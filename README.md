@@ -2,7 +2,7 @@
 
 This piece of software has been developped as part of a PhD thesis in 2018-2020.
 This particular build has been prepared to accompany the publication of a paper in the 2020 edition of the ICTSS
-conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS.
+conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS).
 
 HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
 multi-traces collected from the execution of Distributed Systems against interaction models.
@@ -50,7 +50,7 @@ Finally, we can specify a number of filters that will limit the exploration
 of graphs in algoritmic treatments  in 
 different ways.
 - "max_depth" limits the depth of the explored graph
-- "max_loop_depth" limits the cumulative number of loop instances that cen be unfolded in a given execution
+- "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
 - "max_node_number" limits the number of nodes in the explored graph
 
 ![image info](./README_options.png)
