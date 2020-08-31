@@ -1,0 +1,10 @@
+// Example commands to run
+
+hibou_ictss.exe explore example1.hsf
+
+hibou_ictss.exe explore example2.hsf
+
+hibou_ictss.exe analyze example3.hsf multitrace_for_example3.htf
+
+hibou_ictss.exe analyze example4.hsf multitrace_for_example4.htf
+

@@ -1,0 +1,36 @@
+@option{
+    strategy = DFS;
+    loggers = [graphic];
+    pre_filters = [ max_depth = 3, 
+                    max_loop_depth = 1, 
+                    max_node_number = 5 ]
+}
+@message{
+    m1;
+    m2;
+    m3;
+    m4
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+seq(
+    loop_seq(
+        seq(
+            a -- m1 -> b,
+            alt(
+                b -- m2 -> c,
+                o
+            ),
+            b -- m3 ->|
+        )
+    ),
+    par(
+        a -- m1 ->|,
+        c -- m4 -> a
+    )
+)
+
+

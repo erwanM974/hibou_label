@@ -1,0 +1,18 @@
+@option{
+    loggers = [graphic];
+    pre_filters = [ max_depth = 4, 
+                    max_loop_depth = 4, 
+                    max_node_number = 20 ]
+}
+@message{
+    m
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+par(
+    a -- m -> c,
+    b -- m -> c
+)

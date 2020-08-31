@@ -1,0 +1,21 @@
+@option{
+    strategy = BFS;
+    loggers = [graphic];
+    pre_filters = [ max_depth = 3, 
+                    max_loop_depth = 1, 
+                    max_node_number = 5 ]
+}
+@message{
+    m1;
+    m2
+}
+@lifeline{
+    a;
+    b
+}
+seq(
+    loop_seq(
+        b -- m1 -> a
+    ),
+    a -- m2 -> b
+)

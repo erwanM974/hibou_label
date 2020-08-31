@@ -67,7 +67,11 @@ HIBOU can generate execution trees which illustrate the semantics of the a given
 The exploration of such execution trees can be defined up to certain limits (depth, number of nodes, loop 
 instanciations) and up to certain search algorithms.
 
+Below is given an example exploration:
+
 ![image info](./README_explo1.png)
+
+And a second example:
 
 ![image info](./README_explo2.png)
 
@@ -97,3 +101,20 @@ If, this previous case does not occur in any explored path,
 the global verdict "Fail" is returned on the command line interface.
 
 ![image info](./README_ana1.png)
+
+## Build
+
+You can build the Rust project with cargo using "cargo build --release".
+
+This will generate an executable in "./target/release".
+
+Or you could download the provided binary for windows.
+
+## Requirements / Dependencies
+
+So as to generate the images of the graphs, you will need to have graphviz installed on your system
+and the "dot" command must be in your "PATH" environment variable.
+
+## Examples
+
+All the examples in this README are provided in the "examples" directory as well as the commands used to generate the images above.
