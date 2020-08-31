@@ -18,8 +18,7 @@
 name: hibou_ictss
 version: "0.1"
 author: Erwan Mahe <github.com/erwanM974>
-about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for the analysis of traces and
-multi-traces of interaction models (sequence diagrams/sequence charts)
+about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for the analysis of traces and multi-traces of interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw as a sequence diagram an input hibou specification file (.hsf)
