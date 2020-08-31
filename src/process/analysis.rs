@@ -114,6 +114,7 @@ pub fn analyze(interaction : Interaction,
                 } else {
                     if new_node.rem_front_or_match.len() > 0 {
                         analysis_queue.push( new_node );
+                        node_counter = node_counter + 1;
                         added_in_queue = true;
                     } else {
                         manager.verdict_loggers(&CoverageVerdict::UnCov,&new_node.state_id);

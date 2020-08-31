@@ -4,7 +4,7 @@ This piece of software has been developped as part of a PhD thesis in 2018-2020.
 This particular build has been prepared to accompany the publication of a paper in the 2020 edition of the ICTSS
 conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS.
 
-HIBOU (for Holistic Interaction Bahavioral Oracle Utitlity) provides utilities for the analysis of traces and 
+HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
 multi-traces collected from the execution of Distributed Systems against interaction models.
 
 ## Entry language

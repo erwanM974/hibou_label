@@ -61,6 +61,7 @@ pub fn explore(interaction : Interaction,
             Some( new_node ) => {
                 if new_node.rem_front_or_match.len() > 0 {
                     exploration_queue.push(new_node);
+                    node_counter = node_counter + 1;
                     added_in_queue = true;
                 } else {
                     added_in_queue = false;
