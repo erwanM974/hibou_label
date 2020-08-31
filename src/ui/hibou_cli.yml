@@ -1,0 +1,58 @@
+#
+# Copyright 2020 Erwan Mahe (github.com/erwanM974)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+name: hibou_ictss
+version: "0.1"
+author: Erwan Mahe <github.com/erwanM974>
+about: Holistic Interaction Bahavioral Oracle Utitlity - hibou provides utilities for the analysis of traces and multi-traces of interaction behavioral models (sequence diagrams/sequence charts)
+subcommands:
+    - draw:
+        about: utility to draw as a sequence diagram an input hibou specification file (.hsf)
+        version: "0.1"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+            - hsf:
+                required: true
+                index: 1
+                help: hibou specification file
+            - output:
+                required: false
+                short: o
+                takes_value: true
+                help: target file for drawing (default is 'the name of the hsf'.png)
+    - explore:
+        about: utility to explore the semantics of an input hibou specification file (.hsf)
+        version: "0.1"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+            - hsf:
+                required: true
+                index: 1
+                help: hibou specification file
+    - analyze:
+        about: utility to analyze an input (multi-)trace from a hibou trace file (.htf) w.r.t. an input hibou specification file (.hsf)
+        version: "0.1"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+            - hsf:
+                required: true
+                index: 1
+                help: hibou specification file
+            - htf:
+                required: true
+                index: 2
+                help: hibou trace file

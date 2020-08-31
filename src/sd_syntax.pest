@@ -1,0 +1,120 @@
+/*
+Copyright 2020 Erwan Mahe (github.com/erwanM974)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// ***********************************************
+// generic label ; used for lifelines, messages, etc
+WHITESPACE = _{ " " | "\r\n" | "\n" | "\t" | "\r" }
+HIBOU_LABEL = @{ LETTER ~ (LETTER | ASCII_DIGIT | "_")* }
+// ***********************************************
+SD_LIFELINE = { HIBOU_LABEL }
+MESSAGE_LABEL = { HIBOU_LABEL }
+// ***********************************************
+// ***********************************************
+// ***** interactions / sequence diagrams
+TARGET_LF_LIST = { "(" ~ SD_LIFELINE ~ ("," ~ SD_LIFELINE)* ~ "}" }
+ENVIRONMENT_TARGET = { "|" }
+
+SD_ACTION_EMISSION = { SD_LIFELINE ~ "--" ~ MESSAGE_LABEL ~ "->" ~ (SD_LIFELINE | TARGET_LF_LIST | ENVIRONMENT_TARGET)}
+SD_ACTION_RECEPTION = { MESSAGE_LABEL ~ "->" ~ SD_LIFELINE}
+
+SD_EMPTY_INTERACTION = {"o" | "∅"}
+
+SD_STRICT = {"strict"}
+SD_STRICT_INT = { SD_STRICT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
+SD_SEQ = {"seq"}
+SD_SEQ_INT = { SD_SEQ ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
+SD_ALT = {"alt"}
+SD_ALT_INT = { SD_ALT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
+SD_PAR = {"par"}
+SD_PAR_INT = { SD_PAR ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
+SD_LOOP = {"loop_" ~ (SD_STRICT | SD_SEQ | SD_PAR)}
+SD_LOOP_INT = { SD_LOOP ~ "(" ~ SD_INTERACTION ~ ")" }
+
+SD_INTERACTION = { SD_EMPTY_INTERACTION
+		| SD_ACTION_RECEPTION
+        | SD_ACTION_EMISSION
+        | SD_STRICT_INT
+        | SD_SEQ_INT
+        | SD_ALT_INT
+        | SD_PAR_INT
+        | SD_LOOP_INT
+        }
+// ***********************************************
+// ***********************************************
+// ***** hibou options
+OPTION_GRAPHIC_LOGGER = { "graphic" }
+OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER }
+OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
+// ***********************************************
+OPTION_STRATEGY_BFS = { "BFS" }
+OPTION_STRATEGY_DFS = { "DFS" }
+OPTION_STRATEGY_KIND = _{ OPTION_STRATEGY_BFS | OPTION_STRATEGY_DFS }
+OPTION_STRATEGY_DECL = { "strategy" ~ "=" ~ OPTION_STRATEGY_KIND }
+// ***********************************************
+ARITH_INTEGER = { "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
+// ***********************************************
+OPTION_PREFILTER_MAX_DEPTH = { "max_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_PREFILTER_MAX_LOOP_DEPTH = { "max_loop_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_PREFILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
+OPTION_PREFILTER = _{ OPTION_PREFILTER_MAX_DEPTH | OPTION_PREFILTER_MAX_LOOP_DEPTH | OPTION_PREFILTER_MAX_NODE_NUMBER }
+OPTION_PREFILTERS_DECL = { "pre_filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
+// ***********************************************
+OPTION_DECL = _{ OPTION_LOGGER_DECL | OPTION_STRATEGY_DECL | OPTION_PREFILTERS_DECL }
+HIBOU_OPTION_DECL = { "@option" ~ "{" ~
+                               	OPTION_DECL ~ (";" ~ OPTION_DECL)*
+                                   ~ "}"}
+// ***********************************************
+// ***********************************************
+// declarations
+HIBOU_MODEL_MS_DECL = { "@message" ~ "{" ~
+	MESSAGE_LABEL ~ (";" ~ MESSAGE_LABEL)*
+    ~ "}"}
+
+HIBOU_MODEL_LF_DECL = { "@lifeline" ~ "{" ~
+	SD_LIFELINE ~ (";" ~ SD_LIFELINE)* ~ "}"}
+// ***********************************************
+// ***********************************************
+// setup & .hsf file
+HIBOU_MODEL_SETUP = { HIBOU_OPTION_DECL? ~ HIBOU_MODEL_MS_DECL? ~ HIBOU_MODEL_LF_DECL? }
+HSF_PEST_FILE = { SOI ~
+		HIBOU_MODEL_SETUP? ~ SD_INTERACTION ~
+        EOI }
+
+// ***********************************************
+// ***********************************************
+// traces & multitraces
+TRACE_LIFELINE = { HIBOU_LABEL }
+TRACE_MESSAGE = { HIBOU_LABEL }
+
+TRACE_EMISSION_SYMBOL = { "!" }
+TRACE_RECEPTION_SYMBOL = { "?" }
+
+TRACE_ACTION = { TRACE_LIFELINE ~ (TRACE_EMISSION_SYMBOL|TRACE_RECEPTION_SYMBOL) ~ TRACE_MESSAGE }
+// ***********************************************
+CANAL_LIFELINES = { TRACE_LIFELINE ~ ("," ~ TRACE_LIFELINE)* }
+CANAL_ANY = {"#any"}
+CANAL_ALL = {"#all"}
+TRACE_CANAL = _{ "[" ~ (CANAL_ANY | CANAL_ALL | CANAL_LIFELINES) ~ "]" }
+TRACE = { TRACE_CANAL ~ (TRACE_ACTION ~ ("." ~ TRACE_ACTION)*)? }
+// ***********************************************
+MULTI_TRACE = { "{" ~ (TRACE ~ (";" ~ TRACE)* )? ~ "}" }
+// ***********************************************
+HTF_PEST_FILE = { SOI ~ (MULTI_TRACE|TRACE) ~ EOI }
+// ***********************************************

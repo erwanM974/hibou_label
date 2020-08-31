@@ -1,0 +1,20 @@
+[package]
+name = "hibou_ictss"
+version = "0.1.0"
+authors = ["Erwan Mahe"]
+edition = "2018"
+
+license = "Apache-2.0"
+description = "Holistic Interaction Bahavioral Oracle Utitlity - hibou provides utilities for the analysis of traces and multi-traces of interaction models"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "0.23.3"                                # for rendering interactions
+imageproc = "0.20.0"                            # ...
+strum = "0.18.0"                                # for as_static in the graphviz package and others
+strum_macros = "0.18.0"                         # ...
+rusttype = "0.8.3"                              # for fonts and scale for text in images
+pest = "2.1.3"                                  # for pest parser
+pest_derive = "2.1.0"                           # ...
+clap = {version="2.33.1",features=["yaml"]}     # for the command line interface
