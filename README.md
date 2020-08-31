@@ -7,7 +7,7 @@ conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS).
 This README describes the software implementation.
 
 If you are interested in the Coq proof, please click on this 
-[link](https://htmlpreview.github.io/?https://github.com/erwanM974/hibou_ictss_2020/blob/master/coq_proof_ictss2020_a_small_step_approach_to_multitrace_checking_against_interactions.html)
+[link](https://erwanm974.github.io/coq_ictss_2020/)
 
 HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
 multi-traces collected from the execution of Distributed Systems against interaction models.
