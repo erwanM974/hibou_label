@@ -1,7 +1,7 @@
 @option{
     strategy = DFS;
     loggers = [graphic];
-    pre_filters = [ max_depth = 3, 
+    pre_filters = [ max_depth = 4,
                     max_loop_depth = 1, 
                     max_node_number = 5 ]
 }

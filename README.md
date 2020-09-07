@@ -2,7 +2,8 @@
 
 This piece of software has been developped as part of a PhD thesis in 2018-2020.
 This particular build has been prepared to accompany the publication of a paper in the 2020 edition of the ICTSS
-conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS).
+conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS). 
+A long version of this paper is currently available [here](https://arxiv.org/abs/2009.01777) on Arxiv.
 
 This README describes the software implementation.
 
@@ -21,7 +22,7 @@ The figure below illustrates:
 - in the middle the encoding using the entry langage of HIBOU (PEG grammar)
 - on the right the resulting sequence diagram as drawn by HIBOU  
 
-![image info](./README_entry_schema.png)
+![image info](./README_images/entry_schema.png)
 
 ### Signature Declaration
 
@@ -59,54 +60,136 @@ different ways.
 - "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
 - "max_node_number" limits the number of nodes in the explored graph
 
-![image info](./README_options.png)
+![image info](./README_images/options.png)
 
-## Draw
+## Command Line Interface
+
+The functionnalities of HIBOU are accessed via a Command Line Interface (CLI).
+For the version presented in this repository, you will have to launch the executable "hibou_ictss" (or "hibou_ictss.exe" on Windows OSs) from a terminal.
+
+### Help
+
+The HIBOU executable provides a small documentation about its interface. This can be accessed by tying "hibou_ictss help" or "hibou_ictss -h".
+It explaines that there are 4 sub-commands in HIBOU:
+- "draw" (to be used as "hibou_ictss draw <.hsf file>"), which draws as a sequence diagram a given interaction
+- "explore" (to be used as "hibou_ictss explore <.hsf file>"), which computes (partially or totally if possible) the semantics of a given interaction
+- "analyze" (to be used as "hibou_ictss analyze <.hsf file> <.htf file>"), which analyze a multi-trace w.r.t. an interaction
+- "help", which is the present help
+
+Each sub-command also has its dedicated documentation:
+- "hibou_ictss draw -h" provides a small documentation for the drawing utility
+- "hibou_ictss explore -h" provides a small documentation for the "explore" sub-command
+- "hibou_ictss analyze -h" provides a small documentation for the "analyze" sub-command
+
+In the following, we provide more details about those sub-commands.
+
+### Draw
 
 Diagrams, such as the one on the previous image can be drawn using the "hibou draw" command as exemplified below.
 
-![image info](./README_draw.png)
+![image info](./README_images/draw.png)
 
-## Explore
+### Explore
 
-HIBOU can generate execution trees which illustrate the semantics of the a given interaction model.
+The "explore" command of HIBOU can generate execution trees which illustrate the semantics of the a given interaction model.
 The exploration of such execution trees can be defined up to certain limits (depth, number of nodes, loop 
 instanciations) and up to certain search algorithms.
 
-Below is given an example exploration:
+Below is given an example exploration that you can obtain by tying "hibou_ictss.exe explore example1.hsf". 
+With the "example1.hsf" file provided in the "examples" folder.
 
-![image info](./README_explo1.png)
+![image info](./README_images/explo1.png)
 
-And a second example:
+And a second example that you can obtain by tying "hibou_ictss.exe explore example2.hsf". 
+With the "example2.hsf" file provided in the "examples" folder.
 
-![image info](./README_explo2.png)
+![image info](./README_images/explo2.png)
 
-## Analyze
+### Analyze
 
-HIBOU can analyse traces or multitraces (defined with any groups of co-localized lifelines).
-A given analysis opens-up paths in the execution tree that are compliant with the consumption 
-of the given multitrace. 
+The "analyze" sub-command of HIBOU can analyse multi-traces w.r.t. interactions. 
+For any multi-trace and any interaction, it returns a verdict about the conformity of the multi-trace w.r.t. the interaction. 
+This verdict is either "Pass" or "Fail". 
+We have proven in [this Coq proof](https://erwanm974.github.io/coq_ictss_2020/) that the verdict "Pass" is equivalent to the membership of the multi-trace to the semantics of the interaction.
 
-(Multi)traces to be anlyzed are provided in .htf (Hibou Trace File) files. 
-On the example below a multitrace composed of 2 canals is defined.
+#### Specifying multi-traces
+
+As hinted at earlier, multi-traces are specified in .htf files, which stand for Hibou Trace File.
+
+Multi-traces are sets of traces called its components. 
+Each component is defined over a subset of lifelines called a co-localization that is disjoint to that of any other component.
+
+In [the paper](https://arxiv.org/abs/2009.01777), we restricted co-localizations to singletons in order to simplify the presentation.
+However, our approach still works when considering the more general case of co-localizations.
+
+On the example below is given an example of .htf file which defines a multi-trace composed of 2 components:
 - on the co-localization of the 2 lifelines "a" and "b", the local trace "b!m.a!m" has been logged
 - on the localization of the "c" lifeline, the local trace "c?m.c?m" has been logged
 
-![image info](./README_htf.png)
+![](./README_images/htf.png)
 
-The analysis of this multitrace against a given interaction model then generates a "Pass" verdict and the following 
-image describes the process.
+Let us note that we can analyze global traces simply by defining a multi-trace with a single component as is done below.
+Here we used the "#all" keyword to state that this component is defined over all the lifelines defined in "@lifeline".
 
-![image info](./README_coloc.png)
+![image info](./README_images/global_trace1_htf.png)
 
-If, in any one of those paths the exploration terminates on a node
-where the multitrace has been emptied and the interaction can express the empty trace
-then the analysis is successful and the global verdict "Pass" is returned on the command line interface.
+We could also have used the simpler syntax below to directly define our global trace:
 
-If, this previous case does not occur in any explored path, 
-the global verdict "Fail" is returned on the command line interface.
+![image info](./README_images/global_trace2_htf.png)
 
-![image info](./README_ana1.png)
+We can also use the "#any" keyword to state that a given multi-trace component is defined over all the lifelines that appear in the subsequent trace definition.
+For example below is defined a multi-trace that is the same than the one in our first example.
+The first component is defined over lifelines "a" and "b", and the second over lifeline "c".
+
+![image info](./README_images/htf_bis.png)
+
+#### Analysing multi-traces  
+
+A given analysis opens-up paths in the execution tree that are compliant with the consumption 
+of the given multitrace. 
+Each such path terminates either with 
+- a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution (statically verified on the interaction term)
+- an "UnCov" local verdict in the other cases (i.e. either when the consumption of the multi-trace is impossible, or when the multi-trace has been emptied but the interaction cannot express the empty execution)
+
+If there exists a path terminating in "Cov", a global verdict "Pass" is returned. 
+The global verdict is "Fail" otherwise.
+
+#### Example 1
+
+Below is given an example analysis, that you can reproduce by tying 
+"hibou_ictss.exe analyze example3.hsf multitrace_for_example3.htf"
+
+With the "example3.hsf" and "multitrace_for_example3.htf" (or "multitrace_for_example3_bis.htf") files from the "examples" folder.
+
+![image info](./README_images/ana1.png)
+
+It yields the "Pass" global verdict 
+
+![image info](./README_images/cli_ana1.png)
+
+#### Example 2
+
+Below is given an example analysis, that you can reproduce by tying 
+"hibou_ictss.exe analyze example4.hsf multitrace_for_example4.htf"
+
+With the "example4.hsf" and "multitrace_for_example4.htf" files from the "examples" folder.
+
+![image info](./README_images/ana2.png)
+
+Likewise, it yields the "Pass" global verdict.
+
+#### Example 3
+
+Below is given an example analysis, that you can reproduce by tying 
+"hibou_ictss.exe analyze example4.hsf global_trace_for_example4.htf"
+
+With the "example4.hsf" and "global_trace_for_example4.htf" (or "global_trace_for_example4_bis.htf) files from the "examples" folder.
+
+![image info](./README_images/ana3.png)
+
+It yields the "Fail" global verdict 
+
+![image info](./README_images/cli_ana3.png)
 
 ## Build
 
@@ -118,8 +201,9 @@ Or you could download the provided binary for windows.
 
 ## Requirements / Dependencies
 
-So as to generate the images of the graphs, you will need to have graphviz installed on your system
-and the "dot" command must be in your "PATH" environment variable.
+So as to generate the images of the graphs, you will need to have graphviz installed on your system. 
+Graphviz is available at ( https://www.graphviz.org/download/ ).
+The "dot" command provided by Graphviz must be in your "PATH" environment variable.
 
 ## Examples
 
