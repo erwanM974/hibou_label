@@ -20,7 +20,7 @@ i.e. the 2020 edition of the FASE conference, which is part of ETAPS (European j
 
 
 This particular build has been prepared to accompany the publication of a paper in the 2020 edition of the ICTSS
-conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS). 
+conference (32nd IFIP International Conference on Testing Software and Systems). 
 A long version of this paper is currently available [here](https://arxiv.org/abs/2009.01777) on Arxiv.
 
 This README describes the software implementation.
