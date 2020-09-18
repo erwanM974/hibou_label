@@ -1,7 +1,5 @@
 
-![](./README_images/hibou_banner_v2.svg)
-
-<img src="./README_images/hibou_banner_v2.svg" alt="alt text" width="200">
+<img src="./README_images/hibou_banner_v2.svg" alt="hibou banner" width="750">
 
 # HIBOU ICTSS 2020
 
@@ -74,7 +72,7 @@ different ways.
 - "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
 - "max_node_number" limits the number of nodes in the explored graph
 
-![image info](./README_images/options.png)
+<img src="./README_images/options.png" alt="hibou options" width="550">
 
 ## Command Line Interface
 
