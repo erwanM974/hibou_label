@@ -1,5 +1,7 @@
 
-![](./README_images/hibou_banner_v2.svg | width=100)
+![](./README_images/hibou_banner_v2.svg)
+
+<img src="./README_images/hibou_banner_v2.svg" alt="alt text" width="200">
 
 # HIBOU ICTSS 2020
 
