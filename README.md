@@ -6,9 +6,12 @@
 HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
 multi-traces collected from the execution of Distributed Systems against interaction models.
 
-This piece of software has been developed as part of my PhD thesis in 2018-2020 at the CentraleSupelec engineering school
+This piece of software has been developed as part of my PhD thesis in 2018-2020 at the 
+[CentraleSupelec](https://www.centralesupelec.fr/)
+engineering school
 (part of Université Paris-Saclay) 
-in collaboration with the CEA (Commissariat à l'énergie atomique et aux énergies alternatives).
+in collaboration with the 
+[CEA](http://www.cea.fr/) (Commissariat à l'énergie atomique et aux énergies alternatives).
 
 We described our approach in the following paper: 
 "[Revisiting Semantics of Interactions for Trace Validity Analysis](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24)"
@@ -138,22 +141,22 @@ On the example below is given an example of .htf file which defines a multi-trac
 - on the co-localization of the 2 lifelines "a" and "b", the local trace "b!m.a!m" has been logged
 - on the localization of the "c" lifeline, the local trace "c?m.c?m" has been logged
 
-![](./README_images/htf.png)
+<img src="./README_images/htf.png" alt="co-localized multi-trace" width="400">
 
 Let us note that we can analyze global traces simply by defining a multi-trace with a single component as is done below.
 Here we used the "#all" keyword to state that this component is defined over all the lifelines defined in "@lifeline".
 
-![image info](./README_images/global_trace1_htf.png)
+<img src="./README_images/global_trace1_htf.png" alt="global co-localization" width="650">
 
 We could also have used the simpler syntax below to directly define our global trace:
 
-![image info](./README_images/global_trace2_htf.png)
+<img src="./README_images/global_trace2_htf.png" alt="global trace" width="560">
 
 We can also use the "#any" keyword to state that a given multi-trace component is defined over all the lifelines that appear in the subsequent trace definition.
 For example below is defined a multi-trace that is the same than the one in our first example.
 The first component is defined over lifelines "a" and "b", and the second over lifeline "c".
 
-![image info](./README_images/htf_bis.png)
+<img src="./README_images/htf_bis.png" alt="global trace" width="400">
 
 #### Analysing multi-traces  
 
