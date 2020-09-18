@@ -1,6 +1,21 @@
+
+![](./README_images/hibou_banner_v2.svg | width=100)
+
 # HIBOU ICTSS 2020
 
-This piece of software has been developped as part of a PhD thesis in 2018-2020.
+HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
+multi-traces collected from the execution of Distributed Systems against interaction models.
+
+This piece of software has been developed as part of my PhD thesis in 2018-2020 at the CentraleSupelec engineering school
+(part of Université Paris-Saclay) 
+in collaboration with the CEA (Commissariat à l'énergie atomique et aux énergies alternatives).
+
+We described our approach in the following paper: 
+"[Revisiting Semantics of Interactions for Trace Validity Analysis](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24)"
+which was published in the 23rd International Conference on Fundamental Approaches to Software Engineering
+i.e. the 2020 edition of the FASE conference, which is part of ETAPS (European joint conferences on Theory And Practice of Software).
+
+
 This particular build has been prepared to accompany the publication of a paper in the 2020 edition of the ICTSS
 conference (32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS). 
 A long version of this paper is currently available [here](https://arxiv.org/abs/2009.01777) on Arxiv.
@@ -10,9 +25,6 @@ This README describes the software implementation.
 If you are interested in the Coq proof, please click on this 
 [link](https://erwanm974.github.io/coq_ictss_2020/) or visit the following
 [repository](https://github.com/erwanM974/coq_ictss_2020).
-
-HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities for the analysis of traces and 
-multi-traces collected from the execution of Distributed Systems against interaction models.
 
 ## Entry language
 
