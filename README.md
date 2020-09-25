@@ -24,8 +24,8 @@ The theoretical background of this version of HIBOU is described in [this paper]
 (currently available on Arxiv).
 
 If you are interested in the Coq proof associated with [this paper](https://arxiv.org/abs/2009.01777), please click on this 
-[link](https://erwanm974.github.io/coq_ictss_2020/) or visit the following
-[repository](https://github.com/erwanM974/coq_ictss_2020).
+[link](https://erwanm974.github.io/coq_hibou_label_multi_trace_analysis/) or visit the following
+[repository](https://github.com/erwanM974/coq_hibou_label_multi_trace_analysis).
 
 # Entry language : Interactions (.hsf files)
 
