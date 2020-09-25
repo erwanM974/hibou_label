@@ -20,7 +20,8 @@ We described our approach in the following paper:
 which was published in the 23rd International Conference on Fundamental Approaches to Software Engineering
 i.e. the 2020 edition of the FASE conference, which is part of ETAPS (European joint conferences on Theory And Practice of Software).
 
-The theoretical background of this version of HIBOU is described in this paper, currently available [here](https://arxiv.org/abs/2009.01777) on Arxiv.
+The theoretical background of this version of HIBOU is described in [this paper](https://arxiv.org/abs/2009.01777)
+(currently available on Arxiv).
 
 If you are interested in the Coq proof associated with [this paper](https://arxiv.org/abs/2009.01777), please click on this 
 [link](https://erwanm974.github.io/coq_ictss_2020/) or visit the following
@@ -34,7 +35,7 @@ The figure below illustrates:
 - in the middle the encoding using the entry langage of HIBOU (PEG grammar)
 - on the right the resulting sequence diagram as drawn by HIBOU  
 
-![image info](./README_images/entry_schema.png)
+<img src="./README_images/entry_schema.png" alt="schema interactions" width="750">
 
 ## Signature Declaration
 
@@ -48,7 +49,7 @@ Those terms are build inductively from the composition of basic buildings blocks
 
 ### Basic building blocks
 
-<img src="./README_images/building_blocks.png" alt="building blocks" width="450">
+<img src="./README_images/building_blocks.png" alt="building blocks" width="600">
 
 The most basic interactions can either be:
 - the empty interaction, that specify an absence of observable behavior and which is encoded with "o" or "∅"
@@ -221,20 +222,18 @@ Let us note that, as we use a "DFS" (Depth-First-Search) heuristics, we have qui
 multi-trace and we did not need to explore further executions of the initial interaction model.
 For instance, you can see that we did not explore the branch starting with the execution and consumption of "c!m4".
 
-<img src="./README_images/analysis_command_1.png" alt="analysis command ex1" width="450">
+<img src="./README_images/analysis_command_1.png" alt="analysis command ex1" width="600">
 
-![image info](./README_images/analysis_1.png)
-
+<img src="./README_images/analysis_1.png" alt="analysis ex1" width="750">
 
 #### Example 2
 
 Below is another example, this time of the analysis of a global trace, and yielding the "Fail" verdict.
 You can also reproduce it by using the files from the "examples" folder.
 
-<img src="./README_images/analysis_command_2.png" alt="analysis command ex1" width="450">
+<img src="./README_images/analysis_command_2.png" alt="analysis command ex2" width="600">
 
-![image info](./README_images/analysis_2.png)
-
+<img src="./README_images/analysis_2.png" alt="analysis ex2" width="750">
 
 ## Explore
 

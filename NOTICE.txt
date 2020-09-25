@@ -1,12 +1,22 @@
-=================================================================================
-==                                    HIBOU                                    ==
-==                         Apache License, Version 2.0                         ==
-=================================================================================
+================================================================================================
+==                                       HIBOU-LABEL                                          ==
+==                                Apache License, Version 2.0                                 ==
+================================================================================================
 
-hibou_ictss
-Copyright (c) 2020 Erwan Mahe
+This piece of software has been developed as part of my PhD thesis in 2018-2020
+at the CentraleSupelec engineering school (part of Université Paris-Saclay)
+in collaboration with the CEA (Commissariat à l'énergie atomique et aux énergies alternatives).
 
-This piece of software has been developped as part of a PhD thesis in 2018-2020.
-This particular build has been prepared to accompany the publication of a paper
-in the 2020 edition of the ICTSS conference
-32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS
+Copyright 2020 Erwan Mahe (github.com/erwanM974)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
