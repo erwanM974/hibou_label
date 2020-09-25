@@ -75,7 +75,8 @@ pub enum GraphvizNodeStyleItem {
     Image(String),
     Color(GraphvizColor),
     FontColor(GraphvizColor),
-    FontSize(u32)
+    FontSize(u32),
+    FontName(String)
 }
 
 impl DotTranslatable for GraphvizNodeStyleItem {
@@ -91,14 +92,10 @@ impl DotTranslatable for GraphvizNodeStyleItem {
                 res.push_str(&(node_shape.to_dot_string()));
             },
             GraphvizNodeStyleItem::Label(label) => {
-                res.push_str(r#"label=""#);
-                res.push_str(&label);
-                res.push_str(r#"""#);
+                res.push_str(&format!("label=\"{}\"",label));
             },
             GraphvizNodeStyleItem::Image(imgpath) => {
-                res.push_str(r#"image=""#);
-                res.push_str(&imgpath);
-                res.push_str(r#"""#);
+                res.push_str(&format!("image=\"{}\"",imgpath));
             },
             GraphvizNodeStyleItem::Color(graphviz_color) => {
                 res.push_str("color=");
@@ -111,6 +108,8 @@ impl DotTranslatable for GraphvizNodeStyleItem {
             GraphvizNodeStyleItem::FontSize(size) => {
                 res.push_str("fontsize=");
                 res.push_str(&(size.to_string()));
+            },GraphvizNodeStyleItem::FontName(fname) => {
+                res.push_str(&format!("fontname=\"{}\"",fname));
             }
         }
         return res;

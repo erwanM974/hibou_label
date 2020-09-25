@@ -3,10 +3,7 @@
 ==                         Apache License, Version 2.0                         ==
 =================================================================================
 
-hibou_ictss
-Copyright (c) 2020 Erwan Mahe
+hibou_label
+Copyright (c) 2020 Erwan Mahe (github.com/erwanM974)
 
 This piece of software has been developped as part of a PhD thesis in 2018-2020.
-This particular build has been prepared to accompany the publication of a paper
-in the 2020 edition of the ICTSS conference
-32ND IFIP INTERNATIONAL CONFERENCE ON TESTING SOFTWARE AND SYSTEMS

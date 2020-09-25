@@ -265,7 +265,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hibou_ictss"
+name = "hibou_label"
 version = "0.1.0"
 dependencies = [
  "clap",

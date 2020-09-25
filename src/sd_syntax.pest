@@ -24,7 +24,7 @@ MESSAGE_LABEL = { HIBOU_LABEL }
 // ***********************************************
 // ***********************************************
 // ***** interactions / sequence diagrams
-TARGET_LF_LIST = { "(" ~ SD_LIFELINE ~ ("," ~ SD_LIFELINE)* ~ "}" }
+TARGET_LF_LIST = { "(" ~ SD_LIFELINE ~ ("," ~ SD_LIFELINE)* ~ ")" }
 ENVIRONMENT_TARGET = { "|" }
 
 SD_ACTION_EMISSION = { SD_LIFELINE ~ "--" ~ MESSAGE_LABEL ~ "->" ~ (SD_LIFELINE | TARGET_LF_LIST | ENVIRONMENT_TARGET)}

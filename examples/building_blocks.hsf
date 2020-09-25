@@ -1,0 +1,15 @@
+@message{
+    reception;
+    emission;
+    broadcast
+}
+@lifeline{
+    lifeline1;
+    lifeline2;
+    lifeline3
+}
+seq(
+    reception -> lifeline2,
+    lifeline2 -- emission ->|,
+    lifeline1 -- broadcast -> (lifeline2,lifeline3)
+)

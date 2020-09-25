@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub const HIBOU_GRAPHIC_FONT: &'static [u8] = include_bytes!("DejaVuSansMono.ttf");// include_bytes!("UbuntuMono-Regular.ttf");
+pub const HIBOU_GRAPHIC_FONT: &'static [u8] = include_bytes!("DejaVuSansMono.ttf");
 
 // **********
 pub const BASE_HORIZONTAL_SIZE : f32 = 50.0;

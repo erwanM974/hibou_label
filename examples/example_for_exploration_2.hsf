@@ -1,9 +1,9 @@
 @option{
     strategy = BFS;
     loggers = [graphic];
-    pre_filters = [ max_depth = 3, 
-                    max_loop_depth = 1, 
-                    max_node_number = 5 ]
+    pre_filters = [ max_depth = 4, 
+                    max_loop_depth = 2, 
+                    max_node_number = 8 ]
 }
 @message{
     m1;

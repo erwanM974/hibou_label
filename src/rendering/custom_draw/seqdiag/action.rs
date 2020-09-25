@@ -152,8 +152,8 @@ pub fn draw_action( image : &mut RgbImage,
                     let tar_x_right = tar_lf_coords.x_middle;
                     let tar_x_left= tar_x_right - (tar_lf_coords.x_span_inner/2.0);
 
-                    draw_filled_circle_mut(image, (tar_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
-                    draw_double_half_ellipsis_rightward(image, tar_x_right, arrow_y_pos,Rgb(HCP_Black));
+                    //draw_filled_circle_mut(image, (tar_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
+                    draw_double_half_ellipsis_rightward(image, tar_x_left, arrow_y_pos,Rgb(HCP_Black));
                     draw_line_segment_mut(image,
                                           (tar_x_left, arrow_y_pos),
                                           (tar_x_right, arrow_y_pos),

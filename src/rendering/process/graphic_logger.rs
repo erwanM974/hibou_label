@@ -86,8 +86,12 @@ impl ProcessLogger for GraphicProcessLogger {
         // *****
         let verdict_color = verdict.get_verdict_color();
         node_gv_options.push( GraphvizNodeStyleItem::Color( verdict_color.clone() ) );
-        node_gv_options.push( GraphvizNodeStyleItem::FontColor( verdict_color.clone() ) );
+        node_gv_options.push( GraphvizNodeStyleItem::FontColor( GraphvizColor::beige ) );
+        node_gv_options.push( GraphvizNodeStyleItem::FontSize( 16 ) );
+        node_gv_options.push( GraphvizNodeStyleItem::FontName( "times-bold".to_string() ) );
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Diamond) );
+        node_gv_options.push( GraphvizNodeStyleItem::Style(GvNodeStyle::Filled) );
+
         tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
         // *****
         let gv_edge = GraphVizEdge{origin_id : parent_interaction_node_name.clone(), target_id : verdict_node_name.clone(), style : tran_gv_options};
@@ -219,6 +223,8 @@ impl ProcessLogger for GraphicProcessLogger {
         // *****
         node_gv_options.push( GraphvizNodeStyleItem::Color( GraphvizColor::burlywood4 ) );
         node_gv_options.push( GraphvizNodeStyleItem::FontColor( GraphvizColor::beige ) );
+        node_gv_options.push( GraphvizNodeStyleItem::FontSize( 16 ) );
+        node_gv_options.push( GraphvizNodeStyleItem::FontName( "times-bold".to_string() ) );
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Pentagon) );
         node_gv_options.push( GraphvizNodeStyleItem::Style(GvNodeStyle::Filled) );
         // *****
