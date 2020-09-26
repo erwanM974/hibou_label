@@ -17,8 +17,11 @@ use strum::AsStaticRef;
 
 use crate::rendering::graphviz::common::{DotTranslatable,GraphvizColor};
 
+
+
+
 #[derive(AsStaticStr)]
-pub enum GvNodeStyle {
+pub enum GvNodeStyleKind {
     Solid,
     Dashed,
     Dotted,
@@ -30,9 +33,27 @@ pub enum GvNodeStyle {
     Wedged
 }
 
-impl DotTranslatable for GvNodeStyle {
+impl DotTranslatable for GvNodeStyleKind {
     fn to_dot_string(&self) -> String {
         return self.as_static().to_string().to_lowercase();
+    }
+}
+
+pub type GvNodeStyle = Vec<GvNodeStyleKind>;
+
+impl DotTranslatable for GvNodeStyle {
+    fn to_dot_string(&self) -> String {
+        let mut dot_str = "\"".to_string();
+        let mut rem_styles = self.len();
+        for sty_kind in self {
+            dot_str.push_str( &sty_kind.to_dot_string() );
+            rem_styles = rem_styles -1;
+            if rem_styles > 0 {
+                dot_str.push_str( "," );
+            }
+        }
+        dot_str.push_str( "\"" );
+        return dot_str;
     }
 }
 

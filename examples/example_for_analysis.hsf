@@ -1,5 +1,8 @@
-@option{
+@analyze_option{
     strategy = DFS;
+    loggers = [graphic]
+}
+@explore_option{
     loggers = [graphic];
     pre_filters = [ max_depth = 4,
                     max_loop_depth = 1, 

@@ -29,13 +29,14 @@ use crate::process::verdicts::CoverageVerdict;
 
 use crate::process::hibou_process::FilterEliminationKind;
 
-
+use crate::process::hibou_process::*;
 
 pub trait ProcessLogger {
 
     fn log_init(&mut self,
                  interaction : &Interaction,
                  gen_ctx : &GeneralContext,
+                 options_as_str : &Vec<String>,
                  remaining_multi_trace : &Option<AnalysableMultiTrace>);
 
     fn log_term(&mut self);

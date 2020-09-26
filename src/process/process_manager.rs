@@ -29,10 +29,31 @@ use crate::process::hibou_process::*;
 
 
 pub struct HibouProcessManager {
-    gen_ctx : GeneralContext,
-    strategy : HibouSearchStrategy,
-    pre_filters : Vec<HibouPreFilter>,
-    loggers : Vec<Box<dyn ProcessLogger>>
+    pub gen_ctx : GeneralContext,
+    pub strategy : HibouSearchStrategy,
+    pub pre_filters : Vec<HibouPreFilter>,
+    pub loggers : Vec<Box<dyn ProcessLogger>>
+}
+
+impl HibouProcessManager {
+    pub fn get_options_as_strings(&self) -> Vec<String> {
+        let mut options_str : Vec<String> = Vec::new();
+        options_str.push( format!("strategy={}", &self.strategy.to_string()) );
+        {
+            let mut rem_filter = self.pre_filters.len();
+            let mut filters_str = "filters=[".to_string();
+            for filter in &self.pre_filters {
+                filters_str.push_str( &filter.to_string() );
+                rem_filter = rem_filter - 1;
+                if rem_filter > 0 {
+                    filters_str.push_str( "," );
+                }
+            }
+            filters_str.push_str( "]" );
+            options_str.push( filters_str );
+        }
+        return options_str;
+    }
 }
 
 pub fn make_matches(interaction : &Interaction, multitrace : &AnalysableMultiTrace) -> Vec<Position> {
@@ -63,8 +84,9 @@ impl HibouProcessManager {
 
 
     pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+        let options_as_strs = (&self).get_options_as_strings();
         for logger in self.loggers.iter_mut() {
-            (*logger).log_init(interaction, &self.gen_ctx,remaining_multi_trace);
+            (*logger).log_init(interaction, &self.gen_ctx, &options_as_strs,remaining_multi_trace);
         }
     }
 

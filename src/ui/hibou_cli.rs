@@ -38,7 +38,7 @@ use crate::process::log::*;
 
 use crate::process::analysis::{analyze,GlobalVerdict};
 use crate::process::exploration::explore;
-use crate::from_text::hsf_file::parse_hsf_file;
+use crate::from_text::hsf_file::{ProcessKind,parse_hsf_file};
 use crate::from_text::htf_file::parse_htf_file;
 
 fn get_ascii_border() -> &'static str {
@@ -90,7 +90,7 @@ pub fn hibou_cli() -> i32 {
 
     if let Some(matches) = matches.subcommand_matches("draw") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path) {
+        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
@@ -115,7 +115,7 @@ pub fn hibou_cli() -> i32 {
         }
     } else if let Some(matches) = matches.subcommand_matches("explore") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path) {
+        match parse_hsf_file(hsf_file_path,&ProcessKind::Explore) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
@@ -137,7 +137,7 @@ pub fn hibou_cli() -> i32 {
         }
     } else if let Some(matches) = matches.subcommand_matches("analyze") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path) {
+        match parse_hsf_file(hsf_file_path,&ProcessKind::Analyze) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);

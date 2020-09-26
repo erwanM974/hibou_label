@@ -45,6 +45,7 @@ use crate::core::trace::{TraceAction,TraceActionKind};
 use crate::process::hibou_process::FilterEliminationKind;
 // ***
 
+use crate::process::hibou_process::*;
 
 pub struct GraphicProcessLogger {
     log_name : String,
@@ -90,7 +91,7 @@ impl ProcessLogger for GraphicProcessLogger {
         node_gv_options.push( GraphvizNodeStyleItem::FontSize( 16 ) );
         node_gv_options.push( GraphvizNodeStyleItem::FontName( "times-bold".to_string() ) );
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Diamond) );
-        node_gv_options.push( GraphvizNodeStyleItem::Style(GvNodeStyle::Filled) );
+        node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Filled]) );
 
         tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
         // *****
@@ -107,6 +108,7 @@ impl ProcessLogger for GraphicProcessLogger {
     fn log_init(&mut self,
                 interaction : &Interaction,
                 gen_ctx : &GeneralContext,
+                options_as_strs : &Vec<String>,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         // ***
         // empties temp directory if exists
@@ -122,7 +124,33 @@ impl ProcessLogger for GraphicProcessLogger {
         fs::create_dir_all("./temp").unwrap();
         // ***
         self.file.write("digraph G {\n".as_bytes() );
-
+        // ***
+        // *** LEGEND
+        {
+            let mut legend_str = String::new();
+            match remaining_multi_trace {
+                None => {
+                    legend_str.push_str("process=exploration\\l");
+                },
+                Some(_) => {
+                    legend_str.push_str("process=analysis\\l");
+                }
+            }
+            for opt_str in options_as_strs {
+                legend_str.push_str(opt_str);
+                legend_str.push_str("\\l");
+            }
+            // ***
+            let mut legend_node_gv_options : GraphvizNodeStyle = Vec::new();
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Label( legend_str ) );
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Bold,GvNodeStyleKind::Rounded]) );
+            // ***
+            let legend_node = GraphVizNode{id : "legend".to_owned(), style : legend_node_gv_options};
+            let legend_as_dot_str = format!("{}\n", legend_node.to_dot_string());
+            self.file.write( legend_as_dot_str.as_bytes() );
+        }
+        // ***
         let gv_node0_path : String = format!("./temp/{:}_0.png", self.log_name);
         draw_interaction(&gv_node0_path, interaction, gen_ctx,remaining_multi_trace);
 
@@ -226,7 +254,7 @@ impl ProcessLogger for GraphicProcessLogger {
         node_gv_options.push( GraphvizNodeStyleItem::FontSize( 16 ) );
         node_gv_options.push( GraphvizNodeStyleItem::FontName( "times-bold".to_string() ) );
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Pentagon) );
-        node_gv_options.push( GraphvizNodeStyleItem::Style(GvNodeStyle::Filled) );
+        node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Filled]) );
         // *****
         tran_gv_options.push( GraphvizEdgeStyleItem::Color( GraphvizColor::burlywood4 ) );
         // *****

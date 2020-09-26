@@ -77,7 +77,10 @@ OPTION_PREFILTER = _{ OPTION_PREFILTER_MAX_DEPTH | OPTION_PREFILTER_MAX_LOOP_DEP
 OPTION_PREFILTERS_DECL = { "pre_filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
 // ***********************************************
 OPTION_DECL = _{ OPTION_LOGGER_DECL | OPTION_STRATEGY_DECL | OPTION_PREFILTERS_DECL }
-HIBOU_OPTION_DECL = { "@option" ~ "{" ~
+EXPLORE_OPTION_DECL = { "@explore_option" ~ "{" ~
+                               	OPTION_DECL ~ (";" ~ OPTION_DECL)*
+                                   ~ "}"}
+ANALYZE_OPTION_DECL = { "@analyze_option" ~ "{" ~
                                	OPTION_DECL ~ (";" ~ OPTION_DECL)*
                                    ~ "}"}
 // ***********************************************
@@ -92,9 +95,11 @@ HIBOU_MODEL_LF_DECL = { "@lifeline" ~ "{" ~
 // ***********************************************
 // ***********************************************
 // setup & .hsf file
-HIBOU_MODEL_SETUP = { HIBOU_OPTION_DECL? ~ HIBOU_MODEL_MS_DECL? ~ HIBOU_MODEL_LF_DECL? }
+
+SETUP_SECTION = _{ EXPLORE_OPTION_DECL | ANALYZE_OPTION_DECL | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL }
+HIBOU_MODEL_SETUP = { SETUP_SECTION* }
 HSF_PEST_FILE = { SOI ~
-		HIBOU_MODEL_SETUP? ~ SD_INTERACTION ~
+		HIBOU_MODEL_SETUP ~ SD_INTERACTION ~
         EOI }
 
 // ***********************************************

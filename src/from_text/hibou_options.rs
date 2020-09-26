@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 use std::fs;
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
 use std::collections::btree_map::BTreeMap;
 use std::path::Path;
 
@@ -49,17 +49,37 @@ impl HibouOptions {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+enum LoggerKinds {
+    graphic
+}
 
-pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> HibouOptions {
+pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> Result<HibouOptions,HibouParsingError> {
     let mut loggers : Vec<Box<dyn ProcessLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
+    // ***
+    let mut got_loggers   : bool = false;
+    let mut got_strategy  : bool = false;
+    let mut got_pre_filters : bool = false;
+    // ***
+    let mut declared_loggers : HashSet<LoggerKinds> = HashSet::new();
+    // ***
     for option_decl_pair in option_pair.into_inner() {
         match option_decl_pair.as_rule() {
             Rule::OPTION_LOGGER_DECL => {
+                if got_loggers {
+                    return Err( HibouParsingError::HsfSetupError("several 'loggers=[X]' declared in the same '@X_option' section".to_string()));
+                }
+                got_loggers = true;
+                // ***
                 for logger_kind_pair in option_decl_pair.into_inner() {
                     match logger_kind_pair.as_rule() {
                         Rule::OPTION_GRAPHIC_LOGGER => {
+                            if declared_loggers.contains(&LoggerKinds::graphic) {
+                                return Err( HibouParsingError::HsfSetupError("several 'graphic' loggers declared in the same '@X_option' section".to_string()));
+                            }
+                            declared_loggers.insert( LoggerKinds::graphic );
                             loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string() ) ) );
                         },
                         _ => {
@@ -69,6 +89,11 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> HibouO
                 }
             },
             Rule::OPTION_STRATEGY_DECL => {
+                if got_strategy {
+                    return Err( HibouParsingError::HsfSetupError("several 'strategy=X' declared in the same '@X_option' section".to_string()));
+                }
+                got_strategy = true;
+                // ***
                 let strategy_pair =  option_decl_pair.into_inner().next().unwrap();
                 match strategy_pair.as_rule() {
                     Rule::OPTION_STRATEGY_BFS => {
@@ -83,6 +108,11 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> HibouO
                 }
             },
             Rule::OPTION_PREFILTERS_DECL => {
+                if got_pre_filters {
+                    return Err( HibouParsingError::HsfSetupError("several 'pre_filters=[X]' declared in the same '@X_option' section".to_string()));
+                }
+                got_pre_filters = true;
+                // ***
                 for pre_filter_pair in option_decl_pair.into_inner() {
                     match pre_filter_pair.as_rule() {
                         Rule::OPTION_PREFILTER_MAX_DEPTH => {
@@ -114,5 +144,5 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> HibouO
             }
         }
     }
-    return HibouOptions{loggers,strategy,pre_filters};
+    return Ok( HibouOptions{loggers,strategy,pre_filters} );
 }

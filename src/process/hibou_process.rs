@@ -62,6 +62,22 @@ pub enum HibouPreFilter {
     MaxNodeNumber(u32)
 }
 
+impl std::string::ToString for HibouPreFilter {
+    fn to_string(&self) -> String {
+        match self {
+            HibouPreFilter::MaxLoopInstanciation(num) => {
+                return format!("MaxLoop={}",num);
+            },
+            HibouPreFilter::MaxProcessDepth(num) => {
+                return format!("MaxDepth={}",num);
+            },
+            HibouPreFilter::MaxNodeNumber(num) => {
+                return format!("MaxNum={}",num);
+            }
+        }
+    }
+}
+
 pub enum FilterEliminationKind {
     MaxLoopInstanciation,
     MaxProcessDepth,
@@ -90,7 +106,18 @@ pub enum HibouSearchStrategy {
     DFS
 }
 
-
+impl std::string::ToString for HibouSearchStrategy {
+    fn to_string(&self) -> String {
+        match self {
+            HibouSearchStrategy::BFS => {
+                return "Breadth First Search".to_string();
+            },
+            HibouSearchStrategy::DFS => {
+                return "Depth First Search".to_string();
+            }
+        }
+    }
+}
 
 pub struct ProcessStepResult {
     pub put_back_state_node : Option<ProcessStateNode>,
