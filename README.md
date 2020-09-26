@@ -42,6 +42,22 @@ The figure below illustrates:
 The signature of the interaction model is declared in the "@message" and "@lifeline" sections of the .hsf file.
 It suffices then to list the different message names and lifeline names that will be used in the model.
 
+For instance, in the example above (which you can find in the "examples" folder), we have the following:
+
+```
+@message{
+    m1;
+    m2;
+    m3;
+    m4
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+```
+
 ## Interaction Term
 
 Interactions are terms of a formal language, that can be specified using a simple and intuitive inductive language.
@@ -87,29 +103,40 @@ each repeated behavior being sequenced w.r.t. the others using one of the 3 sche
 
 For instance "loopseq(m->a)" is equivalent to the infinite alternative "alt(∅,m->a,seq(m->a,m->a),...)".
 
+### Example
+
+From the previously defined building blocks and operators we can define interaction terms such as the one below:
+
+```
+seq(
+    loop_seq(
+        seq(
+            a -- m1 -> b,
+            alt(
+                b -- m2 -> c,
+                o
+            ),
+            b -- m3 ->|
+        )
+    ),
+    par(
+        a -- m1 ->|,
+        c -- m4 -> a
+    )
+)
+```
+
 ## Process options
 
 Additionally, one can specify in the header of a .hsf file 
 a number of options that will then be used if this .hsf file is exploited 
-in some algorithmic process
-("explore" or "analyze" command).
+in some algorithmic process.
 
-In the example below, a Depth First Search exploration strategy 
-is specified (by default it is Breadth First Search).
+The "@analyze_option" section specifies options to be used when the model is exploited for the exploration of its possible executions with the "explore" command.
+                       
+The "@explore_option" section specifies options to be used when the model is exploited for the exploration of its possible executions with the "explore" command.
 
-We can specify that we want algorithmic treatments of this .hsf file to be logged with the "loggers" attribute.
-In this build only a "graphic" logger exists. 
-It will create an image file (a .png file with the same name as the .hsf file) describing the treatment.
-
-Finally, we can specify a number of filters that will limit the exploration 
-of graphs in algoritmic treatments  in 
-different ways.
-- "max_depth" limits the depth of the explored graph
-- "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
-- "max_node_number" limits the number of nodes in the explored graph
-
-<img src="./README_images/options.png" alt="hibou options" width="550">
-
+We will detail the available options when describing the "analyze" and "explore" commands.
 
 # Entry language : traces & multi-traces (.htf files)
 
@@ -120,14 +147,19 @@ of sub-systems: emissions and receptions of messages.
 As the lifelines of an interaction model represent the sub-systems of the distributed system modelled by the interaction,
 we can understand those collected logs - called traces - as sequences of words "a!m" or "a?m" - called actions - where "a" is a lifeline and "m" a message.
 
+## Centralized traces
 A centralized trace is a sequence of any such action unregarding of the lifelines on which they occur. 
 Below is given, in the syntax accepted by HIBOU, such a centralized trace. 
 This trace must be specified in a ".htf" file, which stands for Hibou Trace File.
 Here, the "[#all]" signifies that the trace is defined over all lifelines.
 
+```
+[#all] a!m1.b?m1.b!m2.c?m2
+```
+
 In [this paper](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24), we describe our approach for the analysis of centralized traces.
 
-<img src="./README_images/global_trace2_htf.png" alt="global trace" width="560">
+## Multi-traces
 
 However, it is not always possible to collect such centralized traces. 
 More often that not, we have a local log/trace for each sub-system of the distributed system.
@@ -144,19 +176,32 @@ On the example below is given an example of .htf file which defines a multi-trac
 - on the co-localization of the 2 lifelines "a" and "b", the local trace "b!m.a!m" has been logged
 - on the localization of the "c" lifeline, the local trace "c?m.c?m" has been logged
 
-<img src="./README_images/htf.png" alt="co-localized multi-trace" width="400">
+```
+{
+    [a,b] b!m.a!m;
+    [c]   c?m.c?m
+}
+```
 
 Let us note that we can also analyze global traces simply by defining a multi-trace with a single component as is done below.
 Here we used the "#all" keyword to state that this component is defined over all the lifelines defined in "@lifeline".
 
-<img src="./README_images/global_trace1_htf.png" alt="global co-localization" width="650">
+```
+{
+    [#all] a!m1.b?m1.b!m2.c?m2
+}
+```
 
 We can also use the "#any" keyword to state that a given multi-trace component is defined over all the lifelines that appear in the subsequent trace definition.
-For example below is defined a multi-trace that is the same than the one in our first example.
+For example below is defined a multi-trace that is the same than the one in our previous multi-trace example.
 The first component is defined over lifelines "a" and "b", and the second over lifeline "c".
 
-<img src="./README_images/htf_bis.png" alt="global trace" width="400">
-
+```
+{
+    [#any] b!m.a!m;
+    [#any] c?m.c?m
+}
+```
 
 # Command Line Interface
 
@@ -185,7 +230,7 @@ Diagrams, such as the one on the previous images can be drawn using the "hibou d
 
 <img src="./README_images/draw_command_building_blocks.png" alt="draw command" width="450">
 
-<img src="./README_images/building_blocks.png" alt="building blocks" width="450">
+<img src="./README_images/building_blocks.png" alt="building blocks" width="500">
 
 
 ## Analyze
@@ -217,12 +262,29 @@ The global verdict is "Fail" otherwise.
 #### Example 1
 
 Below is given an example analysis, that you can reproduce by using the files from the "examples" folder.
-The analysis of this multi-trace yields the "Pass" global verdict.
-Let us note that, as we use a "DFS" (Depth-First-Search) heuristics, we have quickly found a path that consumed the entire
-multi-trace and we did not need to explore further executions of the initial interaction model.
-For instance, you can see that we did not explore the branch starting with the execution and consumption of "c!m4".
 
 <img src="./README_images/analysis_command_1.png" alt="analysis command ex1" width="600">
+
+The analysis of the multi-trace specified in the "mutrace.htf" file against the interaction specified in
+the "example_for_analysis.hsf" file yields the "Pass" global verdict.
+
+For this analysis we used the following options, declared in the "@analyze_option" section of "example_for_analysis.hsf".
+
+```
+@analyze_option{
+    strategy = DFS;
+    loggers = [graphic]
+}
+```
+
+We can specify that we want algorithmic treatments of this .hsf file to be logged with the "loggers" attribute.
+In this build only a "graphic" logger exists. 
+It will create an image file (a .png file with the same name as the .hsf file) describing the treatment.
+
+Here, we also specified the use of a "DFS" (Depth-First-Search) heuristics.
+This allowed us here to quickly find a path that consumed the entire
+multi-trace and we did not need to explore further executions of the initial interaction model.
+For instance, you can see on the image below (generated by the "graphic" logger) that we did not explore the branch starting with the execution and consumption of "c!m4".
 
 <img src="./README_images/analysis_1.png" alt="analysis ex1" width="750">
 
@@ -238,16 +300,36 @@ You can also reproduce it by using the files from the "examples" folder.
 ## Explore
 
 The "explore" command of HIBOU can generate execution trees which illustrate the semantics of a given interaction model.
-The exploration of such execution trees can be defined up to certain limits (depth, number of nodes, loop 
-instanciations) and up to certain search algorithms.
 
 Below is given an example exploration that you can obtain by tying 
 "hibou_label.exe explore example_for_exploration_1.hsf" 
 with the files from "examples" folder.
 
+Here we used the following options for the exploration:
+
+```
+@explore_option{
+    strategy = DFS;
+    loggers = [graphic];
+    pre_filters = [ max_depth = 3, 
+                    max_loop_depth = 1, 
+                    max_node_number = 5 ]
+}
+```
+
+As you can see, we can specify a number of filters that will limit the exploration 
+of graphs in algoritmic treatments in 
+different ways.
+- "max_depth" limits the depth of the explored graph
+- "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
+- "max_node_number" limits the number of nodes in the explored graph
+
+Although you can also specify those filters for the "analyze" command, it is not recommended, 
+given that it might prevent the consumption of the multi-trace and produce a wrong verdict.
+
 ![image info](./README_images/explo1.png)
 
-And a second example that you can obtain by tying 
+And here is a second example that you can obtain by tying 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
