@@ -329,7 +329,7 @@ You can also reproduce it by using the files from the "examples" folder.
 
 <img src="./README_images/analysis_command_2.png" alt="analysis command ex2" width="600">
 
-<img src="./README_images/analysis_2.svg" alt="analysis ex2" width="750">
+<img src="./README_images/analysis_2.svg" alt="analysis ex2" width="800">
 
 
 #### Example 3
@@ -347,11 +347,11 @@ The highest priority queue is dequeued first at each step of the algorithm.
 
 <img src="./README_images/analysis_command_3.png" alt="analysis command ex2" width="600">
 
-<img src="./README_images/analyze_concurrent_bfs_prio_reception.svg" alt="analyze concurrent" width="600">
+<img src="./README_images/analyze_concurrent_bfs_prio_reception.svg" alt="analyze concurrent" width="650">
 
 By comparison, we would have had the following graph if we did not prioritize the evaluation of receptions:
 
-<img src="./README_images/analyze_concurrent_bfs_prio_none.svg" alt="analyze concurrent" width="800">
+<img src="./README_images/analyze_concurrent_bfs_prio_none.svg" alt="analyze concurrent" width="950">
 
 
 ## Explore
@@ -384,13 +384,13 @@ different ways.
 Although you can also specify those filters for the "analyze" command, it is not recommended, 
 given that it might prevent the consumption of the multi-trace and produce a wrong verdict.
 
-<img src="./README_images/explo1.svg" alt="exploration ex1" width="750">
+<img src="./README_images/explo1.svg" alt="exploration ex1" width="850">
 
 And here is a second example that you can obtain by tying 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
-<img src="./README_images/explo2.svg" alt="exploration ex2" width="650">
+<img src="./README_images/explo2.svg" alt="exploration ex2" width="600">
 
 ## Build
 
