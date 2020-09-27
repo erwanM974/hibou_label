@@ -56,20 +56,20 @@ pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext)
             let first_pair : Pair<Rule> = content.next().unwrap();
             match first_pair.as_rule() {
                 Rule::TRACE => {
-                    let mut multitrace : AnalysableMultiTrace = Vec::new();
+                    let mut canals : Vec<MultiTraceCanal> = Vec::new();
                     match trace_canal_from_pair(first_pair,gen_ctx,&HashSet::new()) {
                         Err(e) => {
                             return Err(e);
                         },
                         Ok( trace_canal ) => {
-                            multitrace.push( trace_canal );
+                            canals.push( trace_canal );
                         }
                     }
-                    return Ok(multitrace);
+                    return Ok( AnalysableMultiTrace::new(canals) );
                 },
                 Rule::MULTI_TRACE => {
                     let mut unavailable_lifelines : HashSet<usize> = HashSet::new();
-                    let mut multitrace : AnalysableMultiTrace = Vec::new();
+                    let mut canals : Vec<MultiTraceCanal> = Vec::new();
                     for trace_pair in first_pair.into_inner() {
                         match trace_canal_from_pair(trace_pair,gen_ctx,&unavailable_lifelines) {
                             Err(e) => {
@@ -77,11 +77,11 @@ pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext)
                             },
                             Ok( trace_canal ) => {
                                 unavailable_lifelines = unavailable_lifelines.union( &trace_canal.lifelines ).cloned().collect();
-                                multitrace.push( trace_canal );
+                                canals.push( trace_canal );
                             }
                         }
                     }
-                    return Ok(multitrace);
+                    return Ok( AnalysableMultiTrace::new(canals) );
                 },
                 _ => {
                     panic!("what rule then ? : {:?}", first_pair.as_rule() );

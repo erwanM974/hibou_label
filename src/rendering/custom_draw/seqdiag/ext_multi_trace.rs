@@ -27,7 +27,7 @@ use crate::rendering::hibou_color_palette::*;
 pub fn extract_texts_on_multi_trace(gen_ctx : &GeneralContext,
                                     multi_trace : &AnalysableMultiTrace) -> Vec<Vec<TextToPrint>> {
     let mut all_texts : Vec<Vec<TextToPrint>> = Vec::new();
-    for trace_canal in multi_trace {
+    for trace_canal in &multi_trace.canals {
         let mut canal_text : Vec<TextToPrint> = Vec::new();
         // ***
         canal_text.push( TextToPrint{text:"[".to_string(), color:Rgb(HC_Grammar_Symbol)} );

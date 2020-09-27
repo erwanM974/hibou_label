@@ -59,7 +59,9 @@ SD_INTERACTION = { SD_EMPTY_INTERACTION
 // ***********************************************
 // ***********************************************
 // ***** hibou options
-OPTION_GRAPHIC_LOGGER = { "graphic" }
+GRAPHIC_LOGGER_KIND_png = { "png" }
+GRAPHIC_LOGGER_KIND_svg = { "svg" }
+OPTION_GRAPHIC_LOGGER = { "graphic" ~ ( "=" ~ (GRAPHIC_LOGGER_KIND_png|GRAPHIC_LOGGER_KIND_svg) )? }
 OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER }
 OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
 // ***********************************************
@@ -76,12 +78,27 @@ OPTION_PREFILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
 OPTION_PREFILTER = _{ OPTION_PREFILTER_MAX_DEPTH | OPTION_PREFILTER_MAX_LOOP_DEPTH | OPTION_PREFILTER_MAX_NODE_NUMBER }
 OPTION_PREFILTERS_DECL = { "pre_filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
 // ***********************************************
-OPTION_DECL = _{ OPTION_LOGGER_DECL | OPTION_STRATEGY_DECL | OPTION_PREFILTERS_DECL }
-EXPLORE_OPTION_DECL = { "@explore_option" ~ "{" ~
-                               	OPTION_DECL ~ (";" ~ OPTION_DECL)*
+OPTION_PRIORITIZE_emission = { "emission" }
+OPTION_PRIORITIZE_reception = { "reception" }
+OPTION_PRIORITIZE_none = { "none" }
+OPTION_PRIORITIZE_ACTION_KIND = _{ OPTION_PRIORITIZE_emission | OPTION_PRIORITIZE_reception | OPTION_PRIORITIZE_none }
+OPTION_PRIORITIZE_ACTION_DECL = { "prioritize_actions" ~ "=" ~ OPTION_PRIORITIZE_ACTION_KIND }
+// ***********************************************
+GENERAL_OPTION_DECL  = _{ OPTION_LOGGER_DECL | OPTION_STRATEGY_DECL | OPTION_PREFILTERS_DECL | OPTION_PRIORITIZE_ACTION_DECL }
+// ***********************************************
+EXPLORE_OPTION_DECL = _{ GENERAL_OPTION_DECL }
+EXPLORE_OPTION_SECTION = { "@explore_option" ~ "{" ~
+                               	EXPLORE_OPTION_DECL ~ (";" ~ EXPLORE_OPTION_DECL)*
                                    ~ "}"}
-ANALYZE_OPTION_DECL = { "@analyze_option" ~ "{" ~
-                               	OPTION_DECL ~ (";" ~ OPTION_DECL)*
+// ***********************************************
+OPTION_SEMANTICS_accept = { "accept" }
+OPTION_SEMANTICS_prefix = { "prefix" }
+OPTION_SEMANTICS_KIND = _{ OPTION_SEMANTICS_accept | OPTION_SEMANTICS_prefix }
+OPTION_SEMANTICS_DECL = { "semantics" ~ "=" ~ OPTION_SEMANTICS_KIND }
+// ***********************************************
+ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_SEMANTICS_DECL }
+ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
+                               	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)*
                                    ~ "}"}
 // ***********************************************
 // ***********************************************
@@ -96,7 +113,7 @@ HIBOU_MODEL_LF_DECL = { "@lifeline" ~ "{" ~
 // ***********************************************
 // setup & .hsf file
 
-SETUP_SECTION = _{ EXPLORE_OPTION_DECL | ANALYZE_OPTION_DECL | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL }
+SETUP_SECTION = _{ EXPLORE_OPTION_SECTION | ANALYZE_OPTION_SECTION | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL }
 HIBOU_MODEL_SETUP = { SETUP_SECTION* }
 HSF_PEST_FILE = { SOI ~
 		HIBOU_MODEL_SETUP ~ SD_INTERACTION ~

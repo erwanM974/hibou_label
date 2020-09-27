@@ -17,7 +17,7 @@ limitations under the License.
 use std::fmt::Debug;
 use std::collections::HashSet;
 
-
+use crate::core::trace::TraceActionKind;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ObservableActionKind {
@@ -34,6 +34,17 @@ pub struct ObservableAction {
 
 
 impl ObservableAction {
+
+    pub fn get_action_kind(&self) -> TraceActionKind {
+        match self.act_kind {
+            ObservableActionKind::Reception => {
+                return TraceActionKind::Reception;
+            },
+            ObservableActionKind::Emission(_) => {
+                return TraceActionKind::Emission;
+            }
+        }
+    }
 
     pub fn occupation_before(&self) -> usize {
         return self.lf_id;

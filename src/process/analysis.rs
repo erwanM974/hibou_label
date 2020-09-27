@@ -15,124 +15,145 @@ limitations under the License.
 */
 
 use std::collections::{HashSet,HashMap};
-
+use std::iter::FromIterator;
 use crate::core::general_context::GeneralContext;
 
 use crate::core::syntax::interaction::*;
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
-use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction,multitrace_length};
+use crate::core::trace::*;
 use crate::process::log::ProcessLogger;
 use crate::core::semantics::frontier::make_frontier;
 
-use crate::process::verdicts::CoverageVerdict;
+use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
 use crate::process::process_manager::*;
 
-pub enum GlobalVerdict {
-    Pass,
-    Fail
-}
-
-impl std::string::ToString for GlobalVerdict {
-    fn to_string(&self) -> String {
-        match self {
-            GlobalVerdict::Pass => {
-                return "Pass".to_string();
-            },
-            GlobalVerdict::Fail => {
-                return "Fail".to_string();
-            }
-        }
-    }
-}
-
-
-fn check_cov(state_node : &ProcessStateNode, manager : &mut HibouProcessManager) -> bool {
-    match &state_node.multitrace {
-        None => {
-            panic!();
-        },
-        Some(ref multitrace) => {
-            if multitrace_length(multitrace) == 0 {
-                if (&state_node.interaction).express_empty() {
-                    manager.verdict_loggers(&CoverageVerdict::Cov,&state_node.state_id);
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
 
 pub fn analyze(interaction : Interaction,
-               multitrace : AnalysableMultiTrace,
+               multi_trace : AnalysableMultiTrace,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
-               loggers : Vec<Box<dyn ProcessLogger>>) -> GlobalVerdict {
+               prioritize_action : PrioritizeActionKind,
+               loggers : Vec<Box<dyn ProcessLogger>>,
+               sem_kind: SemanticKind) -> GlobalVerdict {
     // ***
     // ***
-    let mut manager = HibouProcessManager::new(gen_ctx,strategy,pre_filters,loggers);
-    let multitrace_option = Some(multitrace);
-    manager.init_loggers(&interaction,&multitrace_option);
-    let multitrace = multitrace_option.unwrap();
+    let mut manager = HibouProcessManager::new(gen_ctx,
+                                               strategy,
+                                               Some(sem_kind),
+                                               pre_filters,
+                                               HashMap::new(),
+                                               ProcessQueue::new(),
+                                               prioritize_action,
+                                               loggers);
     // ***
+    let multi_trace_option = Some(multi_trace);
+    manager.init_loggers(&interaction,&multi_trace_option);
+    let multi_trace = multi_trace_option.unwrap();
     // ***
     let mut node_counter : u32 = 1;
-    let mut verdict = GlobalVerdict::Fail;
+    let mut global_verdict = GlobalVerdict::Fail;
     // ***
-    let mut analysis_queue : Vec<ProcessStateNode> = Vec::new();
     {
-
-        let mut filtered_front = make_matches(&interaction,&multitrace);
-        let first_node = ProcessStateNode::new(vec![0],interaction,filtered_front,1,Some(multitrace),0);
-        if check_cov(&first_node,&mut manager) {
-            verdict = GlobalVerdict::Pass;
-        } else {
-            if first_node.rem_front_or_match.len() > 0 {
-                analysis_queue.push( first_node );
-            } else {
-                manager.verdict_loggers(&CoverageVerdict::UnCov,&first_node.state_id);
+        match enqueue_next_nodes_in_analysis(&mut manager,
+                                             vec![0],
+                                             interaction,multi_trace,
+                                             0) {
+            None => {},
+            Some( coverage_verdict ) => {
+                global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
             }
         }
     }
     // ***
-    while analysis_queue.len() > 0 {
-        let state_node = manager.extract_from_queue(&mut analysis_queue );
-        let next_result : ProcessStepResult = manager.process_next(state_node,node_counter);
+    while let Some(next_to_process) = manager.extract_from_queue() {
+        let mut new_state_id = next_to_process.state_id.clone();
+        new_state_id.push(next_to_process.id_as_child);
         // ***
-        let added_in_queue : bool;
-        match next_result.new_state_node {
-            None => {
-                added_in_queue = false;
-            },
-            Some( new_node ) => {
-                if check_cov(&new_node,&mut manager) {
-                    verdict = GlobalVerdict::Pass;
-                    break;
-                } else {
-                    if new_node.rem_front_or_match.len() > 0 {
-                        analysis_queue.push( new_node );
+        let mut parent_state = manager.get_memorized_state(&next_to_process.state_id).unwrap().clone();
+        // ***
+        match next_to_process.kind {
+            NextToProcessKind::Execute( position_to_execute ) => {
+                match manager.process_next(&next_to_process.state_id,
+                                           &new_state_id,
+                                           &parent_state.interaction,
+                                           &parent_state.multi_trace,
+                                           position_to_execute,
+                                           node_counter,parent_state.previous_loop_instanciations) {
+                    None => {},
+                    Some( (new_interaction,new_multi_trace,new_loop_depth)) => {
                         node_counter = node_counter + 1;
-                        added_in_queue = true;
-                    } else {
-                        manager.verdict_loggers(&CoverageVerdict::UnCov,&new_node.state_id);
-                        added_in_queue = false;
+                        match enqueue_next_nodes_in_analysis(&mut manager,
+                                                             new_state_id,
+                                                             new_interaction,
+                                                             new_multi_trace.unwrap(),
+                                                             new_loop_depth) {
+                            None => {},
+                            Some( coverage_verdict ) => {
+                                global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
+                                match global_verdict {
+                                    GlobalVerdict::Pass => {
+                                        break;
+                                    },
+                                    _ => {}
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
         // ***
-        match next_result.put_back_state_node {
-            None => {}
-            Some( to_put_back ) => {
-                manager.put_back_in_queue(&mut analysis_queue, to_put_back,added_in_queue);
+        parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
+        if parent_state.remaining_ids_to_process.len() == 0 {
+            manager.forget_state(&next_to_process.state_id);
+        } else {
+            manager.remember_state(next_to_process.state_id,parent_state);
+        }
+        // ***
+    }
+    // ***
+    manager.term_loggers(Some(&global_verdict) );
+    // ***
+    return global_verdict;
+}
+
+fn enqueue_next_nodes_in_analysis(manager: &mut HibouProcessManager,
+                                  state_id : Vec<u32>,
+                                  interaction : Interaction,
+                                  multi_trace : AnalysableMultiTrace,
+                                  previous_loop_instanciations:u32) -> Option<CoverageVerdict> {
+    // ***
+    let mut next_child_id : u32 = 0;
+    // ***
+    let mut to_enqueue : Vec<(u32,Position,TraceActionKind)> = Vec::new();
+    for front_pos in make_frontier(&interaction) {
+        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
+        for canal in &multi_trace.canals {
+            if canal.trace.len() > 0 {
+                let head_act : &TraceAction = canal.trace.get(0).unwrap();
+                if head_act.is_match(front_act) {
+                    next_child_id = next_child_id +1;
+                    to_enqueue.push( (next_child_id,front_pos,head_act.act_kind.clone()) );
+                    break;
+                }
             }
         }
     }
+    manager.enqueue_executions(&state_id,to_enqueue);
     // ***
-    manager.term_loggers();
-    // ***
-    return verdict;
+    if next_child_id > 0 {
+        let rem_child_ids : HashSet<u32> = HashSet::from_iter((1..(next_child_id+1)).collect::<Vec<u32>>().iter().cloned() );
+        let memo_state = MemorizedState::new(interaction,Some(multi_trace),rem_child_ids, previous_loop_instanciations);
+        manager.remember_state( state_id, memo_state );
+        return None;
+    } else {
+        let verdict = manager.get_coverage_verdict(&interaction,&multi_trace);
+        manager.verdict_loggers(&verdict,&state_id);
+        return Some( verdict );
+    }
 }
+
+

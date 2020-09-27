@@ -47,24 +47,25 @@ use crate::process::hibou_process::FilterEliminationKind;
 
 use crate::process::hibou_process::*;
 
+pub enum GraphicProcessLoggerKind {
+    svg,
+    png
+}
+
 pub struct GraphicProcessLogger {
     log_name : String,
-    log_file_path : String,
-    image_file_path : String,
-    file : File
+    file : File,
+    kind:GraphicProcessLoggerKind
 }
 
 impl GraphicProcessLogger {
-    pub fn new(log_name : String) -> GraphicProcessLogger {
-        let log_file_path = format!("{:}.dot",log_name);
-        let image_file_path = format!("{:}.png",log_name);
-        let file = File::create(&log_file_path).unwrap();
+    pub fn new(log_name : String,kind:GraphicProcessLoggerKind) -> GraphicProcessLogger {
+        let file = File::create(&format!("{:}.dot",log_name)).unwrap();
         // ***
         return GraphicProcessLogger{
-            log_name:log_name,
-            log_file_path:log_file_path,
-            image_file_path:image_file_path,
-            file:file}
+            log_name,
+            file,
+            kind}
     }
 }
 
@@ -108,7 +109,6 @@ impl ProcessLogger for GraphicProcessLogger {
     fn log_init(&mut self,
                 interaction : &Interaction,
                 gen_ctx : &GeneralContext,
-                options_as_strs : &Vec<String>,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         // ***
         // empties temp directory if exists
@@ -125,31 +125,6 @@ impl ProcessLogger for GraphicProcessLogger {
         // ***
         self.file.write("digraph G {\n".as_bytes() );
         // ***
-        // *** LEGEND
-        {
-            let mut legend_str = String::new();
-            match remaining_multi_trace {
-                None => {
-                    legend_str.push_str("process=exploration\\l");
-                },
-                Some(_) => {
-                    legend_str.push_str("process=analysis\\l");
-                }
-            }
-            for opt_str in options_as_strs {
-                legend_str.push_str(opt_str);
-                legend_str.push_str("\\l");
-            }
-            // ***
-            let mut legend_node_gv_options : GraphvizNodeStyle = Vec::new();
-            legend_node_gv_options.push( GraphvizNodeStyleItem::Label( legend_str ) );
-            legend_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-            legend_node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Bold,GvNodeStyleKind::Rounded]) );
-            // ***
-            let legend_node = GraphVizNode{id : "legend".to_owned(), style : legend_node_gv_options};
-            let legend_as_dot_str = format!("{}\n", legend_node.to_dot_string());
-            self.file.write( legend_as_dot_str.as_bytes() );
-        }
         // ***
         let gv_node0_path : String = format!("./temp/{:}_0.png", self.log_name);
         draw_interaction(&gv_node0_path, interaction, gen_ctx,remaining_multi_trace);
@@ -165,15 +140,48 @@ impl ProcessLogger for GraphicProcessLogger {
         self.file.write( string_to_write.as_bytes() );
     }
 
-    fn log_term(&mut self) {
+    fn log_term(&mut self,
+                options_as_strs : &Vec<String>) {
+
+        // *** LEGEND
+        {
+            let mut legend_str = String::new();
+            for opt_str in options_as_strs {
+                legend_str.push_str(opt_str);
+                legend_str.push_str("\\l");
+            }
+            // ***
+            let mut legend_node_gv_options : GraphvizNodeStyle = Vec::new();
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Label( legend_str ) );
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            legend_node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Bold,GvNodeStyleKind::Rounded]) );
+            legend_node_gv_options.push( GraphvizNodeStyleItem::FontSize( 18 ) );
+            // ***
+            let legend_node = GraphVizNode{id : "legend".to_owned(), style : legend_node_gv_options};
+            let legend_as_dot_str = format!("{}\n", legend_node.to_dot_string());
+            self.file.write( legend_as_dot_str.as_bytes() );
+        }
+        // ***
         self.file.write( "}".as_bytes() );
         // ***
-        let status = Command::new("dot")
-            .arg("-Tpng")
-            .arg(&self.log_file_path)
-            .arg("-o")
-            .arg(&self.image_file_path)
-            .output();
+        match self.kind {
+            GraphicProcessLoggerKind::png => {
+                let status = Command::new("dot")
+                    .arg("-Tpng")
+                    .arg(&format!("{:}.dot",self.log_name))
+                    .arg("-o")
+                    .arg(&format!("{:}.png",self.log_name))
+                    .output();
+            },
+            GraphicProcessLoggerKind::svg => {
+                let status = Command::new("dot")
+                    .arg("-Tsvg:cairo")
+                    .arg(&format!("{:}.dot",self.log_name))
+                    .arg("-o")
+                    .arg(&format!("{:}.svg",self.log_name))
+                    .output();
+            }
+        }
     }
 
 

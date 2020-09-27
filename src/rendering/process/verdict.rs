@@ -23,8 +23,18 @@ impl CoverageVerdict {
     pub fn get_verdict_color(&self) -> GraphvizColor {
         match self {
             CoverageVerdict::Cov => {
-                return GraphvizColor::blue3
-            }, CoverageVerdict::UnCov => {
+                return GraphvizColor::blue3;
+            },
+            CoverageVerdict::TooShort => {
+                return GraphvizColor::cyan3;
+            },
+            CoverageVerdict::LackObs => {
+                return GraphvizColor::orangered3;
+            },
+            CoverageVerdict::Out => {
+                return GraphvizColor::red3;
+            },
+            CoverageVerdict::UnCov => {
                 return GraphvizColor::red3;
             }
         }

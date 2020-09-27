@@ -38,6 +38,11 @@ impl TraceAction {
         if model_action.ms_id != self.ms_id {
             return false;
         }
+        if self.act_kind != model_action.get_action_kind() {
+            return false;
+        }
+        return true;
+        /*
         match &self.act_kind {
             &TraceActionKind::Emission => {
                 match model_action.act_kind {
@@ -59,24 +64,43 @@ impl TraceAction {
                     }
                 }
             }
-        }
+        }*/
     }
 }
 
 
-#[derive(Clone, PartialEq, Debug)] //Eq, Hash,
+#[derive(Clone, PartialEq, Debug)]
 pub struct MultiTraceCanal {
     pub lifelines : HashSet<usize>,
     pub trace : Vec<TraceAction>
 }
 
-pub type AnalysableMultiTrace = Vec<MultiTraceCanal>;
+#[derive(Clone, PartialEq, Debug)]
+pub struct AnalysableMultiTrace {
+    pub canals : Vec<MultiTraceCanal>
+}
 
-pub fn multitrace_length(multitrace:&AnalysableMultiTrace) -> usize {
-    let mut length = 0;
-    for canal in multitrace {
-        length = length + (canal.trace.len());
+impl AnalysableMultiTrace {
+    pub fn new(canals:Vec<MultiTraceCanal>) -> AnalysableMultiTrace {
+        return AnalysableMultiTrace{canals};
     }
-    return length;
+
+    pub fn length(&self) -> usize {
+        let mut length = 0;
+        for canal in &self.canals {
+            length = length + (canal.trace.len());
+        }
+        return length;
+    }
+
+    pub fn is_any_component_empty(&self) -> bool {
+        for canal in &self.canals {
+            if canal.trace.len() == 0 {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 

@@ -24,21 +24,74 @@ use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction};
 use crate::process::log::ProcessLogger;
 use crate::core::semantics::frontier::make_frontier;
 use crate::core::semantics::execute::execute;
-use crate::process::verdicts::CoverageVerdict;
+use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
+use crate::core::trace::TraceActionKind;
 
+
+pub enum PrioritizeActionKind {
+    Emission,
+    Reception,
+    None
+}
+
+impl std::string::ToString for PrioritizeActionKind {
+    fn to_string(&self) -> String {
+        match self {
+            PrioritizeActionKind::Emission => {
+                return "Emission".to_string();
+            },
+            PrioritizeActionKind::Reception => {
+                return "Reception".to_string();
+            },
+            PrioritizeActionKind::None => {
+                return "None".to_string();
+            }
+        }
+    }
+}
 
 pub struct HibouProcessManager {
-    pub gen_ctx : GeneralContext,
-    pub strategy : HibouSearchStrategy,
-    pub pre_filters : Vec<HibouPreFilter>,
-    pub loggers : Vec<Box<dyn ProcessLogger>>
+    gen_ctx : GeneralContext,
+    strategy : HibouSearchStrategy,
+    sem_kind : Option<SemanticKind>,
+    pre_filters : Vec<HibouPreFilter>,
+    // ***
+    memorized_states : HashMap<Vec<u32>,MemorizedState>,
+    process_queue : ProcessQueue,
+    // ***
+    prioritize_action : PrioritizeActionKind,
+    // ***
+    loggers : Vec<Box<dyn ProcessLogger>>
 }
 
 impl HibouProcessManager {
-    pub fn get_options_as_strings(&self) -> Vec<String> {
+    pub fn new(gen_ctx : GeneralContext,
+               strategy : HibouSearchStrategy,
+               sem_kind : Option<SemanticKind>,
+               pre_filters : Vec<HibouPreFilter>,
+               memorized_states : HashMap<Vec<u32>,MemorizedState>,
+               process_queue : ProcessQueue,
+               prioritize_action:PrioritizeActionKind,
+               loggers : Vec<Box<dyn ProcessLogger>>
+    ) -> HibouProcessManager {
+        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,prioritize_action,loggers};
+    }
+
+    pub fn get_options_as_strings(&self,verdict:Option<&GlobalVerdict>) -> Vec<String> {
         let mut options_str : Vec<String> = Vec::new();
+        match verdict {
+            None => {
+                options_str.push("process=exploration".to_string());
+            },
+            Some(verd) => {
+                options_str.push("process=analysis".to_string());
+                options_str.push( format!("semantics={}", self.sem_kind.as_ref().unwrap().to_string()) );
+                options_str.push( format!("verdict={}", verd.to_string()) );
+            }
+        }
         options_str.push( format!("strategy={}", &self.strategy.to_string()) );
+        options_str.push( format!("prioritize_actions={}", &self.prioritize_action.to_string()) );
         {
             let mut rem_filter = self.pre_filters.len();
             let mut filters_str = "filters=[".to_string();
@@ -54,45 +107,17 @@ impl HibouProcessManager {
         }
         return options_str;
     }
-}
-
-pub fn make_matches(interaction : &Interaction, multitrace : &AnalysableMultiTrace) -> Vec<Position> {
-    let mut filtered_front : Vec<Position> = Vec::new();
-    for front_pos in make_frontier(interaction) {
-        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
-        for canal in multitrace {
-            if canal.trace.len() > 0 {
-                let head_act : &TraceAction = canal.trace.get(0).unwrap();
-                if head_act.is_match(front_act) {
-                    filtered_front.push(front_pos);
-                    break;
-                }
-            }
-        }
-    }
-    return filtered_front;
-}
-
-impl HibouProcessManager {
-    pub fn new(gen_ctx : GeneralContext,
-               strategy : HibouSearchStrategy,
-               pre_filters : Vec<HibouPreFilter>,
-               loggers : Vec<Box<dyn ProcessLogger>>
-    ) -> HibouProcessManager {
-        return HibouProcessManager{gen_ctx,strategy,pre_filters,loggers};
-    }
-
 
     pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<AnalysableMultiTrace>) {
-        let options_as_strs = (&self).get_options_as_strings();
         for logger in self.loggers.iter_mut() {
-            (*logger).log_init(interaction, &self.gen_ctx, &options_as_strs,remaining_multi_trace);
+            (*logger).log_init(interaction, &self.gen_ctx, remaining_multi_trace);
         }
     }
 
-    pub fn term_loggers(&mut self) {
+    pub fn term_loggers(&mut self,verd:Option<&GlobalVerdict>) {
+        let options_as_strs = (&self).get_options_as_strings(verd);
         for logger in self.loggers.iter_mut() {
-            (*logger).log_term();
+            (*logger).log_term(&options_as_strs);
         }
     }
 
@@ -139,118 +164,114 @@ impl HibouProcessManager {
         }
     }
 
-    pub fn extract_from_queue(&mut self,
-                              state_nodes_queue : &mut Vec<ProcessStateNode>) -> ProcessStateNode {
-        // ***
-        let state_node : ProcessStateNode;
-        match self.strategy {
-            HibouSearchStrategy::BFS => {
-                return state_nodes_queue.remove(0);
+    pub fn get_memorized_state(&self, id:&Vec<u32>) -> Option<&MemorizedState> {
+        return self.memorized_states.get(id);
+    }
 
+    pub fn forget_state(&mut self, id:&Vec<u32>) {
+        self.memorized_states.remove(id);
+    }
+
+    pub fn remember_state(&mut self, id:Vec<u32>, state:MemorizedState) {
+        self.memorized_states.insert( id, state );
+    }
+
+    pub fn extract_from_queue(&mut self) -> Option<NextToProcess> {
+        return self.process_queue.get_next();
+    }
+
+    pub fn enqueue_executions(&mut self, state_id : &Vec<u32>, to_enqueue : Vec<(u32,Position,TraceActionKind)>) {
+        match &self.strategy {
+            &HibouSearchStrategy::DFS => {
+                let mut to_enqueue = to_enqueue;
+                to_enqueue.reverse();
+                for (child_id,front_pos,act_kind) in to_enqueue {
+                    self.enqueue_child_node(state_id,child_id,front_pos,act_kind);
+                }
             },
-            HibouSearchStrategy::DFS => {
-                return state_nodes_queue.remove(state_nodes_queue.len() - 1);
+            &HibouSearchStrategy::BFS => {
+                for (child_id,front_pos,act_kind) in to_enqueue {
+                    self.enqueue_child_node(state_id,child_id,front_pos,act_kind);
+                }
             }
         }
     }
 
-    pub fn put_back_in_queue(&mut self, state_nodes_queue : &mut Vec<ProcessStateNode>, to_put_back : ProcessStateNode, added_in_queue : bool) {
-        match self.strategy {
-            HibouSearchStrategy::BFS => {
-                state_nodes_queue.insert(0,to_put_back);
-
+    fn enqueue_child_node(&mut self,state_id: &Vec<u32>,child_id:u32,front_pos:Position,act_kind:TraceActionKind) {
+        let child = NextToProcess::new(state_id.clone(),child_id,NextToProcessKind::Execute(front_pos));
+        let mut priority : u32 = 0;
+        match self.prioritize_action {
+            PrioritizeActionKind::None => {},
+            PrioritizeActionKind::Reception => {
+                match act_kind {
+                    TraceActionKind::Reception => {
+                        priority = priority + 1;
+                    },
+                    _ => {}
+                }
             },
-            HibouSearchStrategy::DFS => {
-                if added_in_queue {
-                    state_nodes_queue.insert(state_nodes_queue.len() - 1, to_put_back);
-                } else {
-                    state_nodes_queue.push(to_put_back)
+            PrioritizeActionKind::Emission => {
+                match act_kind {
+                    TraceActionKind::Emission => {
+                        priority = priority + 1;
+                    },
+                    _ => {}
                 }
             }
         }
+        self.process_queue.insert_item_left(child,priority);
     }
 
     pub fn process_next(&mut self,
-                        state_node : ProcessStateNode,
-                        process_node_count : u32) -> ProcessStepResult {
+                        parent_node_path:&Vec<u32>,
+                        next_node_path:&Vec<u32>,
+                        parent_interaction : &Interaction,
+                        parent_multi_trace : &Option<AnalysableMultiTrace>,
+                        position:Position,
+                        process_node_count : u32,
+                        parent_loop_depth:u32) -> Option<(Interaction,Option<AnalysableMultiTrace>,u32)> {
         // ***
-        let put_back_state_node : Option<ProcessStateNode>;
-        let new_state_node      : Option<ProcessStateNode>;
+        let new_loop_depth = parent_loop_depth + parent_interaction.get_loop_depth_at_pos(&position);
         // ***
-        // ***
-        let mut new_rem_front_or_match = state_node.rem_front_or_match;
-        let next_front_pos = new_rem_front_or_match.remove(0);
-        // ***
-        let parent_node_path = state_node.state_id;
-        // ***
-        let mut next_node_path = parent_node_path.clone();
-        next_node_path.push( state_node.id_for_next_child );
-        // ***
-        let parent_loop_depth = state_node.previous_loop_instanciations;
-        let new_loop_depth = parent_loop_depth + state_node.interaction.get_loop_depth_at_pos(&next_front_pos);
-        // ***
-        match self.apply_pre_filters(&parent_node_path,new_loop_depth,process_node_count) {
+        let target_action = parent_interaction.get_sub_interaction(&position).as_leaf();
+        match self.apply_pre_filters(parent_node_path,new_loop_depth,process_node_count) {
             None => {
-                let target_action = state_node.interaction.get_sub_interaction(&next_front_pos).as_leaf();
                 let ex_lf_id = target_action.occupation_before();
-                let new_interaction = execute(state_node.interaction.clone(),next_front_pos.clone(),ex_lf_id);
+                let new_interaction = execute(parent_interaction.clone(),position.clone(),ex_lf_id);
                 // ***
-                let new_front_or_match: Vec<Position>;
-                let new_rem_multitrace : Option<AnalysableMultiTrace>;
-                match (state_node.multitrace.clone()) {
+                let new_multi_trace : Option<AnalysableMultiTrace>;
+                match parent_multi_trace {
                     None => {
-                        new_front_or_match = make_frontier(&new_interaction);
-                        new_rem_multitrace = None;
+                        new_multi_trace = None;
                     },
-                    Some( multitrace ) => {
-                        let mut new_mu : AnalysableMultiTrace = Vec::new();
-                        for canal in multitrace {
+                    Some( multi_trace ) => {
+                        let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+                        for canal in &multi_trace.canals {
                             if canal.lifelines.contains(&ex_lf_id) {
-                                let mut new_trace = canal.trace;
-                                assert!(new_trace.len() > 0);
+                                let mut new_trace = canal.trace.clone();
                                 new_trace.remove(0);
-                                new_mu.push( MultiTraceCanal{lifelines:canal.lifelines,trace:new_trace} )
+                                new_canals.push( MultiTraceCanal{lifelines:canal.lifelines.clone(),trace:new_trace} )
                             } else {
-                                new_mu.push(canal);
+                                new_canals.push(canal.clone());
                             }
                         }
-                        // ***
-                        new_front_or_match = make_matches(&new_interaction,&new_mu);
-                        // ***
-                        new_rem_multitrace = Some(new_mu);
+                        new_multi_trace = Some( AnalysableMultiTrace::new(new_canals) );
                     }
                 }
                 // ***
-                self.next_loggers(&next_front_pos,
+                self.next_loggers(&position,
                                   target_action,
                                   &new_interaction,
                                   &parent_node_path,
-                                  &next_node_path,
-                                  &new_rem_multitrace);
-                new_state_node = Some(ProcessStateNode::new(next_node_path,
-                                                            new_interaction,
-                                                            new_front_or_match,
-                                                            1,
-                                                            new_rem_multitrace,
-                                                            new_loop_depth));
+                                  next_node_path,
+                                  &new_multi_trace);
+                return Some( (new_interaction,new_multi_trace,new_loop_depth) );
             },
             Some( elim_kind ) => {
-                let target_action = state_node.interaction.get_sub_interaction(&next_front_pos).as_leaf();
-                self.filtered_loggers(&next_front_pos,target_action,&parent_node_path,&next_node_path, &elim_kind);
-                new_state_node = None;
+                self.filtered_loggers(&position,target_action,&parent_node_path,&next_node_path, &elim_kind);
+                return None;
             }
         }
-        if new_rem_front_or_match.len() > 0 {
-            put_back_state_node = Some(ProcessStateNode::new(parent_node_path,
-                                                             state_node.interaction,
-                                                             new_rem_front_or_match,
-                                                             (state_node.id_for_next_child + 1),
-                                                             state_node.multitrace,
-                                                             parent_loop_depth));
-        } else {
-            put_back_state_node = None;
-        }
-        return ProcessStepResult{put_back_state_node,new_state_node};
     }
 
     fn apply_pre_filters(&self, parent_node_path : &Vec<u32>, loop_depth : u32, node_counter : u32) -> Option<FilterEliminationKind> {
@@ -276,6 +297,34 @@ impl HibouProcessManager {
         return None;
     }
 
-
+    pub fn get_coverage_verdict(&self,interaction:&Interaction,multi_trace:&AnalysableMultiTrace) -> CoverageVerdict {
+        if multi_trace.length() == 0 {
+            if interaction.express_empty() {
+                return CoverageVerdict::Cov;
+            } else {
+                match self.sem_kind.as_ref().unwrap() {
+                    SemanticKind::Accept => {
+                        return CoverageVerdict::UnCov;
+                    },
+                    SemanticKind::Prefix => {
+                        return CoverageVerdict::TooShort;
+                    }
+                }
+            }
+        } else {
+            match self.sem_kind.as_ref().unwrap() {
+                SemanticKind::Accept => {
+                    return CoverageVerdict::UnCov;
+                },
+                SemanticKind::Prefix => {
+                    if multi_trace.is_any_component_empty() {
+                        return CoverageVerdict::LackObs;
+                    } else {
+                        return CoverageVerdict::Out;
+                    }
+                }
+            }
+        }
+    }
 
 }

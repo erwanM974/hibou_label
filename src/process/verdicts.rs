@@ -17,7 +17,10 @@ limitations under the License.
 
 pub enum CoverageVerdict{
     Cov,
-    UnCov
+    TooShort,
+    LackObs,
+    UnCov,
+    Out
 }
 
 impl std::string::ToString for CoverageVerdict {
@@ -27,10 +30,92 @@ impl std::string::ToString for CoverageVerdict {
             CoverageVerdict::Cov => {
                 return "Cov".to_string();
             },
+            CoverageVerdict::TooShort => {
+                return "TooShort".to_string();
+            },
+            CoverageVerdict::LackObs => {
+                return "LackObs".to_string();
+            },
             CoverageVerdict::UnCov => {
                 return "UnCov".to_string();
+            },
+            CoverageVerdict::Out => {
+                return "Out".to_string();
             }
         }
     }
 
+}
+
+pub enum GlobalVerdict {
+    Pass,
+    WeakPass,
+    Inconc,
+    Fail
+}
+
+impl std::string::ToString for GlobalVerdict {
+    fn to_string(&self) -> String {
+        match self {
+            GlobalVerdict::Pass => {
+                return "Pass".to_string();
+            },
+            GlobalVerdict::WeakPass => {
+                return "WeakPass".to_string();
+            },
+            GlobalVerdict::Inconc => {
+                return "Inconc".to_string();
+            },
+            GlobalVerdict::Fail => {
+                return "Fail".to_string();
+            }
+        }
+    }
+}
+
+pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:CoverageVerdict) -> GlobalVerdict {
+    match glo {
+        GlobalVerdict::Pass => {
+            return GlobalVerdict::Pass;
+        },
+        GlobalVerdict::WeakPass => {
+            match cov {
+                CoverageVerdict::Cov => {
+                    return GlobalVerdict::Pass;
+                },
+                _ => {
+                    return GlobalVerdict::WeakPass;
+                }
+            }
+        },
+        GlobalVerdict::Inconc => {
+            match cov {
+                CoverageVerdict::Cov => {
+                    return GlobalVerdict::Pass;
+                },
+                CoverageVerdict::TooShort => {
+                    return GlobalVerdict::WeakPass;
+                },
+                _ => {
+                    return GlobalVerdict::Inconc;
+                }
+            }
+        },
+        GlobalVerdict::Fail => {
+            match cov {
+                CoverageVerdict::Cov => {
+                    return GlobalVerdict::Pass;
+                },
+                CoverageVerdict::TooShort => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::LackObs => {
+                    return GlobalVerdict::Inconc;
+                },
+                _ => {
+                    return GlobalVerdict::Fail;
+                }
+            }
+        }
+    }
 }

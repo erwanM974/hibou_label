@@ -36,10 +36,10 @@ pub trait ProcessLogger {
     fn log_init(&mut self,
                  interaction : &Interaction,
                  gen_ctx : &GeneralContext,
-                 options_as_str : &Vec<String>,
                  remaining_multi_trace : &Option<AnalysableMultiTrace>);
 
-    fn log_term(&mut self);
+    fn log_term(&mut self,
+                options_as_str : &Vec<String>);
 
     fn log_next(&mut self,
                 gen_ctx : &GeneralContext,

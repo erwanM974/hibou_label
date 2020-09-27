@@ -31,21 +31,45 @@ use crate::from_text::error::HibouParsingError;
 use crate::process::log::ProcessLogger;
 
 use crate::from_text::parser::*;
-use crate::rendering::process::graphic_logger::GraphicProcessLogger;
+use crate::rendering::process::graphic_logger::{GraphicProcessLoggerKind,GraphicProcessLogger};
 use crate::process::hibou_process::*;
+use crate::from_text::hsf_file::ProcessKind;
 
+use crate::process::process_manager::PrioritizeActionKind;
 
 pub struct HibouOptions {
     pub loggers : Vec<Box<dyn ProcessLogger>>,
     pub strategy : HibouSearchStrategy,
-    pub pre_filters : Vec<HibouPreFilter>
+    pub pre_filters : Vec<HibouPreFilter>,
+    pub sem_kind : Option<SemanticKind>,
+    pub prioritize_action : PrioritizeActionKind
 }
 
 
 
 impl HibouOptions {
-    pub fn default() -> HibouOptions {
-        return HibouOptions{loggers:Vec::new(),strategy:HibouSearchStrategy::BFS,pre_filters:Vec::new()};
+    pub fn new(loggers : Vec<Box<dyn ProcessLogger>>,
+               strategy : HibouSearchStrategy,
+               pre_filters : Vec<HibouPreFilter>,
+               sem_kind : Option<SemanticKind>,
+               prioritize_action : PrioritizeActionKind) -> HibouOptions {
+        return HibouOptions{loggers,strategy,pre_filters,sem_kind,prioritize_action};
+    }
+
+    pub fn default_explore() -> HibouOptions {
+        return HibouOptions{loggers:Vec::new(),
+            strategy:HibouSearchStrategy::BFS,
+            pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
+            sem_kind:None,
+            prioritize_action:PrioritizeActionKind::None};
+    }
+
+    pub fn default_analyze() -> HibouOptions {
+        return HibouOptions{loggers:Vec::new(),
+            strategy:HibouSearchStrategy::BFS,
+            pre_filters:Vec::new(),
+            sem_kind:Some(SemanticKind::Prefix),
+            prioritize_action:PrioritizeActionKind::None};
     }
 }
 
@@ -54,14 +78,18 @@ enum LoggerKinds {
     graphic
 }
 
-pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> Result<HibouOptions,HibouParsingError> {
+pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
     let mut loggers : Vec<Box<dyn ProcessLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
+    let mut prioritize_action = PrioritizeActionKind::None;
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
+    let mut semantics : Option<SemanticKind> = None;
     // ***
     let mut got_loggers   : bool = false;
     let mut got_strategy  : bool = false;
+    let mut got_prioritize_action : bool = false;
     let mut got_pre_filters : bool = false;
+    let mut got_semantics : bool = false;
     // ***
     let mut declared_loggers : HashSet<LoggerKinds> = HashSet::new();
     // ***
@@ -80,7 +108,25 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> Result
                                 return Err( HibouParsingError::HsfSetupError("several 'graphic' loggers declared in the same '@X_option' section".to_string()));
                             }
                             declared_loggers.insert( LoggerKinds::graphic );
-                            loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string() ) ) );
+                            let graphic_logger_pair = logger_kind_pair.into_inner().next();
+                            match graphic_logger_pair {
+                                None => {
+                                    loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::png ) ) );
+                                },
+                                Some(graphic_logger_kind_pair) => {
+                                    match graphic_logger_kind_pair.as_rule() {
+                                        Rule::GRAPHIC_LOGGER_KIND_png => {
+                                            loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::png ) ) );
+                                        },
+                                        Rule::GRAPHIC_LOGGER_KIND_svg => {
+                                            loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::svg ) ) );
+                                        },
+                                        _ => {
+                                            panic!("what rule then ? : {:?}", graphic_logger_kind_pair.as_rule() );
+                                        }
+                                    }
+                                }
+                            }
                         },
                         _ => {
                             panic!("what rule then ? : {:?}", logger_kind_pair.as_rule() );
@@ -104,6 +150,28 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> Result
                     },
                     _ => {
                         panic!("what rule then ? : {:?}", strategy_pair.as_rule() );
+                    }
+                }
+            },
+            Rule::OPTION_PRIORITIZE_ACTION_DECL => {
+                if got_prioritize_action {
+                    return Err( HibouParsingError::HsfSetupError("several 'prioritize_actions=X' declared in the same '@X_option' section".to_string()));
+                }
+                got_prioritize_action = true;
+                // ***
+                let prioritize_pair =  option_decl_pair.into_inner().next().unwrap();
+                match prioritize_pair.as_rule() {
+                    Rule::OPTION_PRIORITIZE_reception => {
+                        prioritize_action = PrioritizeActionKind::Reception;
+                    },
+                    Rule::OPTION_PRIORITIZE_emission => {
+                        prioritize_action = PrioritizeActionKind::Emission;
+                    },
+                    Rule::OPTION_PRIORITIZE_none => {
+                        prioritize_action = PrioritizeActionKind::None;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", prioritize_pair.as_rule() );
                     }
                 }
             },
@@ -139,10 +207,43 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str) -> Result
                     }
                 }
             },
+            Rule::OPTION_SEMANTICS_DECL => {
+                if got_semantics {
+                    return Err( HibouParsingError::HsfSetupError("several 'semantics=X' declared in the same '@X_option' section".to_string()));
+                }
+                got_semantics = true;
+                // ***
+                let semantics_pair =  option_decl_pair.into_inner().next().unwrap();
+                match semantics_pair.as_rule() {
+                    Rule::OPTION_SEMANTICS_accept => {
+                        semantics = Some( SemanticKind::Accept );
+                    },
+                    Rule::OPTION_SEMANTICS_prefix => {
+                        semantics = Some( SemanticKind::Prefix );
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", semantics_pair.as_rule() );
+                    }
+                }
+            },
             _ => {
                 panic!("what rule then ? : {:?}", option_decl_pair.as_rule() );
             }
         }
     }
-    return Ok( HibouOptions{loggers,strategy,pre_filters} );
+    match process_kind {
+        ProcessKind::Analyze => {
+            match semantics {
+                None => {
+                    return Ok( HibouOptions::new(loggers,strategy,pre_filters,Some(SemanticKind::Prefix), prioritize_action) );
+                },
+                Some( sem_kind ) => {
+                    return Ok( HibouOptions::new(loggers,strategy,pre_filters,Some(sem_kind), prioritize_action) );
+                }
+            }
+        },
+        _ => {
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, prioritize_action) );
+        }
+    }
 }

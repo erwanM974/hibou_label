@@ -36,7 +36,7 @@ use crate::rendering::process::graphic_logger::GraphicProcessLogger;
 
 use crate::process::log::*;
 
-use crate::process::analysis::{analyze,GlobalVerdict};
+use crate::process::analysis::analyze;
 use crate::process::exploration::explore;
 use crate::from_text::hsf_file::{ProcessKind,parse_hsf_file};
 use crate::from_text::htf_file::parse_htf_file;
@@ -132,6 +132,7 @@ pub fn hibou_cli() -> i32 {
                         gen_ctx,
                         hoptions.pre_filters,
                         hoptions.strategy,
+                        hoptions.prioritize_action,
                         hoptions.loggers);
             }
         }
@@ -163,7 +164,9 @@ pub fn hibou_cli() -> i32 {
                                               gen_ctx,
                                               hoptions.pre_filters,
                                               hoptions.strategy,
-                                              hoptions.loggers);
+                                              hoptions.prioritize_action,
+                                              hoptions.loggers,
+                                              hoptions.sem_kind.unwrap());
 
                         ret_print.push( format!("verdict: '{}'", verdict.to_string() ) );
                     }
