@@ -384,13 +384,13 @@ different ways.
 Although you can also specify those filters for the "analyze" command, it is not recommended, 
 given that it might prevent the consumption of the multi-trace and produce a wrong verdict.
 
-<img src="./README_images/explo1.svg" alt="exploration ex1" width="850">
+<img src="./README_images/explo1.svg" alt="exploration ex1" width="900">
 
 And here is a second example that you can obtain by tying 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
-<img src="./README_images/explo2.svg" alt="exploration ex2" width="600">
+<img src="./README_images/explo2.svg" alt="exploration ex2" width="500">
 
 ## Build
 
