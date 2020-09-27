@@ -1,0 +1,23 @@
+@analyze_option{
+    strategy = BFS;
+    loggers = [graphic=svg];
+    semantics = accept;
+    prioritize_actions=reception
+}
+@message{
+    m
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+loop_par(
+    alt(
+        a -- m -> b,
+        a -- m -> c
+    )
+)
+
+
+

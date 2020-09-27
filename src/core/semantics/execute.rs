@@ -162,7 +162,7 @@ pub fn execute(my_int : Interaction, my_pos : Position, tar_lf_id : usize) -> In
                     if new_i2 == Interaction::Empty {
                         return *i1;
                     } else {
-                        return Interaction::Seq( i1, Box::new(new_i2));
+                        return Interaction::Par( i1, Box::new(new_i2));
                     }
                 },
                 _ => {

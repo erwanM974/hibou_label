@@ -236,10 +236,24 @@ Diagrams, such as the one on the previous images can be drawn using the "hibou d
 ## Analyze
 
 The "analyze" sub-command of HIBOU can analyse multi-traces w.r.t. interactions. 
-For any multi-trace and any interaction, it returns a verdict about the conformity of the multi-trace w.r.t. the interaction. 
-This verdict is either "Pass" or "Fail". 
-We have proven in [this Coq proof](https://erwanm974.github.io/coq_ictss_2020/) that the verdict "Pass" is equivalent to the membership of the multi-trace to the semantics of the interaction.
+For any multi-trace and any interaction, it returns a verdict about the conformity of the multi-trace w.r.t. a certain semantics of the interaction. 
 
+We consider two semantics:
+- "AccMult", the semantics which is that of exactly accepted multi-traces (projections of accepted global traces)
+- "SemMult", the semantics which is that of multi-traces which are obtained from projecting prefixes of accepted global traces
+
+In hibou_label, we implemented accordingly two modes for the analysis:
+- the "accept" mode, which returns a verdict "Pass" if the multi-trace is in "AccMult" or "Fail" if not
+- the "prefix" mode, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "SemMult" but not in "AccMult", 
+and either "Inconc" or "Fail" if not, as explained in Sec.4.5 of [this paper](https://arxiv.org/abs/2009.01777)
+
+To select one of those modes ("prefix" is the default), you can write "semantics=accept" or "semantics=prefix" 
+in the "@analyze_option" section of the input .hsf file.
+
+In the following we will only consider example using the "prefix" mode given that it is the more advanced one.
+
+We have proven in [this Coq proof](https://erwanm974.github.io/coq_ictss_2020/) that the verdict "Pass" 
+is equivalent to the membership of the multi-trace to the "AccMult" semantics of the interaction.
 
 ### Analysing multi-traces  
 
@@ -247,17 +261,31 @@ Our approach to analysis consists in consuming one-by-one the head elements of t
 i.e. the actions which are at the beginning of its trace components.
 
 To do so, we compare them with the actions that are immediately executable within the initial interaction model.
-If there is a matche between such an action - called a frontier action - and a trace action,
+If there is a match between such an action - called a frontier action - and a trace action,
 we can compute another interaction model which describes what can happen in the remainder of the execution.
 We then repeat the process with this new interaction model and the new multi-trace on which we have removed the consumed action.
 
 Consequently, any given analysis opens-up paths which are successions of couples (interaction*multi-trace).
-Each such path terminates either with 
-- a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution (statically verified on the interaction term)
-- an "UnCov" local verdict in the other cases (i.e. either when the consumption of the multi-trace is impossible, or when the multi-trace has been emptied but the interaction cannot express the empty execution)
+Each such path terminates either with:
+- in "accept" mode, either:
+  + a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution (statically verified on the interaction term)
+  + or an "UnCov" local verdict in the other cases (i.e. either when the consumption of the multi-trace is impossible, or when the multi-trace has been emptied but the interaction cannot express the empty execution)
+- in "prefix" mode either:
+  + a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution
+  + a "TooShort" local verdict, when the multi-trace has been entirely consumed but the interaction cannot express the empty execution
+  + an "Out" local verdict, when no component of the multi-trace can be entirely consumed
+  + a "LackObs" local verdict, when some but not all of the components of the multi-trace can be entirely consumed
+  
+From those local verdicts, the global verdict is inferred:
+- in "accept" mode: 
+  + "Pass" is returned if there exists a path terminating in "Cov"
+  + "Fail" is returned otherwise
+- in "prefix" mode:
+  + "Pass" is returned if there exists a path terminating in "Cov"
+  + "WeakPass" is returned if there are no paths leading to "Cov" but there exist one terminating in "TooShort"
+  + "Inconc" is returned if there are no paths leading to either "Cov" or "TooShort" but there is one leading to "LackObs"
+  + "Fail" is returned otherwise
 
-If there exists a path terminating in "Cov", a global verdict "Pass" is returned. 
-The global verdict is "Fail" otherwise.
 
 #### Example 1
 
@@ -273,29 +301,58 @@ For this analysis we used the following options, declared in the "@analyze_optio
 ```
 @analyze_option{
     strategy = DFS;
-    loggers = [graphic]
+    loggers = [graphic=svg];
+    semantics = prefix;
+    prioritize_actions = reception
 }
 ```
 
 We can specify that we want algorithmic treatments of this .hsf file to be logged with the "loggers" attribute.
 In this build only a "graphic" logger exists. 
-It will create an image file (a .png file with the same name as the .hsf file) describing the treatment.
+It will create an image file (with the same name as the .hsf file) describing the treatment. 
+The generation of this image requires the graphviz tool to be installed ([https://www.graphviz.org/download/](https://www.graphviz.org/download/)),
+and the "dot" command to be in the "PATH" environment variable.
+The output of the graphic logger can either be a .png file (specified with "graphic=png") 
+or a .svg file (specified with "graphic=svg"), which requires cairo to be installed.
 
 Here, we also specified the use of a "DFS" (Depth-First-Search) heuristics.
 This allowed us here to quickly find a path that consumed the entire
 multi-trace and we did not need to explore further executions of the initial interaction model.
 For instance, you can see on the image below (generated by the "graphic" logger) that we did not explore the branch starting with the execution and consumption of "c!m4".
 
-<img src="./README_images/analysis_1.png" alt="analysis ex1" width="750">
+<img src="./README_images/analysis_1.svg" alt="analysis ex1" width="750">
 
 #### Example 2
 
-Below is another example, this time of the analysis of a global trace, and yielding the "Fail" verdict.
+Below is another example, this time of the analysis of a global trace, and yielding the "WeakPass" verdict.
 You can also reproduce it by using the files from the "examples" folder.
 
 <img src="./README_images/analysis_command_2.png" alt="analysis command ex2" width="600">
 
-<img src="./README_images/analysis_2.png" alt="analysis ex2" width="750">
+<img src="./README_images/analysis_2.svg" alt="analysis ex2" width="750">
+
+
+#### Example 3
+
+This third example describes a concurrent system which complexity quickly explodes due to the very many
+interleaving that are possible between the executions of individual actions.
+
+Here can see the advantage in using the "prioritize_actions" options in the "@analyze_option" section.
+Indeed, prioritizing the evaluation of receptions in this case allows to quickly consume the entire multi-trace
+while minimizing the size of the intermediate interaction terms.
+
+In hibou_label there are several queues on which to store the nodes that are next in line to explore. 
+Those queues are associated to priority levels. 
+The highest priority queue is dequeued first at each step of the algorithm.
+
+<img src="./README_images/analysis_command_3.png" alt="analysis command ex2" width="600">
+
+<img src="./README_images/analyze_concurrent_bfs_prio_reception.svg" alt="analyze concurrent" width="600">
+
+By comparison, we would have had the following graph if we did not prioritize the evaluation of receptions:
+
+<img src="./README_images/analyze_concurrent_bfs_prio_none.svg" alt="analyze concurrent" width="800">
+
 
 ## Explore
 
@@ -310,15 +367,15 @@ Here we used the following options for the exploration:
 ```
 @explore_option{
     strategy = DFS;
-    loggers = [graphic];
+    loggers = [graphic=svg];
     pre_filters = [ max_depth = 3, 
                     max_loop_depth = 1, 
-                    max_node_number = 5 ]
+                    max_node_number = 7 ]
 }
 ```
 
 As you can see, we can specify a number of filters that will limit the exploration 
-of graphs in algoritmic treatments in 
+of graphs in algorithmic treatments in 
 different ways.
 - "max_depth" limits the depth of the explored graph
 - "max_loop_depth" limits the cumulative number of loop instances that can be unfolded in a given execution
@@ -327,13 +384,13 @@ different ways.
 Although you can also specify those filters for the "analyze" command, it is not recommended, 
 given that it might prevent the consumption of the multi-trace and produce a wrong verdict.
 
-![image info](./README_images/explo1.png)
+<img src="./README_images/explo1.svg" alt="exploration ex1" width="750">
 
 And here is a second example that you can obtain by tying 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
-![image info](./README_images/explo2.png)
+<img src="./README_images/explo2.svg" alt="exploration ex2" width="650">
 
 ## Build
 

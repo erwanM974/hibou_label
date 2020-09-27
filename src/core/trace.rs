@@ -42,29 +42,6 @@ impl TraceAction {
             return false;
         }
         return true;
-        /*
-        match &self.act_kind {
-            &TraceActionKind::Emission => {
-                match model_action.act_kind {
-                    ObservableActionKind::Emission(_) => {
-                        return true;
-                    },
-                    _ => {
-                        return false;
-                    }
-                }
-            },
-            &TraceActionKind::Reception => {
-                match model_action.act_kind {
-                    ObservableActionKind::Reception => {
-                        return true;
-                    },
-                    _ => {
-                        return false;
-                    }
-                }
-            }
-        }*/
     }
 }
 

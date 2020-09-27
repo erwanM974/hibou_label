@@ -1,10 +1,6 @@
-@analyze_option{
-    strategy = DFS;
-    loggers = [graphic]
-}
 @explore_option{
     strategy = BFS;
-    loggers = [graphic];
+    loggers = [graphic=svg];
     pre_filters = [ max_depth = 4, 
                     max_loop_depth = 2, 
                     max_node_number = 8 ]
