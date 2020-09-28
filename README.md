@@ -349,10 +349,15 @@ The highest priority queue is dequeued first at each step of the algorithm.
 
 <img src="./README_images/analyze_concurrent_bfs_prio_reception.svg" alt="analyze concurrent" width="650">
 
-By comparison, we would have had the following graph if we did not prioritize the evaluation of receptions:
+By comparison, we would have had the following graph if we did not prioritize the evaluation of receptions 
+while using a Breadth First Search heuristic:
 
-<img src="./README_images/analyze_concurrent_bfs_prio_none.svg" alt="analyze concurrent" width="950">
+<img src="./README_images/analyze_concurrent_bfs_prio_none.svg" alt="analyze concurrent" width="1000">
 
+And the one below if we did not prioritize receptions 
+with a Depth First Search heuristic:
+
+<img src="./README_images/analyze_concurrent_dfs_prio_none.svg" alt="analyze concurrent" width="800">
 
 ## Explore
 
