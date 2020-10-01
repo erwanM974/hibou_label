@@ -30,8 +30,6 @@ use crate::core::syntax::action::*;
 
 
 use crate::process::log::ProcessLogger;
-use crate::tools::fold_vec_to_string;
-
 use crate::rendering::textual::monochrome::position::position_to_text;
 use crate::rendering::graphviz::graph::*;
 use crate::rendering::graphviz::node_style::*;
@@ -72,13 +70,12 @@ impl GraphicProcessLogger {
 impl ProcessLogger for GraphicProcessLogger {
 
     fn log_verdict(&mut self,
-                   parent_node_path : &Vec<u32>,
+                   parent_state_id : u32,
                    verdict : &CoverageVerdict) {
-        let node_path_as_str = fold_vec_to_string(parent_node_path);
         // ***
-        let parent_interaction_node_name = format!("i{:}", &node_path_as_str);
+        let parent_interaction_node_name = format!("i{:}", parent_state_id);
         // ***
-        let verdict_node_name = format!("v{:}o", &node_path_as_str);
+        let verdict_node_name = format!("v{:}", parent_state_id);
         // *****
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
@@ -126,15 +123,15 @@ impl ProcessLogger for GraphicProcessLogger {
         self.file.write("digraph G {\n".as_bytes() );
         // ***
         // ***
-        let gv_node0_path : String = format!("./temp/{:}_0.png", self.log_name);
-        draw_interaction(&gv_node0_path, interaction, gen_ctx,remaining_multi_trace);
+        let gv_node_path : String = format!("./temp/{:}_i1.png", self.log_name);
+        draw_interaction(&gv_node_path, interaction, gen_ctx,remaining_multi_trace);
 
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         node_gv_options.push( GraphvizNodeStyleItem::Label("".to_owned()) );
-        node_gv_options.push( GraphvizNodeStyleItem::Image( gv_node0_path ) );
+        node_gv_options.push( GraphvizNodeStyleItem::Image( gv_node_path ) );
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
 
-        let gv_node = GraphVizNode{id : "i0".to_owned(), style : node_gv_options};
+        let gv_node = GraphVizNode{id : "i1".to_owned(), style : node_gv_options};
         let mut string_to_write = gv_node.to_dot_string();
         string_to_write.push_str("\n");
         self.file.write( string_to_write.as_bytes() );
@@ -185,19 +182,19 @@ impl ProcessLogger for GraphicProcessLogger {
     }
 
 
-    fn log_next(&mut self,
-                gen_ctx : &GeneralContext,
-                parent_node_path : &Vec<u32>,
-                current_node_path : &Vec<u32>,
-                action_position : &Position,
-                action : &ObservableAction,
-                new_interaction : &Interaction,
-                remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+    fn log_execution(&mut self,
+                     gen_ctx : &GeneralContext,
+                     parent_state_id : u32,
+                     new_state_id : u32,
+                     action_position : &Position,
+                     action : &TraceAction,
+                     new_interaction : &Interaction,
+                     remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         // *** Parent Interaction Node
-        let parent_interaction_node_name = format!("i{:}", &fold_vec_to_string(parent_node_path));
+        let parent_interaction_node_name = format!("i{:}", parent_state_id);
         // *** Firing Node
-        let current_node_name = format!("i{:}", &fold_vec_to_string(current_node_path));
-        let firing_node_name = format!("f{:}", &fold_vec_to_string(current_node_path));
+        let current_node_name = format!("i{:}", new_state_id);
+        let firing_node_name = format!("f{:}", new_state_id);
         {
             let firing_node_path : String = format!("./temp/{:}_{}.png",  self.log_name ,firing_node_name);
             draw_firing(&firing_node_path,action_position,action,gen_ctx);
@@ -242,14 +239,14 @@ impl ProcessLogger for GraphicProcessLogger {
     }
 
     fn log_filtered(&mut self,gen_ctx : &GeneralContext,
-                    parent_node_path : &Vec<u32>,
-                    current_node_path : &Vec<u32>,
+                    parent_state_id : u32,
+                    new_state_id : u32,
                     action_position : &Position,
-                    action : &ObservableAction,
+                    action : &TraceAction,
                     elim_kind : &FilterEliminationKind) {
         // *** Node names
-        let parent_interaction_node_name = format!("i{:}", &fold_vec_to_string(parent_node_path));
-        let elim_node_name = format!("e{:}", &fold_vec_to_string(current_node_path));
+        let parent_interaction_node_name = format!("i{:}", parent_state_id);
+        let elim_node_name = format!("e{:}", new_state_id);
         // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

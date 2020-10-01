@@ -59,14 +59,14 @@ use crate::core::trace::{TraceAction,TraceActionKind};
 
 pub fn draw_firing(path_str : &String,
                    action_position : &Position,
-                   action : &ObservableAction,
+                   action : &TraceAction,
                    gen_ctx : &GeneralContext) {
     let path = Path::new( path_str );
     // ***
     let mut text_lines : Vec<Vec<TextToPrint>> = Vec::new();
     // ***
     {
-        let mut ttp = diagram_repr_atomic_model_action(action,gen_ctx);
+        let mut ttp = diagram_repr_trace_action(action,gen_ctx);
         // ***
         ttp.push( TextToPrint{text:"@p".to_string(),color:Rgb(HCP_StandardPurple)} );
         ttp.push( TextToPrint{text:position_to_text(action_position),color:Rgb(HCP_Black)} );

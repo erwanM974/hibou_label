@@ -186,7 +186,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                         Rule::OPTION_PREFILTER_MAX_DEPTH => {
                             let content = pre_filter_pair.into_inner().next().unwrap();
                             let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
-                            let my_val : usize = content_str.parse::<usize>().unwrap();
+                            let my_val : u32 = content_str.parse::<u32>().unwrap();
                             pre_filters.push(HibouPreFilter::MaxProcessDepth(my_val));
                         },
                         Rule::OPTION_PREFILTER_MAX_LOOP_DEPTH  => {

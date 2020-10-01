@@ -35,7 +35,6 @@ extern crate clap;
 
 // **********
 
-pub mod tools;
 pub mod core;
 pub mod from_text;
 pub mod rendering;

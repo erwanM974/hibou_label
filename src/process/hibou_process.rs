@@ -46,15 +46,17 @@ pub struct MemorizedState {
     pub interaction : Interaction,
     pub multi_trace : Option<AnalysableMultiTrace>,
     pub remaining_ids_to_process : HashSet<u32>,
-    pub previous_loop_instanciations : u32
+    pub loop_depth : u32, // number of loop instanciations since intial interaction
+    pub depth : u32       // number of execution steps since initial interaction
 }
 
 impl MemorizedState {
     pub fn new(interaction : Interaction,
                multi_trace : Option<AnalysableMultiTrace>,
                remaining_ids_to_process : HashSet<u32>,
-               previous_loop_instanciations : u32) -> MemorizedState {
-        return MemorizedState{interaction,multi_trace,remaining_ids_to_process,previous_loop_instanciations};
+               loop_depth : u32,
+               depth : u32) -> MemorizedState {
+        return MemorizedState{interaction,multi_trace,remaining_ids_to_process,loop_depth,depth};
     }
 }
 
@@ -65,13 +67,13 @@ pub enum NextToProcessKind {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct NextToProcess {
-    pub state_id : Vec<u32>,
+    pub state_id : u32,
     pub id_as_child : u32,
     pub kind : NextToProcessKind
 }
 
 impl NextToProcess {
-    pub fn new(state_id : Vec<u32>,
+    pub fn new(state_id : u32,
                id_as_child : u32,
                kind : NextToProcessKind) -> NextToProcess {
         return NextToProcess{state_id,id_as_child,kind};
@@ -124,7 +126,7 @@ impl ProcessQueue {
 
 pub enum HibouPreFilter {
     MaxLoopInstanciation(u32),
-    MaxProcessDepth(usize),
+    MaxProcessDepth(u32),
     MaxNodeNumber(u32)
 }
 

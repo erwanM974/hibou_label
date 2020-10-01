@@ -53,53 +53,49 @@ pub fn analyze(interaction : Interaction,
     manager.init_loggers(&interaction,&multi_trace_option);
     let multi_trace = multi_trace_option.unwrap();
     // ***
-    let mut node_counter : u32 = 1;
+    let mut next_state_id : u32 = 1;
+    let mut node_counter : u32 = 0;
     let mut global_verdict = GlobalVerdict::Fail;
     // ***
-    {
-        match enqueue_next_nodes_in_analysis(&mut manager,
-                                             vec![0],
-                                             interaction,multi_trace,
-                                             0) {
-            None => {},
-            Some( coverage_verdict ) => {
-                global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
-            }
+    match enqueue_next_node_in_analysis(&mut manager,
+                                        next_state_id,
+                                        interaction,multi_trace,
+                                        0,0) {
+        None => {},
+        Some( coverage_verdict ) => {
+            global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
         }
     }
+    next_state_id = next_state_id +1;
+    node_counter = node_counter +1;
     // ***
     while let Some(next_to_process) = manager.extract_from_queue() {
-        let mut new_state_id = next_to_process.state_id.clone();
-        new_state_id.push(next_to_process.id_as_child);
+        let new_state_id = next_state_id;
+        next_state_id = next_state_id + 1;
         // ***
-        let mut parent_state = manager.get_memorized_state(&next_to_process.state_id).unwrap().clone();
+        let mut parent_state = manager.get_memorized_state(next_to_process.state_id).unwrap().clone();
         // ***
-        match next_to_process.kind {
-            NextToProcessKind::Execute( position_to_execute ) => {
-                match manager.process_next(&next_to_process.state_id,
-                                           &new_state_id,
-                                           &parent_state.interaction,
-                                           &parent_state.multi_trace,
-                                           position_to_execute,
-                                           node_counter,parent_state.previous_loop_instanciations) {
+        match manager.process_next(&parent_state,
+                                   &next_to_process,
+                                   new_state_id,
+                                   node_counter) {
+            None => {},
+            Some( (new_interaction,new_multi_trace,new_depth,new_loop_depth) ) => {
+                node_counter = node_counter + 1;
+                match enqueue_next_node_in_analysis(&mut manager,
+                                                     new_state_id,
+                                                     new_interaction,
+                                                     new_multi_trace.unwrap(),
+                                                     new_depth,
+                                                     new_loop_depth) {
                     None => {},
-                    Some( (new_interaction,new_multi_trace,new_loop_depth)) => {
-                        node_counter = node_counter + 1;
-                        match enqueue_next_nodes_in_analysis(&mut manager,
-                                                             new_state_id,
-                                                             new_interaction,
-                                                             new_multi_trace.unwrap(),
-                                                             new_loop_depth) {
-                            None => {},
-                            Some( coverage_verdict ) => {
-                                global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
-                                match global_verdict {
-                                    GlobalVerdict::Pass => {
-                                        break;
-                                    },
-                                    _ => {}
-                                }
-                            }
+                    Some( coverage_verdict ) => {
+                        global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
+                        match global_verdict {
+                            GlobalVerdict::Pass => {
+                                break;
+                            },
+                            _ => {}
                         }
                     }
                 }
@@ -108,7 +104,7 @@ pub fn analyze(interaction : Interaction,
         // ***
         parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
         if parent_state.remaining_ids_to_process.len() == 0 {
-            manager.forget_state(&next_to_process.state_id);
+            manager.forget_state(next_to_process.state_id);
         } else {
             manager.remember_state(next_to_process.state_id,parent_state);
         }
@@ -120,11 +116,12 @@ pub fn analyze(interaction : Interaction,
     return global_verdict;
 }
 
-fn enqueue_next_nodes_in_analysis(manager: &mut HibouProcessManager,
-                                  state_id : Vec<u32>,
-                                  interaction : Interaction,
-                                  multi_trace : AnalysableMultiTrace,
-                                  previous_loop_instanciations:u32) -> Option<CoverageVerdict> {
+fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
+                                 state_id    : u32,
+                                 interaction : Interaction,
+                                 multi_trace : AnalysableMultiTrace,
+                                 depth       : u32,
+                                 loop_depth  : u32) -> Option<CoverageVerdict> {
     // ***
     let mut next_child_id : u32 = 0;
     // ***
@@ -142,16 +139,16 @@ fn enqueue_next_nodes_in_analysis(manager: &mut HibouProcessManager,
             }
         }
     }
-    manager.enqueue_executions(&state_id,to_enqueue);
     // ***
     if next_child_id > 0 {
         let rem_child_ids : HashSet<u32> = HashSet::from_iter((1..(next_child_id+1)).collect::<Vec<u32>>().iter().cloned() );
-        let memo_state = MemorizedState::new(interaction,Some(multi_trace),rem_child_ids, previous_loop_instanciations);
+        let memo_state = MemorizedState::new(interaction,Some(multi_trace),rem_child_ids, loop_depth, depth);
         manager.remember_state( state_id, memo_state );
+        manager.enqueue_executions(state_id,to_enqueue);
         return None;
     } else {
         let verdict = manager.get_coverage_verdict(&interaction,&multi_trace);
-        manager.verdict_loggers(&verdict,&state_id);
+        manager.verdict_loggers(&verdict,state_id);
         return Some( verdict );
     }
 }

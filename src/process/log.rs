@@ -41,24 +41,24 @@ pub trait ProcessLogger {
     fn log_term(&mut self,
                 options_as_str : &Vec<String>);
 
-    fn log_next(&mut self,
+    fn log_execution(&mut self,
                 gen_ctx : &GeneralContext,
-                parent_node_path : &Vec<u32>,
-                current_node_path : &Vec<u32>,
+                parent_state_id : u32,
+                new_state_id : u32,
                 action_position : &Position,
-                action : &ObservableAction,
+                action : &TraceAction,
                 new_interaction : &Interaction,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>);
 
     fn log_verdict(&mut self,
-                   parent_node_path : &Vec<u32>,
+                   parent_state_id : u32,
                    verdict : &CoverageVerdict);
 
     fn log_filtered(&mut self,gen_ctx : &GeneralContext,
-                    parent_node_path : &Vec<u32>,
-                    current_node_path : &Vec<u32>,
+                    parent_state_id : u32,
+                    new_state_id : u32,
                     action_position : &Position,
-                    action : &ObservableAction,
+                    action : &TraceAction,
                     elim_kind : &FilterEliminationKind);
 
 }

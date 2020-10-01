@@ -31,6 +31,13 @@ pub struct TraceAction {
 }
 
 impl TraceAction {
+
+    pub fn new(lf_id : usize,
+               act_kind : TraceActionKind,
+               ms_id : usize) -> TraceAction {
+        return TraceAction{lf_id,act_kind,ms_id};
+    }
+
     pub fn is_match(&self,model_action: &ObservableAction) -> bool {
         if model_action.lf_id != self.lf_id {
             return false;
