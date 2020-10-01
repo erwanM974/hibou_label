@@ -46,6 +46,22 @@ pub fn parse_htf_file(file_path : &str, gen_ctx : &GeneralContext) -> Result<Ana
     }
 }
 
+fn complete_canals_up_to_defined_lifelines(canals : &mut Vec<MultiTraceCanal>, gen_ctx : &GeneralContext) {
+    let mut rem_lifelines : HashSet<usize> = HashSet::from_iter((0..gen_ctx.get_lf_num()).collect::<Vec<usize>>().iter().cloned());
+    for canal in canals.iter() {
+        for lf_id in &canal.lifelines {
+            rem_lifelines.remove(lf_id);
+        }
+    }
+    // ***
+    for lf_id in rem_lifelines {
+        let lifelines : HashSet<usize> = HashSet::from_iter( vec![lf_id].iter().cloned() );
+        let trace : Vec<TraceAction> = Vec::new();
+        canals.push( MultiTraceCanal{lifelines,trace})
+    }
+    // ***
+}
+
 pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext) -> Result<AnalysableMultiTrace,HibouParsingError> {
     match SDParser::parse(Rule::HTF_PEST_FILE, multitrace_str) {
         Err(e) => {
@@ -65,6 +81,7 @@ pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext)
                             canals.push( trace_canal );
                         }
                     }
+                    complete_canals_up_to_defined_lifelines(&mut canals,gen_ctx);
                     return Ok( AnalysableMultiTrace::new(canals) );
                 },
                 Rule::MULTI_TRACE => {
@@ -81,6 +98,7 @@ pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext)
                             }
                         }
                     }
+                    complete_canals_up_to_defined_lifelines(&mut canals,gen_ctx);
                     return Ok( AnalysableMultiTrace::new(canals) );
                 },
                 _ => {

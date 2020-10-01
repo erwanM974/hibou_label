@@ -29,7 +29,7 @@ If you are interested in the Coq proof associated with [this paper](https://arxi
 
 # Entry language : Interactions (.hsf files)
 
-Interaction models are specified with .hsf (Hibou Specification File) files.
+Interaction models are specified with ".hsf" (Hibou Specification File) files.
 The figure below illustrates:
 - on the left the model of the interaction as a binary tree (mathematical model)
 - in the middle the encoding using the entry langage of HIBOU (PEG grammar)
@@ -39,7 +39,7 @@ The figure below illustrates:
 
 ## Signature Declaration
 
-The signature of the interaction model is declared in the "@message" and "@lifeline" sections of the .hsf file.
+The signature of the interaction model is declared in the "@message" and "@lifeline" sections of the ".hsf" file.
 It suffices then to list the different message names and lifeline names that will be used in the model.
 
 For instance, in the example above (which you can find in the "examples" folder), we have the following:
@@ -101,7 +101,7 @@ The "alt" operator specified exclusive alternative choice between the execution 
 Loop operators are unary operators that represent the repetition of a given sub-interaction,
 each repeated behavior being sequenced w.r.t. the others using one of the 3 scheduling operators.
 
-For instance "loopseq(m->a)" is equivalent to the infinite alternative "alt(∅,m->a,seq(m->a,m->a),...)".
+For instance "loop_seq(m->a)" is equivalent to the infinite alternative "alt(∅,m->a,seq(m->a,m->a),...)".
 
 ### Example
 
@@ -128,8 +128,8 @@ seq(
 
 ## Process options
 
-Additionally, one can specify in the header of a .hsf file 
-a number of options that will then be used if this .hsf file is exploited 
+Additionally, one can specify in the header of a ".hsf" file 
+a number of options that will then be used if this ".hsf" file is exploited 
 in some algorithmic process.
 
 The "@analyze_option" section specifies options to be used when the model is exploited for the exploration of its possible executions with the "explore" command.
@@ -148,7 +148,7 @@ As the lifelines of an interaction model represent the sub-systems of the distri
 we can understand those collected logs - called traces - as sequences of words "a!m" or "a?m" - called actions - where "a" is a lifeline and "m" a message.
 
 ## Centralized traces
-A centralized trace is a sequence of any such action unregarding of the lifelines on which they occur. 
+A centralized trace is a sequence of any such action regardless of the lifelines on which they occur. 
 Below is given, in the syntax accepted by HIBOU, such a centralized trace. 
 This trace must be specified in a ".htf" file, which stands for Hibou Trace File.
 Here, the "[#all]" signifies that the trace is defined over all lifelines.
@@ -172,7 +172,7 @@ In [this other paper](https://arxiv.org/abs/2009.01777), we describe our approac
 In it, we restricted co-localizations to singletons in order to simplify the presentation.
 However, our approach still works when considering the more general case of co-localizations.
 
-On the example below is given an example of .htf file which defines a multi-trace composed of 2 components:
+On the example below is given an example of ".htf" file which defines a multi-trace composed of 2 components:
 - on the co-localization of the 2 lifelines "a" and "b", the local trace "b!m.a!m" has been logged
 - on the localization of the "c" lifeline, the local trace "c?m.c?m" has been logged
 
@@ -203,6 +203,26 @@ The first component is defined over lifelines "a" and "b", and the second over l
 }
 ```
 
+## Unobserved lifelines
+
+Using a ".htf" file is done with regards to a ".hsf" file which defines the model against which the multi-trace will be analyzed.
+in the illustration below, the multi-trace on the right "(a!m.a!m, ε)" is to be analyzed against the interaction "loop_seq(a -- m -> b)".
+
+<img src="./README_images/trace_example.png" alt="interaction and multi-trace" width="450">
+
+If, in a given ".htf" file, traces on some lifelines are not specified, the corresponding lifelines are automatically fitted with the empty trace.
+As such, w.r.t. the interaction on the left in the illustration above, we can specify the multi-trace "(a!m.a!m, ε)" in a ".htf" file either with:
+
+```
+{
+    [a] a!m.a!m;
+    [b] 
+}
+```
+
+Or simply with (for instance)``[#any] a!m.a!m``.
+
+
 # Command Line Interface
 
 The functionnalities of HIBOU are accessed via a Command Line Interface (CLI).
@@ -210,7 +230,7 @@ For the version presented in this repository, you will have to launch the execut
 
 ## Help
 
-The HIBOU executable provides a small documentation about its interface. This can be accessed by tying "hibou_label help" or "hibou_label -h".
+The HIBOU executable provides a small documentation about its interface. This can be accessed by typing "hibou_label help" or "hibou_label -h".
 It explaines that there are 4 sub-commands in HIBOU:
 - "draw" (to be used as "hibou_label draw <.hsf file>"), which draws as a sequence diagram a given interaction
 - "analyze" (to be used as "hibou_label analyze <.hsf file> <.htf file>"), which analyze a multi-trace w.r.t. an interaction
@@ -248,7 +268,7 @@ In hibou_label, we implemented accordingly two modes for the analysis:
 and either "Inconc" or "Fail" if not, as explained in Sec.4.5 of [this paper](https://arxiv.org/abs/2009.01777)
 
 To select one of those modes ("prefix" is the default), you can write "semantics=accept" or "semantics=prefix" 
-in the "@analyze_option" section of the input .hsf file.
+in the "@analyze_option" section of the input ".hsf" file.
 
 In the following we will only consider example using the "prefix" mode given that it is the more advanced one.
 
@@ -307,9 +327,9 @@ For this analysis we used the following options, declared in the "@analyze_optio
 }
 ```
 
-We can specify that we want algorithmic treatments of this .hsf file to be logged with the "loggers" attribute.
+We can specify that we want algorithmic treatments of this ".hsf" file to be logged with the "loggers" attribute.
 In this build only a "graphic" logger exists. 
-It will create an image file (with the same name as the .hsf file) describing the treatment. 
+It will create an image file (with the same name as the ".hsf" file) describing the treatment. 
 The generation of this image requires the graphviz tool to be installed ([https://www.graphviz.org/download/](https://www.graphviz.org/download/)),
 and the "dot" command to be in the "PATH" environment variable.
 The output of the graphic logger can either be a .png file (specified with "graphic=png") 
@@ -363,7 +383,7 @@ with a Depth First Search heuristic:
 
 The "explore" command of HIBOU can generate execution trees which illustrate the semantics of a given interaction model.
 
-Below is given an example exploration that you can obtain by tying 
+Below is given an example exploration that you can obtain by typing 
 "hibou_label.exe explore example_for_exploration_1.hsf" 
 with the files from "examples" folder.
 
@@ -391,7 +411,7 @@ given that it might prevent the consumption of the multi-trace and produce a wro
 
 <img src="./README_images/explo1.svg" alt="exploration ex1" width="900">
 
-And here is a second example that you can obtain by tying 
+And here is a second example that you can obtain by typing 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
