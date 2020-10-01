@@ -206,7 +206,7 @@ The first component is defined over lifelines "a" and "b", and the second over l
 ## Unobserved lifelines
 
 Using a ".htf" file is done with regards to a ".hsf" file which defines the model against which the multi-trace will be analyzed.
-in the illustration below, the multi-trace on the right "(a!m.a!m, ε)" is to be analyzed against the interaction "loop_seq(a -- m -> b)".
+In the illustration below, the multi-trace on the right "(a!m.a!m, ε)" is to be analyzed against the interaction "loop_seq(a -- m -> b)".
 
 <img src="./README_images/trace_example.png" alt="interaction and multi-trace" width="450">
 
@@ -220,8 +220,13 @@ As such, w.r.t. the interaction on the left in the illustration above, we can sp
 }
 ```
 
-Or simply with (for instance)``[#any] a!m.a!m``.
+Or simply with (for instance):
 
+```
+[#any] a!m.a!m
+```
+ 
+Here lifeline "b" has no specified canal. As such, it will be automatically fitted with a dedicated canal containing the empty trace "ε". 
 
 # Command Line Interface
 
