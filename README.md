@@ -371,13 +371,17 @@ You can also reproduce it by using the files from the "examples" folder.
 
 <img src="./README_images/analysis_2.svg" alt="analysis ex2" width="800">
 
+Let us note that, if we change the goal to "WeakPass" in the options, the branch on the right is not explored in the analysis.
+
+<img src="./README_images/analysis_2_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
+
 
 #### Example 3
 
 This third example describes a concurrent system which complexity quickly explodes due to the very many
 interleaving that are possible between the executions of individual actions.
 
-Here can see the advantage in using the "prioritize_actions" options in the "@analyze_option" section.
+Here can see the advantage in using the "priorities" options in the "@analyze_option" section.
 Indeed, prioritizing the evaluation of receptions in this case allows to quickly consume the entire multi-trace
 while minimizing the size of the intermediate interaction terms.
 
