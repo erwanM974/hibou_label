@@ -29,7 +29,8 @@ use crate::from_text::parser::*;
 
 pub static HIBOU_TRACE_FILE_EXTENSION : &'static str = "htf";
 
-pub fn parse_htf_file(file_path : &str, gen_ctx : &GeneralContext) -> Result<AnalysableMultiTrace,HibouParsingError> {
+pub fn parse_htf_file(file_path : &str,
+                      gen_ctx : &GeneralContext) -> Result<AnalysableMultiTrace,HibouParsingError> {
     let path_object = Path::new(file_path);
     let file_extension : &str = path_object.extension().unwrap().to_str().unwrap();
     if file_extension != HIBOU_TRACE_FILE_EXTENSION {
@@ -38,7 +39,7 @@ pub fn parse_htf_file(file_path : &str, gen_ctx : &GeneralContext) -> Result<Ana
     let file_name : &str = path_object.file_stem().unwrap().to_str().unwrap();
     match fs::read_to_string(file_path) {
         Ok( unparsed_htf_str ) => {
-            return multitrace_from_text(&unparsed_htf_str,gen_ctx);
+            return multitrace_from_text(&unparsed_htf_str, gen_ctx);
         },
         Err(e) => {
             return Err( HibouParsingError::FileError(e.to_string()) );
@@ -62,7 +63,8 @@ fn complete_canals_up_to_defined_lifelines(canals : &mut Vec<MultiTraceCanal>, g
     // ***
 }
 
-pub fn multitrace_from_text(multitrace_str : &String, gen_ctx : &GeneralContext) -> Result<AnalysableMultiTrace,HibouParsingError> {
+pub fn multitrace_from_text(multitrace_str : &String,
+                            gen_ctx : &GeneralContext) -> Result<AnalysableMultiTrace,HibouParsingError> {
     match SDParser::parse(Rule::HTF_PEST_FILE, multitrace_str) {
         Err(e) => {
             return Err( HibouParsingError::MatchError(e.to_string()) );

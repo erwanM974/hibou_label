@@ -30,18 +30,6 @@ use crate::process::verdicts::CoverageVerdict;
 
 
 
-/*
-#[derive(Clone, PartialEq, Debug)]
-pub struct ProcessStateNode {
-    pub state_id : Vec<u32>,
-    pub interaction : Interaction,
-    pub rem_front_or_match : Vec<Position>,
-    pub id_for_next_child : u32,
-    pub multitrace : Option<AnalysableMultiTrace>,
-    pub previous_loop_instanciations : u32
-}*/
-
-
 #[derive(Clone, PartialEq, Debug)]
 pub struct MemorizedState {
     pub interaction : Interaction,
@@ -101,32 +89,6 @@ impl ProcessQueue {
         }
     }
 
-    /*
-    pub fn insert_item_left(&mut self,node:NextToProcess,priority:i32) {
-        match self.queues.remove(&priority) {
-            None => {
-                self.queues.insert(priority,vec![node]);
-            },
-            Some( mut queue ) => {
-                queue.insert(0,node);
-                self.queues.insert(priority,queue);
-            }
-        }
-    }
-
-    pub fn insert_item_right(&mut self,node:NextToProcess,priority:i32) {
-        match self.queues.remove(&priority) {
-            None => {
-                self.queues.insert(priority,vec![node]);
-            },
-            Some( mut queue ) => {
-                queue.push(node);
-                self.queues.insert(priority,queue);
-            }
-        }
-    }
-    */
-
     pub fn insert_item_right(&mut self,node:NextToProcess,priority:i32) {
         match self.queues.get_mut(&priority) {
             None => {
@@ -155,27 +117,6 @@ impl ProcessQueue {
         return None;
     }
 
-    /*
-    pub fn get_next(&mut self) -> Option<NextToProcess> {
-        let mut keys : Vec<i32> = self.queues.keys().cloned().collect();
-        keys.sort_by_key(|k| Reverse(*k));
-        for k in keys {
-            match self.queues.remove(&k) {
-                None => {},
-                Some( mut queue ) => {
-                    if queue.len() > 0 {
-                        let next = queue.remove(0);
-                        if queue.len() > 0 {
-                            self.queues.insert( k, queue);
-                        }
-                        return Some(next);
-                    }
-                }
-            }
-        }
-        return None;
-    }
-    */
 }
 
 

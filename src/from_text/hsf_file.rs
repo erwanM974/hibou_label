@@ -53,7 +53,7 @@ pub fn parse_hsf_file(file_path : &str, process_kind : &ProcessKind) -> Result<(
     let file_name : &str = path_object.file_stem().unwrap().to_str().unwrap();
     match fs::read_to_string(file_path) {
         Ok( unparsed_hsf_str ) => {
-            return parse_hsf_string(unparsed_hsf_str, file_name,process_kind);
+            return parse_hsf_string(unparsed_hsf_str, file_name, process_kind);
         },
         Err(e) => {
             return Err( HibouParsingError::FileError(e.to_string()) );
@@ -61,7 +61,9 @@ pub fn parse_hsf_file(file_path : &str, process_kind : &ProcessKind) -> Result<(
     }
 }
 
-pub fn parse_hsf_string(sd_string : String, name:&str, process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
+pub fn parse_hsf_string(sd_string : String,
+                        name : &str,
+                        process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
     match SDParser::parse(Rule::HSF_PEST_FILE, &sd_string) {
         Ok( ref mut sd_cfg_pair ) => {
             let mut content = sd_cfg_pair.next().unwrap().into_inner();
@@ -100,7 +102,10 @@ fn parse_lifeline_decl(lf_decl_pair : Pair<Rule>, gen_ctx : &mut GeneralContext 
     }
 }
 
-fn parse_setup(setup_pair : Pair<Rule>, gen_ctx : &mut GeneralContext, file_name : &str, process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
+fn parse_setup(setup_pair : Pair<Rule>,
+               gen_ctx : &mut GeneralContext,
+               file_name : &str,
+               process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
     // ***
     let mut got_section_explore_options   : bool = false;
     let mut got_section_analyze_options   : bool = false;
@@ -185,7 +190,10 @@ fn parse_setup(setup_pair : Pair<Rule>, gen_ctx : &mut GeneralContext, file_name
     }
 }
 
-fn parse_sd(interaction_pair : Pair<Rule>, setup_pair_opt : Option< Pair<Rule> >, name : &str, process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
+fn parse_sd(interaction_pair : Pair<Rule>,
+            setup_pair_opt : Option< Pair<Rule> >,
+            name : &str,
+            process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
     let mut gen_ctx = GeneralContext::new();
     let hibou_options : HibouOptions;
     match setup_pair_opt {

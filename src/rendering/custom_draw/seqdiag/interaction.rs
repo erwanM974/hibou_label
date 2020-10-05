@@ -102,7 +102,7 @@ pub fn draw_interaction(path_str : &String,
     let mut nest_shift : u32 = 1; // shift to display nested fragments
     let mut yshift : u32 = 3;
 
-    draw_interaction_rec(&mut image,  gen_ctx,interaction, &lf_x_widths, gen_ctx.get_lf_num(), &mut nest_shift, &mut yshift);
+    draw_interaction_rec(&mut image,  gen_ctx, interaction, &lf_x_widths, gen_ctx.get_lf_num(), &mut nest_shift, &mut yshift);
 
     match multi_trace_txttoprint {
         None => {},

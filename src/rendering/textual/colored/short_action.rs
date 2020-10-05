@@ -52,27 +52,3 @@ pub fn diagram_repr_trace_action(action : &TraceAction, gen_ctx : &GeneralContex
 }
 
 
-pub fn diagram_repr_atomic_model_action(action : &ObservableAction, gen_ctx : &GeneralContext) -> Vec<TextToPrint> {
-    let mut to_print : Vec<TextToPrint> = Vec::new();
-    // ***
-    {
-        let lf_name = gen_ctx.get_lf_name(action.lf_id).unwrap();
-        to_print.push( TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)} );
-    }
-    // ***
-    match &action.act_kind {
-        &ObservableActionKind::Reception => {
-            to_print.push( TextToPrint{text:SYNTAX_RECEPTION.to_string(),color:Rgb(HC_Grammar_Symbol)} );
-        },
-        &ObservableActionKind::Emission(_) => {
-            to_print.push( TextToPrint{text:SYNTAX_EMISSION.to_string(),color:Rgb(HC_Grammar_Symbol)} );
-        }
-    }
-    // ***
-    {
-        let ms_name = gen_ctx.get_ms_name(action.ms_id).unwrap();
-        to_print.push( TextToPrint{text:ms_name,color:Rgb(HC_Message)} );
-    }
-    // ***
-    return to_print;
-}

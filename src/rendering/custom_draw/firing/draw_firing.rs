@@ -43,7 +43,7 @@ use crate::core::syntax::position::*;
 
 use crate::rendering::sd_drawing_conf::*;
 use crate::rendering::textual::colored::colored_text::*;
-use crate::rendering::textual::colored::short_action::{diagram_repr_trace_action,diagram_repr_atomic_model_action};
+use crate::rendering::textual::colored::short_action::diagram_repr_trace_action;
 
 use crate::rendering::hibou_color_palette::*;
 use crate::rendering::textual::monochrome::position::position_to_text;
