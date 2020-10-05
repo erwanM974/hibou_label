@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+use std::cmp::Reverse;
 use std::collections::{HashSet,HashMap};
 
 use crate::core::general_context::GeneralContext;
@@ -81,46 +82,100 @@ impl NextToProcess {
 }
 
 pub struct ProcessQueue {
-    pub high_priority : Vec<NextToProcess>,
-    pub medium_priority : Vec<NextToProcess>,
-    pub low_priority : Vec<NextToProcess>
+    queues : HashMap<i32,Vec<NextToProcess>>
 }
 
 impl ProcessQueue {
     pub fn new() -> ProcessQueue {
-        return ProcessQueue{high_priority:Vec::new(),medium_priority:Vec::new(),low_priority:Vec::new()}
+        return ProcessQueue{queues:HashMap::new()}
     }
 
-    pub fn insert_item_left(&mut self,node:NextToProcess,priority:u32) {
-        if priority >= 1 {
-            self.high_priority.insert(0,node);
-        } else if priority == 0 {
-            self.medium_priority.insert(0,node);
-        } else {
-            self.low_priority.insert(0,node);
+    pub fn insert_item_left(&mut self,node:NextToProcess,priority:i32) {
+        match self.queues.get_mut(&priority) {
+            None => {
+                self.queues.insert(priority,vec![node]);
+            },
+            Some( queue ) => {
+                queue.insert(0,node);
+            }
         }
     }
 
-    pub fn insert_item_right(&mut self,node:NextToProcess,priority:u32) {
-        if priority >= 1 {
-            self.high_priority.push(node);
-        } else if priority == 0 {
-            self.medium_priority.push(node);
-        } else {
-            self.low_priority.push(node);
+    /*
+    pub fn insert_item_left(&mut self,node:NextToProcess,priority:i32) {
+        match self.queues.remove(&priority) {
+            None => {
+                self.queues.insert(priority,vec![node]);
+            },
+            Some( mut queue ) => {
+                queue.insert(0,node);
+                self.queues.insert(priority,queue);
+            }
+        }
+    }
+
+    pub fn insert_item_right(&mut self,node:NextToProcess,priority:i32) {
+        match self.queues.remove(&priority) {
+            None => {
+                self.queues.insert(priority,vec![node]);
+            },
+            Some( mut queue ) => {
+                queue.push(node);
+                self.queues.insert(priority,queue);
+            }
+        }
+    }
+    */
+
+    pub fn insert_item_right(&mut self,node:NextToProcess,priority:i32) {
+        match self.queues.get_mut(&priority) {
+            None => {
+                self.queues.insert(priority,vec![node]);
+            },
+            Some( queue ) => {
+                queue.push(node);
+            }
         }
     }
 
     pub fn get_next(&mut self) -> Option<NextToProcess> {
-        if self.high_priority.len() > 0 {
-            return Some( self.high_priority.remove(0) );
-        } else if self.medium_priority.len() > 0 {
-            return Some( self.medium_priority.remove(0) );
-        } else if self.low_priority.len() > 0 {
-            return Some( self.low_priority.remove(0) );
+        let mut keys : Vec<i32> = self.queues.keys().cloned().collect();
+        keys.sort_by_key(|k| Reverse(*k));
+        for k in keys {
+            match self.queues.get_mut(&k) {
+                None => {},
+                Some( queue ) => {
+                    if queue.len() > 0 {
+                        let next = queue.remove(0);
+                        return Some(next);
+                    }
+                }
+            }
         }
         return None;
     }
+
+    /*
+    pub fn get_next(&mut self) -> Option<NextToProcess> {
+        let mut keys : Vec<i32> = self.queues.keys().cloned().collect();
+        keys.sort_by_key(|k| Reverse(*k));
+        for k in keys {
+            match self.queues.remove(&k) {
+                None => {},
+                Some( mut queue ) => {
+                    if queue.len() > 0 {
+                        let next = queue.remove(0);
+                        if queue.len() > 0 {
+                            self.queues.insert( k, queue);
+                        }
+                        return Some(next);
+                    }
+                }
+            }
+        }
+        return None;
+    }
+    */
 }
 
 

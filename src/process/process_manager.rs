@@ -51,6 +51,29 @@ impl std::string::ToString for PrioritizeActionKind {
     }
 }
 
+pub struct ProcessPriorities {
+    pub emission : i32,
+    pub reception : i32,
+    pub in_loop : i32
+}
+
+impl ProcessPriorities {
+    pub fn new(emission : i32,
+               reception : i32,
+               in_loop : i32) -> ProcessPriorities {
+        return ProcessPriorities{emission,reception,in_loop};
+    }
+}
+
+impl std::string::ToString for ProcessPriorities {
+    fn to_string(&self) -> String {
+        let mut my_str = format!("emission={:},",self.emission);
+        my_str.push_str( &format!("reception={:},",self.reception));
+        my_str.push_str( &format!("in_loop={:}",self.in_loop));
+        return my_str;
+    }
+}
+
 pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
     strategy : HibouSearchStrategy,
@@ -60,7 +83,7 @@ pub struct HibouProcessManager {
     memorized_states : HashMap<u32,MemorizedState>,
     process_queue : ProcessQueue,
     // ***
-    prioritize_action : PrioritizeActionKind,
+    priorities : ProcessPriorities,
     // ***
     loggers : Vec<Box<dyn ProcessLogger>>
 }
@@ -72,26 +95,27 @@ impl HibouProcessManager {
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
                process_queue : ProcessQueue,
-               prioritize_action:PrioritizeActionKind,
+               priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>
     ) -> HibouProcessManager {
-        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,prioritize_action,loggers};
+        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,priorities,loggers};
     }
 
-    pub fn get_options_as_strings(&self,verdict:Option<&GlobalVerdict>) -> Vec<String> {
+    pub fn get_options_as_strings(&self,goal_and_verdict:Option<(&GlobalVerdict,&GlobalVerdict)>) -> Vec<String> {
         let mut options_str : Vec<String> = Vec::new();
-        match verdict {
+        match goal_and_verdict {
             None => {
                 options_str.push("process=exploration".to_string());
             },
-            Some(verd) => {
+            Some( (goal,verd) ) => {
                 options_str.push("process=analysis".to_string());
                 options_str.push( format!("semantics={}", self.sem_kind.as_ref().unwrap().to_string()) );
+                options_str.push( format!("goal={}", goal.to_string()) );
                 options_str.push( format!("verdict={}", verd.to_string()) );
             }
         }
         options_str.push( format!("strategy={}", &self.strategy.to_string()) );
-        options_str.push( format!("prioritize_actions={}", &self.prioritize_action.to_string()) );
+        options_str.push( format!("priorities=[{}]", &self.priorities.to_string()) );
         {
             let mut rem_filter = self.pre_filters.len();
             let mut filters_str = "filters=[".to_string();
@@ -114,8 +138,8 @@ impl HibouProcessManager {
         }
     }
 
-    pub fn term_loggers(&mut self,verd:Option<&GlobalVerdict>) {
-        let options_as_strs = (&self).get_options_as_strings(verd);
+    pub fn term_loggers(&mut self,goal_and_verdict:Option<(&GlobalVerdict,&GlobalVerdict)>) {
+        let options_as_strs = (&self).get_options_as_strings(goal_and_verdict);
         for logger in self.loggers.iter_mut() {
             (*logger).log_term(&options_as_strs);
         }
@@ -180,45 +204,45 @@ impl HibouProcessManager {
         return self.process_queue.get_next();
     }
 
-    pub fn enqueue_executions(&mut self, state_id : u32, to_enqueue : Vec<(u32,Position,TraceActionKind)>) {
+    pub fn enqueue_executions(&mut self, state_id : u32, to_enqueue : Vec<(u32,NextToProcessKind)>) {
         match &self.strategy {
             &HibouSearchStrategy::DFS => {
                 let mut to_enqueue = to_enqueue;
                 to_enqueue.reverse();
-                for (child_id,front_pos,act_kind) in to_enqueue {
-                    self.enqueue_child_node(state_id,child_id,front_pos,act_kind);
+                for (child_id,child_kind) in to_enqueue {
+                    self.enqueue_child_node(state_id,child_id,child_kind);
                 }
             },
             &HibouSearchStrategy::BFS => {
-                for (child_id,front_pos,act_kind) in to_enqueue {
-                    self.enqueue_child_node(state_id,child_id,front_pos,act_kind);
+                for (child_id,child_kind) in to_enqueue {
+                    self.enqueue_child_node(state_id,child_id,child_kind);
                 }
             }
         }
     }
 
-    fn enqueue_child_node(&mut self,state_id: u32,child_id:u32,front_pos:Position,act_kind:TraceActionKind) {
-        let child = NextToProcess::new(state_id,child_id,NextToProcessKind::Execute(front_pos));
-        let mut priority : u32 = 0;
-        match self.prioritize_action {
-            PrioritizeActionKind::None => {},
-            PrioritizeActionKind::Reception => {
-                match act_kind {
-                    TraceActionKind::Reception => {
-                        priority = priority + 1;
+    fn enqueue_child_node(&mut self,state_id: u32,child_id:u32,child_kind:NextToProcessKind) {
+        let mut priority : i32 = 0;
+        match &child_kind {
+            &NextToProcessKind::Execute( ref front_pos ) => {
+                let parent_state = self.get_memorized_state(state_id).unwrap();
+                let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
+                match front_act.act_kind {
+                    ObservableActionKind::Reception => {
+                        priority = priority + self.priorities.reception;
                     },
-                    _ => {}
+                    ObservableActionKind::Emission(_) => {
+                        priority = priority + self.priorities.emission;
+                    }
                 }
-            },
-            PrioritizeActionKind::Emission => {
-                match act_kind {
-                    TraceActionKind::Emission => {
-                        priority = priority + 1;
-                    },
-                    _ => {}
+                let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
+                if loop_depth > 0 {
+                    priority = priority + self.priorities.in_loop;
                 }
             }
         }
+        // ***
+        let child = NextToProcess::new(state_id,child_id,child_kind);
         self.process_queue.insert_item_left(child,priority);
     }
 

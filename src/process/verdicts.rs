@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 
+
 pub enum CoverageVerdict{
     Cov,
     TooShort,
@@ -47,11 +48,12 @@ impl std::string::ToString for CoverageVerdict {
 
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum GlobalVerdict {
-    Pass,
-    WeakPass,
+    Fail,
     Inconc,
-    Fail
+    WeakPass,
+    Pass
 }
 
 impl std::string::ToString for GlobalVerdict {

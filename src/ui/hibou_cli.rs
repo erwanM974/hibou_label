@@ -53,7 +53,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-2020-09 "#);
+    my_vec.push(r#"  V-label-2020-10 "#);
     return my_vec;
 }
 
@@ -132,7 +132,7 @@ pub fn hibou_cli() -> i32 {
                         gen_ctx,
                         hoptions.pre_filters,
                         hoptions.strategy,
-                        hoptions.prioritize_action,
+                        hoptions.priorities,
                         hoptions.loggers);
             }
         }
@@ -164,9 +164,10 @@ pub fn hibou_cli() -> i32 {
                                               gen_ctx,
                                               hoptions.pre_filters,
                                               hoptions.strategy,
-                                              hoptions.prioritize_action,
+                                              hoptions.priorities,
                                               hoptions.loggers,
-                                              hoptions.sem_kind.unwrap());
+                                              hoptions.sem_kind.unwrap(),
+                                              hoptions.goal.unwrap());
 
                         ret_print.push( format!("verdict: '{}'", verdict.to_string() ) );
                     }

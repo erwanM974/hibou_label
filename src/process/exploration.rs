@@ -34,7 +34,7 @@ pub fn explore(interaction : Interaction,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
-               prioritize_action : PrioritizeActionKind,
+               priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>) {
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
@@ -43,7 +43,7 @@ pub fn explore(interaction : Interaction,
                                                pre_filters,
                                                HashMap::new(),
                                                ProcessQueue::new(),
-                                               prioritize_action,
+                                               priorities,
                                                loggers);
     // ***
     manager.init_loggers(&interaction,&None);
@@ -99,11 +99,11 @@ fn enqueue_next_node_in_exploration(manager      : &mut HibouProcessManager,
     // ***
     let mut next_child_id : u32 = 0;
     // ***
-    let mut to_enqueue : Vec<(u32,Position,TraceActionKind)> = Vec::new();
+    let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
     for front_pos in make_frontier(&interaction) {
-        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
         next_child_id = next_child_id +1;
-        to_enqueue.push( (next_child_id,front_pos,front_act.get_action_kind()) );
+        let child_kind = NextToProcessKind::Execute(front_pos);
+        to_enqueue.push( (next_child_id,child_kind) );
     }
     // ***
     if next_child_id > 0 {

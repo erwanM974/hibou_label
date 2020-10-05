@@ -35,9 +35,10 @@ pub fn analyze(interaction : Interaction,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
-               prioritize_action : PrioritizeActionKind,
+               priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
-               sem_kind: SemanticKind) -> GlobalVerdict {
+               sem_kind: SemanticKind,
+               goal:GlobalVerdict) -> GlobalVerdict {
     // ***
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
@@ -46,7 +47,7 @@ pub fn analyze(interaction : Interaction,
                                                pre_filters,
                                                HashMap::new(),
                                                ProcessQueue::new(),
-                                               prioritize_action,
+                                               priorities,
                                                loggers);
     // ***
     let multi_trace_option = Some(multi_trace);
@@ -111,7 +112,7 @@ pub fn analyze(interaction : Interaction,
         // ***
     }
     // ***
-    manager.term_loggers(Some(&global_verdict) );
+    manager.term_loggers(Some((&goal,&global_verdict)) );
     // ***
     return global_verdict;
 }
@@ -125,7 +126,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
     // ***
     let mut next_child_id : u32 = 0;
     // ***
-    let mut to_enqueue : Vec<(u32,Position,TraceActionKind)> = Vec::new();
+    let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
     for front_pos in make_frontier(&interaction) {
         let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
         for canal in &multi_trace.canals {
@@ -133,7 +134,8 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                 let head_act : &TraceAction = canal.trace.get(0).unwrap();
                 if head_act.is_match(front_act) {
                     next_child_id = next_child_id +1;
-                    to_enqueue.push( (next_child_id,front_pos,head_act.act_kind.clone()) );
+                    let child_kind = NextToProcessKind::Execute(front_pos);
+                    to_enqueue.push( (next_child_id,child_kind) );
                     break;
                 }
             }
