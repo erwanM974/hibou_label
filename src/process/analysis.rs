@@ -71,6 +71,9 @@ pub fn analyze(interaction : Interaction,
     node_counter = node_counter +1;
     // ***
     while let Some(next_to_process) = manager.extract_from_queue() {
+        if global_verdict >= goal {
+            break;
+        }
         let new_state_id = next_state_id;
         next_state_id = next_state_id + 1;
         // ***
@@ -92,12 +95,6 @@ pub fn analyze(interaction : Interaction,
                     None => {},
                     Some( coverage_verdict ) => {
                         global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
-                        match global_verdict {
-                            GlobalVerdict::Pass => {
-                                break;
-                            },
-                            _ => {}
-                        }
                     }
                 }
             }

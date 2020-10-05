@@ -1,8 +1,9 @@
 @analyze_option{
-    strategy = DFS;
     loggers = [graphic=svg];
     semantics = prefix;
-    priorities = [reception=1]
+    strategy = DFS;
+    priorities = [reception=1];
+    goal = Pass
 }
 @message{
     m1;
