@@ -132,9 +132,11 @@ Additionally, one can specify in the header of a ".hsf" file
 a number of options that will then be used if this ".hsf" file is exploited 
 in some algorithmic process.
 
-The "@analyze_option" section specifies options to be used when the model is exploited for the exploration of its possible executions with the "explore" command.
+The "@analyze_option" section specifies options to be used when the model is exploited 
+as a reference for the analysis of a multi-trace with the "analyze" command.
                        
-The "@explore_option" section specifies options to be used when the model is exploited for the exploration of its possible executions with the "explore" command.
+The "@explore_option" section specifies options to be used when the model is exploited 
+for the exploration of its possible executions with the "explore" command.
 
 We will detail the available options when describing the "analyze" and "explore" commands.
 
