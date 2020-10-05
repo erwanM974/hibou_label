@@ -371,7 +371,8 @@ You can also reproduce it by using the files from the "examples" folder.
 
 <img src="./README_images/analysis_2.svg" alt="analysis ex2" width="800">
 
-Let us note that, if we change the goal to "WeakPass" in the options, the branch on the right is not explored in the analysis.
+Let us note that, if we change the goal to "WeakPass" in the options, the branch on the right is not explored in the analysis because the analysis stops
+once the goal verdict (or a verdict that is stronger) is reached.
 
 <img src="./README_images/analysis_2_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
 
@@ -388,6 +389,10 @@ while minimizing the size of the intermediate interaction terms.
 In hibou_label there are several queues on which to store the nodes that are next in line to explore. 
 Those queues are associated to priority levels. 
 The highest priority queue is dequeued first at each step of the algorithm.
+
+Priority levels are computed according to the user-defined numbers set in the "priorities" option.
+For instance, if ``priorities = [emission=1,loop=-2]``, then the evaluation of actions that are emissions and that
+exist within a loop will be 1+(-2)= -1. Those of emissions outside loops will be 1 and those of receptions outside loops will be 0. 
 
 <img src="./README_images/analysis_command_3.png" alt="analysis command ex2" width="600">
 
