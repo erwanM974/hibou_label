@@ -2,7 +2,7 @@
     strategy = DFS;
     loggers = [graphic=svg];
     semantics = prefix;
-    prioritize_actions = reception
+    priorities = [reception=1]
 }
 @message{
     m1;

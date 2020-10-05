@@ -2,7 +2,7 @@
     strategy = BFS;
     loggers = [graphic=svg];
     semantics = accept;
-    prioritize_actions=reception
+    priorities = [reception=1]
 }
 @message{
     m

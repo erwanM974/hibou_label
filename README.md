@@ -203,7 +203,7 @@ The first component is defined over lifelines "a" and "b", and the second over l
 }
 ```
 
-## Unobserved lifelines
+## Lifelines with no specified trace component
 
 Using a ".htf" file is done with regards to a ".hsf" file which defines the model against which the multi-trace will be analyzed.
 In the illustration below, the multi-trace on the right "(a!m.a!m, ε)" is to be analyzed against the interaction "loop_seq(a -- m -> b)".
@@ -277,7 +277,7 @@ in the "@analyze_option" section of the input ".hsf" file.
 
 In the following we will only consider example using the "prefix" mode given that it is the more advanced one.
 
-We have proven in [this Coq proof](https://erwanm974.github.io/coq_ictss_2020/) that the verdict "Pass" 
+We have proven in [this Coq proof](https://erwanm974.github.io/coq_hibou_label_multi_trace_analysis/) that the verdict "Pass" 
 is equivalent to the membership of the multi-trace to the "AccMult" semantics of the interaction.
 
 ### Analysing multi-traces  
