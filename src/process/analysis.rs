@@ -70,43 +70,45 @@ pub fn analyze(interaction : Interaction,
     next_state_id = next_state_id +1;
     node_counter = node_counter +1;
     // ***
-    while let Some(next_to_process) = manager.extract_from_queue() {
-        if global_verdict >= goal {
-            break;
-        }
-        let new_state_id = next_state_id;
-        next_state_id = next_state_id + 1;
-        // ***
-        let mut parent_state = manager.get_memorized_state(next_to_process.state_id).unwrap().clone();
-        // ***
-        match manager.process_next(&parent_state,
-                                   &next_to_process,
-                                   new_state_id,
-                                   node_counter) {
-            None => {},
-            Some( (new_interaction,new_multi_trace,new_depth,new_loop_depth) ) => {
-                node_counter = node_counter + 1;
-                match enqueue_next_node_in_analysis(&mut manager,
-                                                     new_state_id,
-                                                     new_interaction,
-                                                     new_multi_trace.unwrap(),
-                                                     new_depth,
-                                                     new_loop_depth) {
-                    None => {},
-                    Some( coverage_verdict ) => {
-                        global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
+    if global_verdict < goal {
+        while let Some(next_to_process) = manager.extract_from_queue() {
+            let new_state_id = next_state_id;
+            next_state_id = next_state_id + 1;
+            // ***
+            let mut parent_state = manager.get_memorized_state(next_to_process.state_id).unwrap().clone();
+            // ***
+            match manager.process_next(&parent_state,
+                                       &next_to_process,
+                                       new_state_id,
+                                       node_counter) {
+                None => {},
+                Some( (new_interaction,new_multi_trace,new_depth,new_loop_depth) ) => {
+                    node_counter = node_counter + 1;
+                    match enqueue_next_node_in_analysis(&mut manager,
+                                                        new_state_id,
+                                                        new_interaction,
+                                                        new_multi_trace.unwrap(),
+                                                        new_depth,
+                                                        new_loop_depth) {
+                        None => {},
+                        Some( coverage_verdict ) => {
+                            global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
+                            if global_verdict >= goal {
+                                break;
+                            }
+                        }
                     }
                 }
             }
+            // ***
+            parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
+            if parent_state.remaining_ids_to_process.len() == 0 {
+                manager.forget_state(next_to_process.state_id);
+            } else {
+                manager.remember_state(next_to_process.state_id,parent_state);
+            }
+            // ***
         }
-        // ***
-        parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
-        if parent_state.remaining_ids_to_process.len() == 0 {
-            manager.forget_state(next_to_process.state_id);
-        } else {
-            manager.remember_state(next_to_process.state_id,parent_state);
-        }
-        // ***
     }
     // ***
     manager.term_loggers(Some((&goal,&global_verdict)) );
