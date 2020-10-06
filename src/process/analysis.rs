@@ -35,7 +35,7 @@ pub fn analyze(interaction : Interaction,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
-               priorities : ProcessPriorities,
+               frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
                sem_kind: SemanticKind,
                goal:GlobalVerdict) -> GlobalVerdict {
@@ -47,7 +47,7 @@ pub fn analyze(interaction : Interaction,
                                                pre_filters,
                                                HashMap::new(),
                                                ProcessQueue::new(),
-                                               priorities,
+                                               frontier_priorities,
                                                loggers);
     // ***
     let multi_trace_option = Some(multi_trace);

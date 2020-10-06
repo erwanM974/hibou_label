@@ -34,7 +34,7 @@ pub fn explore(interaction : Interaction,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
-               priorities : ProcessPriorities,
+               frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>) {
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
@@ -43,7 +43,7 @@ pub fn explore(interaction : Interaction,
                                                pre_filters,
                                                HashMap::new(),
                                                ProcessQueue::new(),
-                                               priorities,
+                                               frontier_priorities,
                                                loggers);
     // ***
     manager.init_loggers(&interaction,&None);

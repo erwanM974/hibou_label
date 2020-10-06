@@ -44,7 +44,7 @@ pub struct HibouOptions {
     pub pre_filters : Vec<HibouPreFilter>,
     pub sem_kind : Option<SemanticKind>,
     pub goal : Option<GlobalVerdict>,
-    pub priorities : ProcessPriorities
+    pub frontier_priorities : ProcessPriorities
 }
 
 
@@ -55,8 +55,8 @@ impl HibouOptions {
                pre_filters : Vec<HibouPreFilter>,
                sem_kind : Option<SemanticKind>,
                goal:Option<GlobalVerdict>,
-               priorities : ProcessPriorities) -> HibouOptions {
-        return HibouOptions{loggers,strategy,pre_filters,sem_kind,goal,priorities};
+               frontier_priorities : ProcessPriorities) -> HibouOptions {
+        return HibouOptions{loggers,strategy,pre_filters,sem_kind,goal,frontier_priorities};
     }
 
     pub fn default_explore() -> HibouOptions {
@@ -65,7 +65,7 @@ impl HibouOptions {
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
             sem_kind:None,
             goal:None,
-            priorities:ProcessPriorities::new(0,0,0)};
+            frontier_priorities:ProcessPriorities::new(0,0,0)};
     }
 
     pub fn default_analyze() -> HibouOptions {
@@ -74,7 +74,7 @@ impl HibouOptions {
             pre_filters:Vec::new(),
             sem_kind:Some(SemanticKind::Prefix),
             goal:Some(GlobalVerdict::Pass),
-            priorities:ProcessPriorities::new(0,0,0)};
+            frontier_priorities:ProcessPriorities::new(0,0,0)};
     }
 }
 
@@ -86,14 +86,14 @@ enum LoggerKinds {
 pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
     let mut loggers : Vec<Box<dyn ProcessLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
-    let mut priorities = ProcessPriorities::new(0,0,0);
+    let mut frontier_priorities = ProcessPriorities::new(0,0,0);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
     let mut semantics : Option<SemanticKind> = None;
     let mut goal : Option<GlobalVerdict> = None;
     // ***
     let mut got_loggers   : bool = false;
     let mut got_strategy  : bool = false;
-    let mut got_priorities : bool = false;
+    let mut got_frontier_priorities : bool = false;
     let mut got_pre_filters : bool = false;
     let mut got_semantics : bool = false;
     let mut got_goal : bool = false;
@@ -160,11 +160,11 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     }
                 }
             },
-            Rule::OPTION_PRIORITIES_DECL => {
-                if got_priorities {
-                    return Err( HibouParsingError::HsfSetupError("several 'priorities=X' declared in the same '@X_option' section".to_string()));
+            Rule::OPTION_FRONTIER_PRIORITIES_DECL => {
+                if got_frontier_priorities {
+                    return Err( HibouParsingError::HsfSetupError("several 'frontier_priorities=X' declared in the same '@X_option' section".to_string()));
                 }
-                got_priorities = true;
+                got_frontier_priorities = true;
                 // ***
                 for priority_pair in option_decl_pair.into_inner() {
                     let mut priority_contents = priority_pair.into_inner();
@@ -176,13 +176,13 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     // ***
                     match priority_kind_pair.as_rule() {
                         Rule::OPTION_PRIORITTY_emission => {
-                            priorities.emission = priority_level;
+                            frontier_priorities.emission = priority_level;
                         },
                         Rule::OPTION_PRIORITTY_reception => {
-                            priorities.reception = priority_level;
+                            frontier_priorities.reception = priority_level;
                         },
                         Rule::OPTION_PRIORITY_loop => {
-                            priorities.in_loop = priority_level;
+                            frontier_priorities.in_loop = priority_level;
                         },
                         _ => {
                             panic!("what rule then ? : {:?}", priority_kind_pair.as_rule() );
@@ -286,10 +286,10 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                 }
             }
             // ***
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,Some(ana_sem), Some(ana_goal),priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,Some(ana_sem), Some(ana_goal),frontier_priorities) );
         },
         _ => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, None,priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, None,frontier_priorities) );
         }
     }
 }

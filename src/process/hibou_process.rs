@@ -70,51 +70,28 @@ impl NextToProcess {
 }
 
 pub struct ProcessQueue {
-    queues : HashMap<i32,Vec<NextToProcess>>
+    queue : Vec<NextToProcess>
 }
 
 impl ProcessQueue {
     pub fn new() -> ProcessQueue {
-        return ProcessQueue{queues:HashMap::new()}
+        return ProcessQueue{queue:Vec::new()}
     }
 
-    pub fn insert_item_left(&mut self,node:NextToProcess,priority:i32) {
-        match self.queues.get_mut(&priority) {
-            None => {
-                self.queues.insert(priority,vec![node]);
-            },
-            Some( queue ) => {
-                queue.insert(0,node);
-            }
-        }
+    pub fn insert_item_left(&mut self,node:NextToProcess) {
+        self.queue.insert(0,node);
     }
 
-    pub fn insert_item_right(&mut self,node:NextToProcess,priority:i32) {
-        match self.queues.get_mut(&priority) {
-            None => {
-                self.queues.insert(priority,vec![node]);
-            },
-            Some( queue ) => {
-                queue.push(node);
-            }
-        }
+    pub fn insert_item_right(&mut self,node:NextToProcess) {
+        self.queue.push(node);
     }
 
     pub fn get_next(&mut self) -> Option<NextToProcess> {
-        let mut keys : Vec<i32> = self.queues.keys().cloned().collect();
-        keys.sort_by_key(|k| Reverse(*k));
-        for k in keys {
-            match self.queues.get_mut(&k) {
-                None => {},
-                Some( queue ) => {
-                    if queue.len() > 0 {
-                        let next = queue.remove(0);
-                        return Some(next);
-                    }
-                }
-            }
+        if self.queue.len() > 0 {
+            return Some( self.queue.remove(0) );
+        } else {
+            return None;
         }
-        return None;
     }
 
 }

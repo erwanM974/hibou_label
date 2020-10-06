@@ -132,7 +132,7 @@ pub fn hibou_cli() -> i32 {
                         gen_ctx,
                         hoptions.pre_filters,
                         hoptions.strategy,
-                        hoptions.priorities,
+                        hoptions.frontier_priorities,
                         hoptions.loggers);
             }
         }
@@ -164,7 +164,7 @@ pub fn hibou_cli() -> i32 {
                                               gen_ctx,
                                               hoptions.pre_filters,
                                               hoptions.strategy,
-                                              hoptions.priorities,
+                                              hoptions.frontier_priorities,
                                               hoptions.loggers,
                                               hoptions.sem_kind.unwrap(),
                                               hoptions.goal.unwrap());

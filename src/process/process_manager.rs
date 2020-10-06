@@ -13,7 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 use std::collections::HashMap;
+use std::cmp::Reverse;
 
 use crate::core::general_context::GeneralContext;
 
@@ -83,7 +85,7 @@ pub struct HibouProcessManager {
     memorized_states : HashMap<u32,MemorizedState>,
     process_queue : ProcessQueue,
     // ***
-    priorities : ProcessPriorities,
+    frontier_priorities : ProcessPriorities,
     // ***
     loggers : Vec<Box<dyn ProcessLogger>>
 }
@@ -95,10 +97,10 @@ impl HibouProcessManager {
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
                process_queue : ProcessQueue,
-               priorities : ProcessPriorities,
+               frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>
     ) -> HibouProcessManager {
-        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,priorities,loggers};
+        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,frontier_priorities,loggers};
     }
 
     pub fn get_options_as_strings(&self,goal_and_verdict:Option<(&GlobalVerdict,&GlobalVerdict)>) -> Vec<String> {
@@ -115,7 +117,7 @@ impl HibouProcessManager {
             }
         }
         options_str.push( format!("strategy={}", &self.strategy.to_string()) );
-        options_str.push( format!("priorities=[{}]", &self.priorities.to_string()) );
+        options_str.push( format!("frontier_priorities=[{}]", &self.frontier_priorities.to_string()) );
         {
             let mut rem_filter = self.pre_filters.len();
             let mut filters_str = "filters=[".to_string();
@@ -205,16 +207,63 @@ impl HibouProcessManager {
     }
 
     pub fn enqueue_executions(&mut self, state_id : u32, to_enqueue : Vec<(u32,NextToProcessKind)>) {
+        let mut to_enqueue_reorganize : HashMap<i32,Vec<(u32,NextToProcessKind)>> = HashMap::new();
+        for (child_id,child_kind) in to_enqueue {
+            match &child_kind {
+                &NextToProcessKind::Execute( ref front_pos ) => {
+                    let mut priority : i32 = 0;
+                    // ***
+                    let parent_state = self.get_memorized_state(state_id).unwrap();
+                    let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
+                    match front_act.act_kind {
+                        ObservableActionKind::Reception => {
+                            priority = priority + self.frontier_priorities.reception;
+                        },
+                        ObservableActionKind::Emission(_) => {
+                            priority = priority + self.frontier_priorities.emission;
+                        }
+                    }
+                    let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
+                    if loop_depth > 0 {
+                        priority = priority + self.frontier_priorities.in_loop;
+                    }
+                    // ***
+                    match to_enqueue_reorganize.get_mut(&priority) {
+                        None => {
+                            to_enqueue_reorganize.insert(priority,vec![ (child_id,child_kind) ]);
+                        },
+                        Some( queue ) => {
+                            queue.push((child_id,child_kind) );
+                        }
+                    }
+                    // ***
+                }
+            }
+        }
+        // ***
+        let mut to_enqueue_reorganized : Vec<(u32,NextToProcessKind)> = Vec::new();
+        {
+            let mut keys : Vec<i32> = to_enqueue_reorganize.keys().cloned().collect();
+            keys.sort_by_key(|k| Reverse(*k));
+            for k in keys {
+                match to_enqueue_reorganize.get_mut(&k) {
+                    None => {},
+                    Some( queue ) => {
+                        to_enqueue_reorganized.append( queue );
+                    }
+                }
+            }
+        }
+        // ***
         match &self.strategy {
             &HibouSearchStrategy::DFS => {
-                let mut to_enqueue = to_enqueue;
-                to_enqueue.reverse();
-                for (child_id,child_kind) in to_enqueue {
+                to_enqueue_reorganized.reverse();
+                for (child_id,child_kind) in to_enqueue_reorganized {
                     self.enqueue_child_node(state_id,child_id,child_kind);
                 }
             },
             &HibouSearchStrategy::BFS => {
-                for (child_id,child_kind) in to_enqueue {
+                for (child_id,child_kind) in to_enqueue_reorganized {
                     self.enqueue_child_node(state_id,child_id,child_kind);
                 }
             }
@@ -222,33 +271,13 @@ impl HibouProcessManager {
     }
 
     fn enqueue_child_node(&mut self,state_id: u32,child_id:u32,child_kind:NextToProcessKind) {
-        let mut priority : i32 = 0;
-        match &child_kind {
-            &NextToProcessKind::Execute( ref front_pos ) => {
-                let parent_state = self.get_memorized_state(state_id).unwrap();
-                let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
-                match front_act.act_kind {
-                    ObservableActionKind::Reception => {
-                        priority = priority + self.priorities.reception;
-                    },
-                    ObservableActionKind::Emission(_) => {
-                        priority = priority + self.priorities.emission;
-                    }
-                }
-                let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
-                if loop_depth > 0 {
-                    priority = priority + self.priorities.in_loop;
-                }
-            }
-        }
-        // ***
         let child = NextToProcess::new(state_id,child_id,child_kind);
         match &(self.strategy) {
             &HibouSearchStrategy::DFS => {
-                self.process_queue.insert_item_left(child, priority);
+                self.process_queue.insert_item_left(child);
             },
             &HibouSearchStrategy::BFS => {
-                self.process_queue.insert_item_right(child, priority);
+                self.process_queue.insert_item_right(child);
             }
         }
     }
