@@ -2,7 +2,6 @@
     loggers = [graphic=svg];
     semantics = prefix;
     strategy = DFS;
-    priorities = [reception=1];
     goal = Pass
 }
 @message{

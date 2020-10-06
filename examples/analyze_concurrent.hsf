@@ -1,5 +1,5 @@
 @analyze_option{
-    strategy = BFS;
+    strategy = DFS;
     loggers = [graphic=svg];
     semantics = accept;
     priorities = [reception=1]

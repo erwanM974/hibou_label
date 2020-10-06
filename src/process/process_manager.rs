@@ -243,7 +243,14 @@ impl HibouProcessManager {
         }
         // ***
         let child = NextToProcess::new(state_id,child_id,child_kind);
-        self.process_queue.insert_item_left(child,priority);
+        match &(self.strategy) {
+            &HibouSearchStrategy::DFS => {
+                self.process_queue.insert_item_left(child, priority);
+            },
+            &HibouSearchStrategy::BFS => {
+                self.process_queue.insert_item_right(child, priority);
+            }
+        }
     }
 
     pub fn process_next(&mut self,
