@@ -379,7 +379,59 @@ once the goal verdict (or a verdict that is stronger) is reached.
 
 <img src="./README_images/ana_glotrace_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
 
+#### Example 3
 
+The child nodes of a given couple (interaction,multi-trace) correspond to the execution of a
+frontier action of the interaction which match a head action of a trace component of the multi-trace.
+The default order in which those matches are exploited is that of the lexicographic order of the positions of the 
+matching frontier actions within the interaction.
+
+For instance, if there are matches at positions 11, 12, 21 and 22 of the interaction, the the child nodes will be explored
+in that order.
+
+However, we can reorganize the order with which the matches (and therefore frontier) are explored. To do so, we use
+the "frontier_priorities" option, for instance, as follows:
+
+```
+@analyze_option{
+    semantics = accept;
+    strategy = DFS;
+    loggers = [graphic=svg];
+    goal = Pass;
+    frontier_priorities = [reception=1]
+}
+```
+
+Here we prioritize the evaluation of receptions found in the frontier. 
+For instance if the matches are at positions 11 and 12 but the action at position 11 is an emission whereas the action
+at position 12 is a reception, then, with those options, the match at position 12 will be exploited before the one
+at position 11.
+
+Below is illustrated the analysis of a multi-trace using a DFS strategy while prioritizing the evaluation of receptions
+in the frontier.
+
+<img src="./README_images/example_priority_2_dfs_1reception.svg" alt="example prioritizing receptions" width="600">
+
+If we had not prioritized receptions, we would have had the following (still using DFS):
+
+<img src="./README_images/example_priority_2_dfs_none.svg" alt="example prioritizing nothing" width="800">
+
+Prioritizing the evaluation of certain frontier actions may be advantageous (so as to find more quickly
+a path that consumes the multi-trace) in certain cases. 
+In this case, the model contains a repeating pattern (with a loop),
+which beginning can, at each iteration be interpreted differently in the model.
+Here, prioritizing receptions (in this case, it would be the same as de-prioritizing actions in loops with 
+``frontier_priorities = [loop=-1]``), makes so that the analysis prefers to "finish" the evaluation of an instance of a loop
+before instantiating another one.
+
+The gain in "performances" can be assessed using the number of nodes necessary to obtain the "Pass" verdict (i.e. finding a "Cov" node).
+Below is a table giving this number of nodes for respectively 1, 2, 3 and 4 repetition of the behavior (a!m,c?m)
+and for cases where no action are prioritized (first row) and receptions are prioritized (second row).
+
+|             | 1 | 2  | 3  | 4  |
+|-------------|---|----|----|----|
+| no          | 4 | 12 | 39 |145 |
+| reception=1 | 4 | 10 | 27 | 89 |
 
 ## Explore
 

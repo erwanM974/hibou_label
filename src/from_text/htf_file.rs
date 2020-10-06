@@ -124,12 +124,22 @@ pub fn trace_canal_from_pair(trace_pair : Pair<Rule>,
         Some( first_pair ) => {
             match first_pair.as_rule() {
                 Rule::CANAL_ANY => {
-                    inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, true);
+                    match inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, true) {
+                        Err(e) => {
+                            return Err(e);
+                        },
+                        Ok(_) => {}
+                    }
                 },
                 Rule::CANAL_ALL => {
                     let all_lfs : HashSet<usize> = HashSet::from_iter((0..gen_ctx.get_lf_num()).collect::<Vec<usize>>().iter().cloned());
                     lifelines = all_lfs;
-                    inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, true);
+                    match inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, true) {
+                        Err(e) => {
+                            return Err(e);
+                        },
+                        Ok(_) => {}
+                    }
                 },
                 Rule::CANAL_LIFELINES => {
                     for trace_lf_pair in first_pair.into_inner() {
@@ -143,7 +153,12 @@ pub fn trace_canal_from_pair(trace_pair : Pair<Rule>,
                             }
                         }
                     }
-                    inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, false);
+                    match inner_trace_from_pairs(&mut content,gen_ctx,unavailable_lifelines,&mut trace, &mut lifelines, false) {
+                        Err(e) => {
+                            return Err(e);
+                        },
+                        Ok(_) => {}
+                    }
                 },
                 _ => {
                     panic!("what rule then ? : {:?}", first_pair.as_rule() );
