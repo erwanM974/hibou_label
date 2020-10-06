@@ -2,13 +2,11 @@
 
 hibou_label.exe draw building_blocks.hsf
 
-hibou_label.exe analyze simple_loop.hsf simple_loop.htf
-
 hibou_label.exe analyze example_for_analysis.hsf mutrace.htf
 
 hibou_label.exe analyze example_for_analysis.hsf glotrace.htf
 
-hibou_label.exe analyze analyze_concurrent.hsf muconcurrent.htf
+hibou_label.exe analyze example_priority.hsf example_priority_2.htf
 
 hibou_label.exe explore example_for_exploration_1.hsf
 

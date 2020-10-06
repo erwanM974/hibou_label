@@ -1,7 +1,8 @@
 @analyze_option{
+    semantics = accept;
     strategy = DFS;
     loggers = [graphic=svg];
-    semantics = accept;
+    goal = Pass;
     frontier_priorities = [reception=1]
 }
 @message{
@@ -12,12 +13,11 @@
     b;
     c
 }
-loop_par(
-    alt(
-        a -- m -> b,
+par(
+    loop_seq(
+        a -- m -> b
+    ),
+    loop_seq(
         a -- m -> c
     )
 )
-
-
-

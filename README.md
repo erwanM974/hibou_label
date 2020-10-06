@@ -386,7 +386,7 @@ frontier action of the interaction which match a head action of a trace componen
 The default order in which those matches are exploited is that of the lexicographic order of the positions of the 
 matching frontier actions within the interaction.
 
-For instance, if there are matches at positions 11, 12, 21 and 22 of the interaction, the the child nodes will be explored
+For instance, if there are matches at positions 11, 12, 21 and 22 of the interaction, then the child nodes will be explored
 in that order.
 
 However, we can reorganize the order with which the matches (and therefore frontier) are explored. To do so, we use
@@ -432,6 +432,8 @@ and for cases where no action are prioritized (first row) and receptions are pri
 |-------------|---|----|----|----|
 | no          | 4 | 12 | 39 |145 |
 | reception=1 | 4 | 10 | 27 | 89 |
+
+The model file ("example_priority.hsf") and trace file ("example_priority_2.htf") for this example are also in the "examples" folder.
 
 ## Explore
 
