@@ -1,0 +1,19 @@
+// Example commands to run
+
+./hibou_label draw building_blocks.hsf
+
+./hibou_label analyze example_for_analysis.hsf mutrace.htf
+
+./hibou_label analyze example_for_analysis.hsf glotrace.htf
+
+./hibou_label analyze example_priority_dfs_no.hsf example_priority_2.htf
+
+./hibou_label analyze example_priority_dfs.hsf example_priority_2.htf
+
+./hibou_label analyze example_priority_bfs.hsf example_priority_2.htf
+
+./hibou_label analyze example_priority_gfs.hsf example_priority_2.htf
+
+./hibou_label explore example_for_exploration_1.hsf
+
+./hibou_label explore example_for_exploration_2.hsf
