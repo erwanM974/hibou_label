@@ -487,7 +487,7 @@ Here we used the following options for the exploration:
 
 ```
 @explore_option{
-    strategy = DFS;
+    strategy = DepthFS;
     loggers = [graphic=svg];
     pre_filters = [ max_depth = 3, 
                     max_loop_depth = 1, 
