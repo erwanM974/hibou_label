@@ -104,9 +104,6 @@
 <symbol overflow="visible" id="glyph1-29">
 <path style="stroke:none;" d="M 9 4 L 0 4 L 0 3 L 9 3 Z M 9 4 "/>
 </symbol>
-<symbol overflow="visible" id="glyph1-30">
-<path style="stroke:none;" d="M 1 -5 L 5 -5 L 5 -3 L 1 -3 Z M 1 -5 "/>
-</symbol>
 </g>
 <clipPath id="clip1">
   <path d="M 0 1740 L 897.5 1740 L 897.5 0 L 0 0 Z M 0 1740 "/>
@@ -270,7 +267,7 @@
   <use xlink:href="#glyph1-3" x="786.25" y="136.398438"/>
   <use xlink:href="#glyph1-9" x="795.25" y="136.398438"/>
   <use xlink:href="#glyph1-7" x="804.25" y="136.398438"/>
-  <use xlink:href="#glyph1-24" x="814.75" y="136.398438"/>
+  <use xlink:href="#glyph1-26" x="814.75" y="136.398438"/>
   <use xlink:href="#glyph1-25" x="823.75" y="136.398438"/>
   <use xlink:href="#glyph1-10" x="828.25" y="136.398438"/>
   <use xlink:href="#glyph1-3" x="832.75" y="136.398438"/>
@@ -330,9 +327,8 @@
   <use xlink:href="#glyph1-3" x="754" y="156.398438"/>
   <use xlink:href="#glyph1-1" x="763" y="156.398438"/>
   <use xlink:href="#glyph1-7" x="772" y="156.398438"/>
-  <use xlink:href="#glyph1-30" x="782.5" y="156.398438"/>
-  <use xlink:href="#glyph1-24" x="788.5" y="156.398438"/>
-  <use xlink:href="#glyph1-27" x="797.5" y="156.398438"/>
+  <use xlink:href="#glyph1-26" x="782.5" y="156.398438"/>
+  <use xlink:href="#glyph1-27" x="791.5" y="156.398438"/>
 </g>
 <g style="fill:rgb(0%,0%,0%);fill-opacity:1;">
   <use xlink:href="#glyph1-28" x="419.5" y="176.398438"/>

@@ -435,16 +435,15 @@ and for cases where no action are prioritized (first row) and receptions are pri
 
 #### Example showcasing Greedy Best First Search
 
-In addition to the classical Breadth First Search and Depth First Search strategies, we propose a Greedy Best First Search strategy, 
+In addition to the classical Breadth First Search and Depth First Search strategies, we experimented with a Greedy Best First Search strategy, 
 which use can be specified and tweaked in the options with, for instance: 
 
 ```
 @analyze_option{
     semantics = accept;
-    strategy = GreedyBestFS[reception=1];
+    strategy = GreedyBestFS[step=1];
     loggers = [graphic=svg];
-    goal = Pass;
-    frontier_priorities = [loop=-1]
+    goal = Pass
 }
 ```
 
@@ -458,22 +457,32 @@ Priority levels are computed according to the user-defined numbers set between t
 For instance, if we set ``strategy = GreedyBestFS[step=0,emission=1,loop=-2]``, then the evaluation of actions that are emissions 
 and that exist within a loop will be 1+(-2)= -1. Those of emissions outside loops will be 1 and those of receptions outside loops will be 0.
 You may notice that we have an additional kind of priority which is the ``step`` priority. 
-By default, ``step=1`` (and the others are set to 0), which means that a next node of depth (distance to initial interaction) "d" will have a "d*1 = d" priority level.
+By default, ``step=1`` (and the others are set to 0), which means that a next node of depth 
+(distance to initial interaction) "d" will have a "d*1 = d" priority level.
 
 Below is given tha analysis of the same multi-trace as the previous example, on the same interaction, but this time using our custom
 GreedyBestFS strategy.
 
 <img src="./README_images/example_priority_gfs.svg" alt="example prioritizing nothing" width="600">
 
-The gain in "performances" is quite clear.
-Below is a table giving this number of nodes for respectively 1, 2, 3 and 4 repetition of the behavior (a!m,c?m)
+We can observe that in this precise case (interaction and multi-trace), the gain in "performances" is quite clear.
+Below is a table giving the number of nodes explored for respectively 1, 2, 3 and 4 repetition of the behavior (a!m,c?m)
 and for different uses of our proposed search heuristics.
 
-|                            | 1 | 2  | 3  | 4  |
-|----------------------------|---|----|----|----|
-| BreadthFS with priorities  | 4 | 14 | 56 |244 |
-| DepthFS with priorities    | 4 | 10 | 27 | 89 |
-| Custom GreedyBestFS        | 3 |  5 |  7 |  9 |
+|                                                   | 1 | 2  | 3  | 4  |
+|---------------------------------------------------|---|----|----|----|
+| BreadthFS with reception=1 as frontier priorities | 4 | 14 | 56 |244 |
+| DepthFS with reception=1 as frontier priorities   | 4 | 10 | 27 | 89 |
+| GreedyBestFS with step=1 as strategy              | 3 |  5 |  7 |  9 |
+
+Although it may be impressive in this example, the GreedyBestFS (with or without the use of frontier priorities) is not, 
+in the general case, more efficient than a DepthFS with frontier priorities.
+
+In facts, with "depth=1" and no frontier priorities, GreedyBestFS only "reverses" the frontier (compared with DepthFS with no frontier priorities)
+i.e. it prioritizes the evaluation of actions that are farther
+(in the lexicographic order of positions) in the interaction term.
+
+
 
 ## Explore
 

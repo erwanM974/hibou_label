@@ -1,9 +1,8 @@
 @analyze_option{
     semantics = accept;
-    strategy = GreedyBestFS[reception=1];
+    strategy = GreedyBestFS[step=1];
     loggers = [graphic=svg];
-    goal = Pass;
-    frontier_priorities = [loop=-1]
+    goal = Pass
 }
 @message{
     m
