@@ -478,7 +478,7 @@ and for different uses of our proposed search heuristics.
 Although it may be impressive in this example, the GreedyBestFS (with or without the use of frontier priorities) is not, 
 in the general case, more efficient than a DepthFS with frontier priorities.
 
-In facts, with "depth=1" and no frontier priorities, GreedyBestFS only "reverses" the frontier (compared with DepthFS with no frontier priorities)
+In facts, with "step=1" (others to 0) and no frontier priorities, GreedyBestFS only "reverses" the frontier (compared with DepthFS with no frontier priorities)
 i.e. it prioritizes the evaluation of actions that are farther
 (in the lexicographic order of positions) in the interaction term.
 
@@ -488,6 +488,11 @@ so the algorithm doesn't explore those "dead-ends".
 
 If we considered a multi-trace with a repetition of the (a!m,b?m) behavior, the situation (w.r.t. the respective performances of GreedyBestFS and DepthFS)
 would be reversed.
+
+With "step=0" (others to 0), GreedyBestFS is equivalent to BreadthFirstSearch.
+
+To summarize, GreedyBestFS can be considered to be another implementation of a search strategy 
+that includes the possible combinations of BreadthFS and DepthFS with frontier priorities.
 
 ## Explore
 
