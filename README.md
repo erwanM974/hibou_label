@@ -460,7 +460,7 @@ You may notice that we have an additional kind of priority which is the ``step``
 By default, ``step=1`` (and the others are set to 0), which means that a next node of depth 
 (distance to initial interaction) "d" will have a "d*1 = d" priority level.
 
-Below is given tha analysis of the same multi-trace as the previous example, on the same interaction, but this time using our custom
+Below is given the analysis of the same multi-trace as the previous example, on the same interaction, but this time using our custom
 GreedyBestFS strategy.
 
 <img src="./README_images/example_priority_gfs.svg" alt="example prioritizing nothing" width="600">
@@ -482,7 +482,12 @@ In facts, with "depth=1" and no frontier priorities, GreedyBestFS only "reverses
 i.e. it prioritizes the evaluation of actions that are farther
 (in the lexicographic order of positions) in the interaction term.
 
+This is why in this particular example, GreedyBestFS is more efficient than DepthFS ("sheer luck"). 
+Indeed, the matching of "a!m" with the trigger action of "a -- m -> c" is done before that with "a -- m -> b" 
+so the algorithm doesn't explore those "dead-ends".
 
+If we considered a multi-trace with a repetition of the (a!m,b?m) behavior, the situation (w.r.t. the respective performances of GreedyBestFS and DepthFS)
+would be reversed.
 
 ## Explore
 
