@@ -28,7 +28,8 @@ use crate::core::semantics::frontier::make_frontier;
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
 use crate::process::process_manager::*;
-
+use crate::process::queue::*;
+use crate::process::priorities::ProcessPriorities;
 
 pub fn analyze(interaction : Interaction,
                multi_trace : AnalysableMultiTrace,
@@ -38,7 +39,7 @@ pub fn analyze(interaction : Interaction,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
                sem_kind: SemanticKind,
-               goal:GlobalVerdict) -> GlobalVerdict {
+               goal:GlobalVerdict) -> (GlobalVerdict,u32) {
     // ***
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
@@ -46,7 +47,7 @@ pub fn analyze(interaction : Interaction,
                                                Some(sem_kind),
                                                pre_filters,
                                                HashMap::new(),
-                                               ProcessQueue::new(),
+                                               Box::new(SimpleProcessQueue::new()),
                                                frontier_priorities,
                                                loggers);
     // ***
@@ -113,7 +114,7 @@ pub fn analyze(interaction : Interaction,
     // ***
     manager.term_loggers(Some((&goal,&global_verdict)) );
     // ***
-    return global_verdict;
+    return (global_verdict,node_counter);
 }
 
 fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
@@ -145,7 +146,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
         let rem_child_ids : HashSet<u32> = HashSet::from_iter((1..(next_child_id+1)).collect::<Vec<u32>>().iter().cloned() );
         let memo_state = MemorizedState::new(interaction,Some(multi_trace),rem_child_ids, loop_depth, depth);
         manager.remember_state( state_id, memo_state );
-        manager.enqueue_executions(state_id,to_enqueue);
+        manager.enqueue_executions(state_id,to_enqueue,depth);
         return None;
     } else {
         let verdict = manager.get_coverage_verdict(&interaction,&multi_trace);

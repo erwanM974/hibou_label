@@ -128,12 +128,14 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("of interaction from file '{}'",hsf_file_path) );
                 ret_print.push( "".to_string());
                 // ***
-                explore(my_int,
+                let node_count = explore(my_int,
                         gen_ctx,
                         hoptions.pre_filters,
                         hoptions.strategy,
                         hoptions.frontier_priorities,
                         hoptions.loggers);
+
+                ret_print.push( format!("node count : {:?}", node_count ) );
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("analyze") {
@@ -159,7 +161,7 @@ pub fn hibou_cli() -> i32 {
                         ret_print.push( format!("from file '{}'",hsf_file_path) );
                         ret_print.push( "".to_string());
 
-                        let verdict = analyze(my_int,
+                        let (verdict,node_count) = analyze(my_int,
                                               multi_trace,
                                               gen_ctx,
                                               hoptions.pre_filters,
@@ -169,7 +171,8 @@ pub fn hibou_cli() -> i32 {
                                               hoptions.sem_kind.unwrap(),
                                               hoptions.goal.unwrap());
 
-                        ret_print.push( format!("verdict: '{}'", verdict.to_string() ) );
+                        ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );
+                        ret_print.push( format!("node count : {:?}", node_count ) );
                     }
                 }
             }

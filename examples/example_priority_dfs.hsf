@@ -1,6 +1,6 @@
 @analyze_option{
     semantics = accept;
-    strategy = DFS;
+    strategy = DepthFS;
     loggers = [graphic=svg];
     goal = Pass;
     frontier_priorities = [reception=1]

@@ -27,7 +27,7 @@ use crate::core::semantics::frontier::make_frontier;
 use crate::core::semantics::execute::execute;
 use crate::process::verdicts::CoverageVerdict;
 
-
+use crate::process::priorities::ProcessPriorities;
 
 
 #[derive(Clone, PartialEq, Debug)]
@@ -67,33 +67,6 @@ impl NextToProcess {
                kind : NextToProcessKind) -> NextToProcess {
         return NextToProcess{state_id,id_as_child,kind};
     }
-}
-
-pub struct ProcessQueue {
-    queue : Vec<NextToProcess>
-}
-
-impl ProcessQueue {
-    pub fn new() -> ProcessQueue {
-        return ProcessQueue{queue:Vec::new()}
-    }
-
-    pub fn insert_item_left(&mut self,node:NextToProcess) {
-        self.queue.insert(0,node);
-    }
-
-    pub fn insert_item_right(&mut self,node:NextToProcess) {
-        self.queue.push(node);
-    }
-
-    pub fn get_next(&mut self) -> Option<NextToProcess> {
-        if self.queue.len() > 0 {
-            return Some( self.queue.remove(0) );
-        } else {
-            return None;
-        }
-    }
-
 }
 
 
@@ -144,17 +117,21 @@ impl std::string::ToString for FilterEliminationKind {
 
 pub enum HibouSearchStrategy {
     BFS,
-    DFS
+    DFS,
+    GFS(ProcessPriorities)
 }
 
 impl std::string::ToString for HibouSearchStrategy {
     fn to_string(&self) -> String {
         match self {
             HibouSearchStrategy::BFS => {
-                return "Breadth First Search".to_string();
+                return "BreadthFS".to_string();
             },
             HibouSearchStrategy::DFS => {
-                return "Depth First Search".to_string();
+                return "DepthFS".to_string();
+            },
+            HibouSearchStrategy::GFS(ref pp) => {
+                return format!("GreedyBestFS[{:}]", &pp.to_string());
             }
         }
     }

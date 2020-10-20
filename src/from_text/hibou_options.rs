@@ -35,7 +35,7 @@ use crate::rendering::process::graphic_logger::{GraphicProcessLoggerKind,Graphic
 use crate::process::hibou_process::*;
 use crate::from_text::hsf_file::ProcessKind;
 
-use crate::process::process_manager::ProcessPriorities;
+use crate::process::priorities::ProcessPriorities;
 use crate::process::verdicts::GlobalVerdict;
 
 pub struct HibouOptions {
@@ -65,7 +65,7 @@ impl HibouOptions {
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
             sem_kind:None,
             goal:None,
-            frontier_priorities:ProcessPriorities::new(0,0,0)};
+            frontier_priorities:ProcessPriorities::new(0,0,0, None)};
     }
 
     pub fn default_analyze() -> HibouOptions {
@@ -74,7 +74,7 @@ impl HibouOptions {
             pre_filters:Vec::new(),
             sem_kind:Some(SemanticKind::Prefix),
             goal:Some(GlobalVerdict::Pass),
-            frontier_priorities:ProcessPriorities::new(0,0,0)};
+            frontier_priorities:ProcessPriorities::new(0,0,0, None)};
     }
 }
 
@@ -83,10 +83,44 @@ enum LoggerKinds {
     graphic
 }
 
+fn parse_priorities(priority_pair : Pair<Rule>,
+                    pp : &mut ProcessPriorities,
+                    frontier_pp : bool) -> Result<(),HibouParsingError> {
+    let mut priority_contents = priority_pair.into_inner();
+    let priority_kind_pair = priority_contents.next().unwrap();
+    // ***
+    let priority_level_pair = priority_contents.next().unwrap();
+    let priority_level_str : String = priority_level_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+    let priority_level : i32 = priority_level_str.parse::<i32>().unwrap();
+    // ***
+    match priority_kind_pair.as_rule() {
+        Rule::OPTION_PRIORITY_emission => {
+            pp.emission = priority_level;
+        },
+        Rule::OPTION_PRIORITY_reception => {
+            pp.reception = priority_level;
+        },
+        Rule::OPTION_PRIORITY_loop => {
+            pp.in_loop = priority_level;
+        },
+        Rule::OPTION_PRIORITY_step => {
+            if frontier_pp {
+                return Err( HibouParsingError::ProcessPriorityError("cannot specify \"step\" in frontier priorities".to_string()) );
+            } else {
+                pp.step = Some( priority_level );
+            }
+        }
+        _ => {
+            panic!("what rule then ? : {:?}", priority_kind_pair.as_rule() );
+        }
+    }
+    return Ok(());
+}
+
 pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
     let mut loggers : Vec<Box<dyn ProcessLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
-    let mut frontier_priorities = ProcessPriorities::new(0,0,0);
+    let mut frontier_priorities = ProcessPriorities::new(0,0,0, None);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
     let mut semantics : Option<SemanticKind> = None;
     let mut goal : Option<GlobalVerdict> = None;
@@ -155,6 +189,25 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     Rule::OPTION_STRATEGY_DFS => {
                         strategy = HibouSearchStrategy::DFS;
                     },
+                    Rule::OPTION_STRATEGY_GFS => {
+                        let mut gfs_priorities = ProcessPriorities::new(0,0,0,Some(1));
+                        match strategy_pair.into_inner().next() {
+                            None => {},
+                            Some(gfs_opts_pair) => {
+                                match gfs_opts_pair.as_rule() {
+                                    Rule::OPTION_STRATEGY_GFS_opts => {
+                                        for priority_pair in gfs_opts_pair.into_inner() {
+                                            parse_priorities(priority_pair,&mut gfs_priorities,false);
+                                        }
+                                    },
+                                    _ => {
+                                        panic!("what rule then ? : {:?}", gfs_opts_pair.as_rule() );
+                                    }
+                                }
+                            }
+                        }
+                        strategy = HibouSearchStrategy::GFS(gfs_priorities);
+                    },
                     _ => {
                         panic!("what rule then ? : {:?}", strategy_pair.as_rule() );
                     }
@@ -167,27 +220,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                 got_frontier_priorities = true;
                 // ***
                 for priority_pair in option_decl_pair.into_inner() {
-                    let mut priority_contents = priority_pair.into_inner();
-                    let priority_kind_pair = priority_contents.next().unwrap();
-                    // ***
-                    let priority_level_pair = priority_contents.next().unwrap();
-                    let priority_level_str : String = priority_level_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
-                    let priority_level : i32 = priority_level_str.parse::<i32>().unwrap();
-                    // ***
-                    match priority_kind_pair.as_rule() {
-                        Rule::OPTION_PRIORITTY_emission => {
-                            frontier_priorities.emission = priority_level;
-                        },
-                        Rule::OPTION_PRIORITTY_reception => {
-                            frontier_priorities.reception = priority_level;
-                        },
-                        Rule::OPTION_PRIORITY_loop => {
-                            frontier_priorities.in_loop = priority_level;
-                        },
-                        _ => {
-                            panic!("what rule then ? : {:?}", priority_kind_pair.as_rule() );
-                        }
-                    }
+                    parse_priorities(priority_pair,&mut frontier_priorities,true);
                 }
             },
             Rule::OPTION_PREFILTERS_DECL => {

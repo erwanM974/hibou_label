@@ -1,0 +1,23 @@
+@analyze_option{
+    semantics = accept;
+    strategy = BreadthFS;
+    loggers = [graphic=svg];
+    goal = Pass;
+    frontier_priorities = [reception=1]
+}
+@message{
+    m
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+par(
+    loop_seq(
+        a -- m -> b
+    ),
+    loop_seq(
+        a -- m -> c
+    )
+)

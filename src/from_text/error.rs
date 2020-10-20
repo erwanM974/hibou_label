@@ -24,7 +24,8 @@ pub enum HibouParsingError {
     MissingLifelineDeclarationError(String),
     EmissionDefinitionError(String),
     NonDisjointTraceComponents,
-    HsfSetupError(String)
+    HsfSetupError(String),
+    ProcessPriorityError(String)
 }
 
 impl fmt::Display for HibouParsingError {
@@ -53,6 +54,9 @@ impl fmt::Display for HibouParsingError {
             },
             HibouParsingError::HsfSetupError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing setup section of .hsf file : {:}", sub_e));
+            },
+            HibouParsingError::ProcessPriorityError(sub_e) => {
+                return write!(f, "{}", format!("error while parsing priorities in .hsf file : {:}", sub_e));
             }
         }
     }

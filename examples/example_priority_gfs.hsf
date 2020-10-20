@@ -1,0 +1,23 @@
+@analyze_option{
+    semantics = accept;
+    strategy = GreedyBestFS[reception=1];
+    loggers = [graphic=svg];
+    goal = Pass;
+    frontier_priorities = [loop=-1]
+}
+@message{
+    m
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+par(
+    loop_seq(
+        a -- m -> b
+    ),
+    loop_seq(
+        a -- m -> c
+    )
+)

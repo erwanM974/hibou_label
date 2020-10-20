@@ -14,7 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+pub mod priorities;
 pub mod log;
+pub mod queue;
 pub mod hibou_process;
 pub mod process_manager;
 pub mod verdicts;

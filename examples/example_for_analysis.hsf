@@ -1,7 +1,7 @@
 @analyze_option{
     loggers = [graphic=svg];
     semantics = prefix;
-    strategy = DFS;
+    strategy = DepthFS;
     goal = Pass
 }
 @message{

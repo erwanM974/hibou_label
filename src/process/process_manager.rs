@@ -29,52 +29,9 @@ use crate::core::semantics::execute::execute;
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
 use crate::core::trace::TraceActionKind;
+use crate::process::queue::*;
 
-
-pub enum PrioritizeActionKind {
-    Emission,
-    Reception,
-    None
-}
-
-impl std::string::ToString for PrioritizeActionKind {
-    fn to_string(&self) -> String {
-        match self {
-            PrioritizeActionKind::Emission => {
-                return "Emission".to_string();
-            },
-            PrioritizeActionKind::Reception => {
-                return "Reception".to_string();
-            },
-            PrioritizeActionKind::None => {
-                return "None".to_string();
-            }
-        }
-    }
-}
-
-pub struct ProcessPriorities {
-    pub emission : i32,
-    pub reception : i32,
-    pub in_loop : i32
-}
-
-impl ProcessPriorities {
-    pub fn new(emission : i32,
-               reception : i32,
-               in_loop : i32) -> ProcessPriorities {
-        return ProcessPriorities{emission,reception,in_loop};
-    }
-}
-
-impl std::string::ToString for ProcessPriorities {
-    fn to_string(&self) -> String {
-        let mut my_str = format!("emission={:},",self.emission);
-        my_str.push_str( &format!("reception={:},",self.reception));
-        my_str.push_str( &format!("in_loop={:}",self.in_loop));
-        return my_str;
-    }
-}
+use crate::process::priorities::ProcessPriorities;
 
 pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
@@ -83,7 +40,7 @@ pub struct HibouProcessManager {
     pre_filters : Vec<HibouPreFilter>,
     // ***
     memorized_states : HashMap<u32,MemorizedState>,
-    process_queue : ProcessQueue,
+    process_queue : Box<ProcessQueue>,
     // ***
     frontier_priorities : ProcessPriorities,
     // ***
@@ -96,7 +53,7 @@ impl HibouProcessManager {
                sem_kind : Option<SemanticKind>,
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
-               process_queue : ProcessQueue,
+               process_queue : Box<ProcessQueue>,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>
     ) -> HibouProcessManager {
@@ -206,37 +163,55 @@ impl HibouProcessManager {
         return self.process_queue.get_next();
     }
 
-    pub fn enqueue_executions(&mut self, state_id : u32, to_enqueue : Vec<(u32,NextToProcessKind)>) {
+    fn get_priority_of_node(&self,
+                            state_id : u32,
+                            child_kind : &NextToProcessKind,
+                            priorities : &ProcessPriorities,
+                            node_depth : u32) -> i32 {
+        let mut priority : i32 = 0;
+        // ***
+        let parent_state = self.get_memorized_state(state_id).unwrap();
+        match &child_kind {
+            &NextToProcessKind::Execute( ref front_pos ) => {
+                let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
+                match front_act.act_kind {
+                    ObservableActionKind::Reception => {
+                        priority = priority + priorities.reception;
+                    },
+                    ObservableActionKind::Emission(_) => {
+                        priority = priority + priorities.emission;
+                    }
+                }
+                let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
+                if loop_depth > 0 {
+                    priority = priority + priorities.in_loop;
+                }
+            }
+        }
+        // ***
+        match priorities.step {
+            None => {},
+            Some( step ) => {
+                priority = priority + ( (node_depth as i32) * step);
+            }
+        }
+        return priority;
+    }
+
+    pub fn enqueue_executions(&mut self,
+                              state_id : u32,
+                              to_enqueue : Vec<(u32,NextToProcessKind)>,
+                              node_depth : u32) {
         let mut to_enqueue_reorganize : HashMap<i32,Vec<(u32,NextToProcessKind)>> = HashMap::new();
         for (child_id,child_kind) in to_enqueue {
-            match &child_kind {
-                &NextToProcessKind::Execute( ref front_pos ) => {
-                    let mut priority : i32 = 0;
-                    // ***
-                    let parent_state = self.get_memorized_state(state_id).unwrap();
-                    let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
-                    match front_act.act_kind {
-                        ObservableActionKind::Reception => {
-                            priority = priority + self.frontier_priorities.reception;
-                        },
-                        ObservableActionKind::Emission(_) => {
-                            priority = priority + self.frontier_priorities.emission;
-                        }
-                    }
-                    let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
-                    if loop_depth > 0 {
-                        priority = priority + self.frontier_priorities.in_loop;
-                    }
-                    // ***
-                    match to_enqueue_reorganize.get_mut(&priority) {
-                        None => {
-                            to_enqueue_reorganize.insert(priority,vec![ (child_id,child_kind) ]);
-                        },
-                        Some( queue ) => {
-                            queue.push((child_id,child_kind) );
-                        }
-                    }
-                    // ***
+            let priority : i32 = self.get_priority_of_node(state_id,&child_kind,&self.frontier_priorities,node_depth);
+            // ***
+            match to_enqueue_reorganize.get_mut(&priority) {
+                None => {
+                    to_enqueue_reorganize.insert(priority,vec![ (child_id,child_kind) ]);
+                },
+                Some( queue ) => {
+                    queue.push((child_id,child_kind) );
                 }
             }
         }
@@ -259,25 +234,38 @@ impl HibouProcessManager {
             &HibouSearchStrategy::DFS => {
                 to_enqueue_reorganized.reverse();
                 for (child_id,child_kind) in to_enqueue_reorganized {
-                    self.enqueue_child_node(state_id,child_id,child_kind);
+                    self.enqueue_child_node(state_id,child_id,child_kind,node_depth);
                 }
             },
             &HibouSearchStrategy::BFS => {
                 for (child_id,child_kind) in to_enqueue_reorganized {
-                    self.enqueue_child_node(state_id,child_id,child_kind);
+                    self.enqueue_child_node(state_id,child_id,child_kind,node_depth);
+                }
+            },
+            &HibouSearchStrategy::GFS(_) => {
+                for (child_id,child_kind) in to_enqueue_reorganized {
+                    self.enqueue_child_node(state_id,child_id,child_kind,node_depth);
                 }
             }
         }
     }
 
-    fn enqueue_child_node(&mut self,state_id: u32,child_id:u32,child_kind:NextToProcessKind) {
+    fn enqueue_child_node(&mut self,
+                          state_id : u32,
+                          child_id : u32,
+                          child_kind : NextToProcessKind,
+                          node_depth : u32) {
         let child = NextToProcess::new(state_id,child_id,child_kind);
         match &(self.strategy) {
             &HibouSearchStrategy::DFS => {
-                self.process_queue.insert_item_left(child);
+                self.process_queue.insert_item_left(child, 0);
             },
             &HibouSearchStrategy::BFS => {
-                self.process_queue.insert_item_right(child);
+                self.process_queue.insert_item_right(child, 0);
+            },
+            &HibouSearchStrategy::GFS(ref pp) => {
+                let priority = self.get_priority_of_node(state_id,&(child.kind),pp,node_depth);
+                self.process_queue.insert_item_left(child, priority);
             }
         }
     }

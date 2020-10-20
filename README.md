@@ -329,7 +329,7 @@ For this analysis we used the following options, declared in the "@analyze_optio
 @analyze_option{
     loggers = [graphic=svg];
     semantics = prefix;
-    strategy = DFS;
+    strategy = DepthFS;
     goal = Pass
 }
 ```
@@ -344,9 +344,9 @@ or a .svg file (specified with "graphic=svg"), which requires cairo to be instal
 
 As explained earlier, we will use the "prefix" semantics to analyze the multi-trace.
 
-A search strategy: either Breadth First Search (BFS) or Depth First Search (DFS) can be specified using the "strategy" option.
+A search strategy: for instance Breadth First Search (BreadthFS) or Depth First Search (DepthFS) can be specified using the "strategy" option.
 Indeed, for any given (interaction,multi-trace) couple, several matches may be evaluated, leading to several other couples (interaction,multi-trace).
-We can then explore those child nodes and their children using any classical search heuristic.
+We can then explore those child nodes and their children using any search heuristic.
 
 We can also specify the verdict which will be the goal of the analysis, meaning that the analysis will stop once a verdict that is greater or equal to the goal
 is found. This is done using the "goal" option. 
@@ -379,7 +379,7 @@ once the goal verdict (or a verdict that is stronger) is reached.
 
 <img src="./README_images/ana_glotrace_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
 
-#### Example 3
+#### Example showcasing frontier priorities
 
 The child nodes of a given couple (interaction,multi-trace) correspond to the execution of a
 frontier action of the interaction which match a head action of a trace component of the multi-trace.
@@ -395,7 +395,7 @@ the "frontier_priorities" option, for instance, as follows:
 ```
 @analyze_option{
     semantics = accept;
-    strategy = DFS;
+    strategy = DepthFS;
     loggers = [graphic=svg];
     goal = Pass;
     frontier_priorities = [reception=1]
@@ -407,14 +407,14 @@ For instance if the matches are at positions 11 and 12 but the action at positio
 at position 12 is a reception, then, with those options, the match at position 12 will be exploited before the one
 at position 11.
 
-Below is illustrated the analysis of a multi-trace using a DFS strategy while prioritizing the evaluation of receptions
-in the frontier.
+Below is illustrated the analysis of a multi-trace (in file "example_priority_2.htf") using a DFS strategy while prioritizing the evaluation of receptions
+in the frontier. (model found in "example_priority_dfs.hsf")
 
-<img src="./README_images/example_priority_2_dfs_1reception.svg" alt="example prioritizing receptions" width="600">
+<img src="./README_images/example_priority_dfs.svg" alt="example prioritizing receptions" width="600">
 
-If we had not prioritized receptions, we would have had the following (still using DFS):
+If we had not prioritized receptions, we would have had the following (still using DFS) (model found in "example_priority_dfs_no.hsf"):
 
-<img src="./README_images/example_priority_2_dfs_none.svg" alt="example prioritizing nothing" width="800">
+<img src="./README_images/example_priority_dfs_no.svg" alt="example prioritizing nothing" width="800">
 
 Prioritizing the evaluation of certain frontier actions may be advantageous (so as to find more quickly
 a path that consumes the multi-trace) in certain cases. 
@@ -428,12 +428,52 @@ The gain in "performances" can be assessed using the number of nodes necessary t
 Below is a table giving this number of nodes for respectively 1, 2, 3 and 4 repetition of the behavior (a!m,c?m)
 and for cases where no action are prioritized (first row) and receptions are prioritized (second row).
 
-|             | 1 | 2  | 3  | 4  |
-|-------------|---|----|----|----|
-| no          | 4 | 12 | 39 |145 |
-| reception=1 | 4 | 10 | 27 | 89 |
+|                            | 1 | 2  | 3  | 4  |
+|----------------------------|---|----|----|----|
+| DepthFS with no priorities | 4 | 12 | 39 |145 |
+| DepthFS with reception=1   | 4 | 10 | 27 | 89 |
 
-The model file ("example_priority.hsf") and trace file ("example_priority_2.htf") for this example are also in the "examples" folder.
+#### Example showcasing Greedy Best First Search
+
+In addition to the classical Breadth First Search and Depth First Search strategies, we propose a Greedy Best First Search strategy, 
+which use can be specified and tweaked in the options with, for instance: 
+
+```
+@analyze_option{
+    semantics = accept;
+    strategy = GreedyBestFS[reception=1];
+    loggers = [graphic=svg];
+    goal = Pass;
+    frontier_priorities = [loop=-1]
+}
+```
+
+Our implementations of the BreadthFS and DepthFS strategies rely on a single simple queue so as to enqueue the newly computed nodes 
+and to dequeue the nodes to be treated next.
+
+By contrast, our implementation of GreedyBestFS rely on several queues, each corresponding to a certain priority level 
+(this system implements efficiently a priority queue). The highest priority queue is dequeued first at each step of the algorithm.
+
+Priority levels are computed according to the user-defined numbers set between the brackets, and they work in a similar manner as the frontier priorities.
+For instance, if we set ``strategy = GreedyBestFS[step=0,emission=1,loop=-2]``, then the evaluation of actions that are emissions 
+and that exist within a loop will be 1+(-2)= -1. Those of emissions outside loops will be 1 and those of receptions outside loops will be 0.
+You may notice that we have an additional kind of priority which is the ``step`` priority. 
+By default, ``step=1`` (and the others are set to 0), which means that a next node of depth (distance to initial interaction) "d" will have a "d*1 = d" priority level.
+
+Below is given tha analysis of the same multi-trace as the previous example, on the same interaction, but this time using our custom
+GreedyBestFS strategy.
+
+<img src="./README_images/example_priority_gfs.svg" alt="example prioritizing nothing" width="600">
+
+The gain in "performances" is quite clear.
+Below is a table giving this number of nodes for respectively 1, 2, 3 and 4 repetition of the behavior (a!m,c?m)
+and for different uses of our proposed search heuristics.
+
+|                            | 1 | 2  | 3  | 4  |
+|----------------------------|---|----|----|----|
+| BreadthFS with priorities  | 4 | 14 | 56 |244 |
+| DepthFS with priorities    | 4 | 10 | 27 | 89 |
+| Custom GreedyBestFS        | 3 |  5 |  7 |  9 |
 
 ## Explore
 
@@ -465,13 +505,13 @@ different ways.
 Although you can also specify those filters for the "analyze" command, it is not recommended, 
 given that it might prevent the consumption of the multi-trace and produce a wrong verdict.
 
-<img src="./README_images/explo1.svg" alt="exploration ex1" width="950">
+<img src="./README_images/example_for_exploration_1.svg" alt="exploration ex1" width="950">
 
 And here is a second example that you can obtain by typing 
 "hibou_label.exe explore example_for_exploration_2.hsf" 
 with the files from "examples" folder.
 
-<img src="./README_images/explo2.svg" alt="exploration ex2" width="650">
+<img src="./README_images/example_for_exploration_2.svg" alt="exploration ex2" width="650">
 
 ## Build
 

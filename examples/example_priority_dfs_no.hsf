@@ -1,0 +1,22 @@
+@analyze_option{
+    semantics = accept;
+    strategy = DepthFS;
+    loggers = [graphic=svg];
+    goal = Pass
+}
+@message{
+    m
+}
+@lifeline{
+    a;
+    b;
+    c
+}
+par(
+    loop_seq(
+        a -- m -> b
+    ),
+    loop_seq(
+        a -- m -> c
+    )
+)

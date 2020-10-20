@@ -29,20 +29,22 @@ use crate::core::semantics::frontier::make_frontier;
 use crate::process::verdicts::CoverageVerdict;
 use crate::process::hibou_process::*;
 use crate::process::process_manager::*;
+use crate::process::queue::*;
+use crate::process::priorities::ProcessPriorities;
 
 pub fn explore(interaction : Interaction,
                gen_ctx : GeneralContext,
                pre_filters : Vec<HibouPreFilter>,
                strategy : HibouSearchStrategy,
                frontier_priorities : ProcessPriorities,
-               loggers : Vec<Box<dyn ProcessLogger>>) {
+               loggers : Vec<Box<dyn ProcessLogger>>) -> u32 {
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
                                                strategy,
                                                None,
                                                pre_filters,
                                                HashMap::new(),
-                                               ProcessQueue::new(),
+                                               Box::new(SimpleProcessQueue::new()),
                                                frontier_priorities,
                                                loggers);
     // ***
@@ -87,6 +89,7 @@ pub fn explore(interaction : Interaction,
     // ***
     manager.term_loggers(None);
     // ***
+    return node_counter;
 }
 
 
@@ -108,9 +111,9 @@ fn enqueue_next_node_in_exploration(manager      : &mut HibouProcessManager,
     // ***
     if next_child_id > 0 {
         let rem_child_ids : HashSet<u32> = HashSet::from_iter((1..(next_child_id+1)).collect::<Vec<u32>>().iter().cloned() );
-        let memo_state = MemorizedState::new(interaction,None,rem_child_ids, loop_depth,depth);
+        let memo_state = MemorizedState::new(interaction,None,rem_child_ids, loop_depth, depth);
         manager.remember_state( state_id, memo_state );
-        manager.enqueue_executions( state_id, to_enqueue );
+        manager.enqueue_executions( state_id, to_enqueue, depth );
     }
 }
 

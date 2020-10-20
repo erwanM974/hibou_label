@@ -1,5 +1,5 @@
 @explore_option{
-    strategy = BFS;
+    strategy = BreadthFS;
     loggers = [graphic=svg];
     pre_filters = [ max_depth = 4, 
                     max_loop_depth = 2, 
