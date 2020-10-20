@@ -454,8 +454,8 @@ By contrast, our implementation of GreedyBestFS rely on several queues, each cor
 (this system implements efficiently a priority queue). The highest priority queue is dequeued first at each step of the algorithm.
 
 Priority levels are computed according to the user-defined numbers set between the brackets, and they work in a similar manner as the frontier priorities.
-For instance, if we set ``strategy = GreedyBestFS[step=0,emission=1,loop=-2]``, then the evaluation of actions that are emissions 
-and that exist within a loop will be 1+(-2)= -1. Those of emissions outside loops will be 1 and those of receptions outside loops will be 0.
+For instance, if we set ``strategy = GreedyBestFS[step=0,emission=1,loop=-2]``, then the priority level of actions that are emissions 
+and that exist within a loop will be "1+(-2)= -1". Those of emissions outside loops will be 1 and those of receptions outside loops will be 0.
 You may notice that we have an additional kind of priority which is the ``step`` priority. 
 By default, ``step=1`` (and the others are set to 0), which means that a next node of depth 
 (distance to initial interaction) "d" will have a "d*1 = d" priority level.
@@ -478,18 +478,18 @@ and for different uses of our proposed search heuristics.
 Although it may be impressive in this example, the GreedyBestFS (with or without the use of frontier priorities) is not, 
 in the general case, more efficient than a DepthFS with frontier priorities.
 
-In facts, with "step=1" (others to 0) and no frontier priorities, GreedyBestFS only "reverses" the frontier (compared with DepthFS with no frontier priorities)
+In facts, with ``step=1`` (others to 0) and no frontier priorities, GreedyBestFS only "reverses" the frontier (compared with DepthFS with no frontier priorities)
 i.e. it prioritizes the evaluation of actions that are farther
 (in the lexicographic order of positions) in the interaction term.
 
 This is why in this particular example, GreedyBestFS is more efficient than DepthFS ("sheer luck"). 
-Indeed, the matching of "a!m" with the trigger action of "a -- m -> c" is done before that with "a -- m -> b" 
+Indeed, the matching of "a!m" with the trigger action of "a -- m -> c" is done before that with "a -- m -> b"
 so the algorithm doesn't explore those "dead-ends".
 
 If we considered a multi-trace with a repetition of the (a!m,b?m) behavior, the situation (w.r.t. the respective performances of GreedyBestFS and DepthFS)
 would be reversed.
 
-With "step=0" (others to 0), GreedyBestFS is equivalent to BreadthFirstSearch.
+With ``step=0`` (others to 0), GreedyBestFS is equivalent to BreadthFirstSearch.
 
 To summarize, GreedyBestFS can be considered to be another implementation of a search strategy 
 that includes the possible combinations of BreadthFS and DepthFS with frontier priorities.
