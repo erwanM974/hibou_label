@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
 use std::cmp::Reverse;
 
 use crate::core::general_context::GeneralContext;
@@ -33,6 +33,9 @@ use crate::process::queue::*;
 
 use crate::process::priorities::ProcessPriorities;
 
+use crate::process::semkind::SemanticKind;
+
+
 pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
     strategy : HibouSearchStrategy,
@@ -48,6 +51,11 @@ pub struct HibouProcessManager {
 }
 
 impl HibouProcessManager {
+
+    pub fn get_sem_kind(&self) -> &SemanticKind {
+        return self.sem_kind.as_ref().unwrap();
+    }
+
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
                sem_kind : Option<SemanticKind>,
@@ -114,8 +122,6 @@ impl HibouProcessManager {
     }
 
     pub fn filtered_loggers(&mut self,
-                            action_position : &Position,
-                            executed_action : &TraceAction,
                             parent_state_id : u32,
                             new_state_id : u32,
                             elim_kind : &FilterEliminationKind) {
@@ -123,27 +129,41 @@ impl HibouProcessManager {
             logger.log_filtered(&self.gen_ctx,
                                 parent_state_id,
                                 new_state_id,
-                                action_position,
-                                executed_action,
                                 elim_kind);
         }
     }
 
     pub fn execution_loggers(&mut self,
-                        action_position : &Position,
-                        executed_action : &TraceAction,
-                        new_interaction : &Interaction,
-                        parent_state_id : u32,
-                        new_state_id :u32,
-                        remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                             action_position : &Position,
+                             executed_action : &TraceAction,
+                             new_interaction : &Interaction,
+                             parent_state_id : u32,
+                             new_state_id :u32,
+                             remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         for logger in self.loggers.iter_mut() {
             logger.log_execution(&self.gen_ctx,
-                            parent_state_id,
+                                 parent_state_id,
                                  new_state_id,
-                            action_position,
-                            executed_action,
+                                 action_position,
+                                 executed_action,
+                                 new_interaction,
+                                 remaining_multi_trace);
+        }
+    }
+
+    pub fn hiding_loggers(&mut self,
+                             lfs_to_hide : &HashSet<usize>,
+                             new_interaction : &Interaction,
+                             parent_state_id : u32,
+                             new_state_id :u32,
+                             remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+        for logger in self.loggers.iter_mut() {
+            logger.log_hide(&self.gen_ctx,
+                                 parent_state_id,
+                                 new_state_id,
+                            lfs_to_hide,
                             new_interaction,
-                            remaining_multi_trace);
+                                 remaining_multi_trace);
         }
     }
 
@@ -186,6 +206,9 @@ impl HibouProcessManager {
                 if loop_depth > 0 {
                     priority = priority + priorities.in_loop;
                 }
+            },
+            &NextToProcessKind::Hide(lf_to_hide) => {
+                priority = priority + priorities.hide;
             }
         }
         // ***
@@ -281,7 +304,7 @@ impl HibouProcessManager {
                 let new_loop_depth = parent_state.loop_depth + (parent_state.interaction).get_loop_depth_at_pos(position);
                 // ***
                 let target_action = (parent_state.interaction).get_sub_interaction(position).as_leaf();
-                match self.apply_pre_filters(new_depth,new_loop_depth,node_counter) {
+                match self.apply_pre_filters(new_depth,Some(new_loop_depth),node_counter) {
                     None => {
                         let ex_lf_id = target_action.occupation_before();
                         let new_interaction = execute((parent_state.interaction).clone(),position.clone(),ex_lf_id);
@@ -297,7 +320,12 @@ impl HibouProcessManager {
                                     if canal.lifelines.contains(&ex_lf_id) {
                                         let mut new_trace = canal.trace.clone();
                                         new_trace.remove(0);
-                                        new_canals.push( MultiTraceCanal{lifelines:canal.lifelines.clone(),trace:new_trace} )
+                                        new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
+                                                                              new_trace,
+                                                                              false,
+                                                                              canal.consumed+1,
+                                                                              canal.simulated_before,
+                                                                              canal.simulated_after) );
                                     } else {
                                         new_canals.push(canal.clone());
                                     }
@@ -316,22 +344,68 @@ impl HibouProcessManager {
                         return Some( (new_interaction,new_multi_trace,new_depth,new_loop_depth) );
                     },
                     Some( elim_kind ) => {
-                        self.filtered_loggers(&position,
-                                              &target_action.to_trace_action(),
-                                              to_process.state_id,
+                        self.filtered_loggers(to_process.state_id,
                                               new_state_id,
                                               &elim_kind);
                         return None;
                     }
                 }
             },
-            _ => {
-                return None;
+            &NextToProcessKind::Hide( ref lfs_to_hide ) => {
+                let new_depth = parent_state.depth + 1;
+                // ***
+                match self.apply_pre_filters(new_depth,None,node_counter) {
+                    None => {
+                        let new_interaction = (parent_state.interaction).hide(lfs_to_hide);
+                        // ***
+                        let new_multi_trace : Option<AnalysableMultiTrace>;
+                        match (parent_state.multi_trace).as_ref(){
+                            None => {
+                                panic!();
+                            },
+                            Some( ref multi_trace ) => {
+                                let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+                                for canal in &multi_trace.canals {
+                                    if &(canal.lifelines) != lfs_to_hide {
+                                        new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
+                                                                             canal.trace.clone(),
+                                                                             canal.flag_hidden,
+                                                                             canal.consumed,
+                                                                             canal.simulated_before,
+                                                                             canal.simulated_after));
+                                    } else {
+                                        new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
+                                                                             canal.trace.clone(),
+                                                                             true,
+                                                                             canal.consumed,
+                                                                             canal.simulated_before,
+                                                                             canal.simulated_after));
+                                    }
+                                }
+                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals) );
+                            }
+                        }
+                        // ***
+                        self.hiding_loggers(lfs_to_hide,
+                                               &new_interaction,
+                                               to_process.state_id,
+                                               new_state_id,
+                                               &new_multi_trace);
+                        // ***
+                        return Some( (new_interaction,new_multi_trace,new_depth,parent_state.loop_depth) );
+                    },
+                    Some( elim_kind ) => {
+                        self.filtered_loggers(to_process.state_id,
+                                              new_state_id,
+                                              &elim_kind);
+                        return None;
+                    }
+                }
             }
         }
     }
 
-    fn apply_pre_filters(&self, depth : u32, loop_depth : u32, node_counter : u32) -> Option<FilterEliminationKind> {
+    fn apply_pre_filters(&self, depth : u32, loop_depth : Option<u32>, node_counter : u32) -> Option<FilterEliminationKind> {
         for pre_filter in &self.pre_filters {
             match pre_filter {
                 HibouPreFilter::MaxProcessDepth( max_depth ) => {
@@ -340,8 +414,13 @@ impl HibouProcessManager {
                     }
                 },
                 HibouPreFilter::MaxLoopInstanciation( loop_num ) => {
-                    if loop_depth > *loop_num {
-                        return Some( FilterEliminationKind::MaxLoopInstanciation );
+                    match loop_depth {
+                        None => {},
+                        Some( ld ) => {
+                            if ld > *loop_num {
+                                return Some( FilterEliminationKind::MaxLoopInstanciation );
+                            }
+                        }
                     }
                 },
                 HibouPreFilter::MaxNodeNumber( max_node_number ) => {
@@ -354,10 +433,30 @@ impl HibouProcessManager {
         return None;
     }
 
-    pub fn get_coverage_verdict(&self,interaction:&Interaction,multi_trace:&AnalysableMultiTrace) -> CoverageVerdict {
+    pub fn get_coverage_verdict(&self,
+                                interaction:&Interaction,
+                                multi_trace:&AnalysableMultiTrace) -> CoverageVerdict {
         if multi_trace.length() == 0 {
             if interaction.express_empty() {
-                return CoverageVerdict::Cov;
+                match self.sem_kind.as_ref().unwrap() {
+                    SemanticKind::Accept => {
+                        return CoverageVerdict::Cov;
+                    },
+                    SemanticKind::Prefix => {
+                        return CoverageVerdict::Cov;
+                    },
+                    SemanticKind::Hide => {
+                        if multi_trace.is_any_component_hidden() {
+                            if multi_trace.are_colocalizations_singletons() {
+                                return CoverageVerdict::MultiPref;
+                            } else {
+                                return CoverageVerdict::Inconc;
+                            }
+                        } else {
+                            return CoverageVerdict::Cov;
+                        }
+                    }
+                }
             } else {
                 match self.sem_kind.as_ref().unwrap() {
                     SemanticKind::Accept => {
@@ -365,6 +464,17 @@ impl HibouProcessManager {
                     },
                     SemanticKind::Prefix => {
                         return CoverageVerdict::TooShort;
+                    },
+                    SemanticKind::Hide => {
+                        if multi_trace.is_any_component_hidden() {
+                            if multi_trace.are_colocalizations_singletons() {
+                                return CoverageVerdict::MultiPref;
+                            } else {
+                                return CoverageVerdict::Inconc;
+                            }
+                        } else {
+                            return CoverageVerdict::TooShort;
+                        }
                     }
                 }
             }
@@ -379,6 +489,9 @@ impl HibouProcessManager {
                     } else {
                         return CoverageVerdict::Out;
                     }
+                },
+                SemanticKind::Hide => {
+                    return CoverageVerdict::Out;
                 }
             }
         }

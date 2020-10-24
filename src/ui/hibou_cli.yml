@@ -16,13 +16,13 @@
 
 
 name: hibou_label
-version: "0.4.5"
+version: "0.4.6"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for the analysis of traces and multi-traces of interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw as a sequence diagram an input hibou specification file (.hsf)
-        version: "0.4.5"
+        version: "0.4.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -36,7 +36,7 @@ subcommands:
                 help: target file for drawing (default is 'the name of the hsf'.png)
     - explore:
         about: utility to explore the semantics of an input hibou specification file (.hsf)
-        version: "0.4.5"
+        version: "0.4.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -45,7 +45,7 @@ subcommands:
                 help: hibou specification file
     - analyze:
         about: utility to analyze an input (multi-)trace from a hibou trace file (.htf) w.r.t. an input hibou specification file (.hsf)
-        version: "0.4.5"
+        version: "0.4.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:

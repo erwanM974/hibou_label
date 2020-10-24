@@ -28,6 +28,15 @@ impl CoverageVerdict {
             CoverageVerdict::TooShort => {
                 return GraphvizColor::cyan3;
             },
+            CoverageVerdict::MultiPref => {
+                return GraphvizColor::slateblue3;
+            },
+            CoverageVerdict::Slice => {
+                return GraphvizColor::darkorchid3;
+            },
+            CoverageVerdict::Inconc => {
+                return GraphvizColor::deeppink3;
+            },
             CoverageVerdict::LackObs => {
                 return GraphvizColor::orangered3;
             },

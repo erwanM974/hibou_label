@@ -31,12 +31,13 @@ use crate::from_text::error::HibouParsingError;
 use crate::process::log::ProcessLogger;
 
 use crate::from_text::parser::*;
-use crate::rendering::process::graphic_logger::{GraphicProcessLoggerKind,GraphicProcessLogger};
+use crate::rendering::process::graphic_logger::{GraphicProcessLoggerOutputKind,GraphicProcessLoggerLayout,GraphicProcessLogger};
 use crate::process::hibou_process::*;
 use crate::from_text::hsf_file::ProcessKind;
 
 use crate::process::priorities::ProcessPriorities;
 use crate::process::verdicts::GlobalVerdict;
+use crate::process::semkind::SemanticKind;
 
 pub struct HibouOptions {
     pub loggers : Vec<Box<dyn ProcessLogger>>,
@@ -65,7 +66,7 @@ impl HibouOptions {
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
             sem_kind:None,
             goal:None,
-            frontier_priorities:ProcessPriorities::new(0,0,0, None)};
+            frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
 
     pub fn default_analyze() -> HibouOptions {
@@ -74,7 +75,7 @@ impl HibouOptions {
             pre_filters:Vec::new(),
             sem_kind:Some(SemanticKind::Prefix),
             goal:Some(GlobalVerdict::Pass),
-            frontier_priorities:ProcessPriorities::new(0,0,0, None)};
+            frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
 }
 
@@ -120,7 +121,7 @@ fn parse_priorities(priority_pair : Pair<Rule>,
 pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
     let mut loggers : Vec<Box<dyn ProcessLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
-    let mut frontier_priorities = ProcessPriorities::new(0,0,0, None);
+    let mut frontier_priorities = ProcessPriorities::new(0,0,0, None, -2, -2);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
     let mut semantics : Option<SemanticKind> = None;
     let mut goal : Option<GlobalVerdict> = None;
@@ -149,23 +150,36 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                                 return Err( HibouParsingError::HsfSetupError("several 'graphic' loggers declared in the same '@X_option' section".to_string()));
                             }
                             declared_loggers.insert( LoggerKinds::graphic );
-                            let graphic_logger_pair = logger_kind_pair.into_inner().next();
-                            match graphic_logger_pair {
+                            let graphic_logger_opts_pair = logger_kind_pair.into_inner().next();
+                            match graphic_logger_opts_pair {
                                 None => {
-                                    loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::png ) ) );
+                                    loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),
+                                                                                    GraphicProcessLoggerOutputKind::png,
+                                                                                    GraphicProcessLoggerLayout::vertical ) ) );
                                 },
-                                Some(graphic_logger_kind_pair) => {
-                                    match graphic_logger_kind_pair.as_rule() {
-                                        Rule::GRAPHIC_LOGGER_KIND_png => {
-                                            loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::png ) ) );
-                                        },
-                                        Rule::GRAPHIC_LOGGER_KIND_svg => {
-                                            loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),GraphicProcessLoggerKind::svg ) ) );
-                                        },
-                                        _ => {
-                                            panic!("what rule then ? : {:?}", graphic_logger_kind_pair.as_rule() );
+                                Some(graphic_logger_opts) => {
+                                    let mut output_kind = GraphicProcessLoggerOutputKind::png;
+                                    let mut layout_kind = GraphicProcessLoggerLayout::vertical;
+                                    for opt_pair in graphic_logger_opts.into_inner() {
+                                        match opt_pair.as_rule() {
+                                            Rule::GRAPHIC_LOGGER_png => {
+                                                output_kind = GraphicProcessLoggerOutputKind::png;
+                                            },
+                                            Rule::GRAPHIC_LOGGER_svg => {
+                                                output_kind = GraphicProcessLoggerOutputKind::svg;
+                                            },
+                                            Rule::GRAPHIC_LOGGER_vertical => {
+                                                layout_kind = GraphicProcessLoggerLayout::vertical;
+                                            },
+                                            Rule::GRAPHIC_LOGGER_horizontal => {
+                                                layout_kind = GraphicProcessLoggerLayout::horizontal;
+                                            },
+                                            _ => {
+                                                panic!("what rule then ? : {:?}", opt_pair.as_rule() );
+                                            }
                                         }
                                     }
+                                    loggers.push(Box::new(GraphicProcessLogger::new(file_name.to_string(),output_kind,layout_kind ) ) );
                                 }
                             }
                         },
@@ -190,7 +204,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                         strategy = HibouSearchStrategy::DFS;
                     },
                     Rule::OPTION_STRATEGY_GFS => {
-                        let mut gfs_priorities = ProcessPriorities::new(0,0,0,Some(1));
+                        let mut gfs_priorities = ProcessPriorities::new(0,0,0,Some(1), -2, -2);
                         match strategy_pair.into_inner().next() {
                             None => {},
                             Some(gfs_opts_pair) => {
@@ -268,6 +282,9 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     },
                     Rule::OPTION_SEMANTICS_prefix => {
                         semantics = Some( SemanticKind::Prefix );
+                    },
+                    Rule::OPTION_SEMANTICS_hide => {
+                        semantics = Some( SemanticKind::Hide );
                     },
                     _ => {
                         panic!("what rule then ? : {:?}", semantics_pair.as_rule() );

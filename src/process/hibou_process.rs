@@ -51,7 +51,8 @@ impl MemorizedState {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum NextToProcessKind {
-    Execute(Position)
+    Execute(Position),
+    Hide( HashSet<usize> )
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -132,25 +133,6 @@ impl std::string::ToString for HibouSearchStrategy {
             },
             HibouSearchStrategy::GFS(ref pp) => {
                 return format!("GreedyBestFS[{:}]", &pp.to_string());
-            }
-        }
-    }
-}
-
-pub enum SemanticKind {
-    Accept,
-    Prefix
-}
-
-
-impl std::string::ToString for SemanticKind {
-    fn to_string(&self) -> String {
-        match self {
-            SemanticKind::Accept => {
-                return "accept".to_string();
-            },
-            SemanticKind::Prefix => {
-                return "prefix".to_string();
             }
         }
     }

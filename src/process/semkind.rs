@@ -14,12 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod semkind;
-pub mod priorities;
-pub mod log;
-pub mod queue;
-pub mod hibou_process;
-pub mod process_manager;
-pub mod verdicts;
-pub mod exploration;
-pub mod analysis;
+pub enum SemanticKind {
+    Accept,
+    Prefix,
+    Hide/*,
+    Simulate(bool)*/
+}
+
+
+impl std::string::ToString for SemanticKind {
+    fn to_string(&self) -> String {
+        match self {
+            SemanticKind::Accept => {
+                return "accept".to_string();
+            },
+            SemanticKind::Prefix => {
+                return "prefix".to_string();
+            },
+            SemanticKind::Hide => {
+                return "hide".to_string();
+            }
+        }
+    }
+}

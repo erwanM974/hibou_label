@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+
 use std::cmp;
 use std::collections::{HashMap,HashSet};
 use std::hash::{Hash, Hasher};
@@ -170,6 +172,31 @@ impl Interaction {
         }
     }
 
+    pub fn involves_any_of(&self, lf_ids : &HashSet<usize>) -> bool {
+        match self {
+            &Interaction::Empty => {
+                return false;
+            }, &Interaction::Action(ref act) => {
+                for lf_id in lf_ids {
+                    if act.occupation_after().contains(lf_id) {
+                        return true;
+                    }
+                }
+                return false;
+            }, &Interaction::Strict(ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            }, &Interaction::Seq(ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            }, &Interaction::Par(ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            }, &Interaction::Alt(ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            }, &Interaction::Loop(_, ref i1) => {
+                return i1.involves_any_of(lf_ids);
+            }
+        }
+    }
+
     pub fn get_loop_depth_at_pos(&self, my_pos : &Position) -> u32 {
         match my_pos {
             Position::Epsilon => {
@@ -219,7 +246,160 @@ impl Interaction {
         }
     }
 
+
+
+    pub fn hide(&self, lfs_to_remove : &HashSet<usize>) -> Interaction {
+        match self {
+            Interaction::Empty => {
+                return Interaction::Empty;
+            },
+            Interaction::Action( ref act ) => {
+                if lfs_to_remove.contains(&act.lf_id) {
+                    match &act.act_kind {
+                        ObservableActionKind::Reception => {
+                            return Interaction::Empty;
+                        },
+                        ObservableActionKind::Emission( targets ) => {
+                            let mut receptions : Vec<ObservableAction> = Vec::new();
+                            for target_lf_id in targets {
+                                if !lfs_to_remove.contains(target_lf_id) {
+                                    receptions.push( ObservableAction{lf_id:*target_lf_id,
+                                        act_kind:ObservableActionKind::Reception,
+                                        ms_id:act.ms_id} );
+                                }
+                            }
+                            return fold_reception_actions_with_seq(&mut receptions);
+                        }
+                    }
+                } else {
+                    match &act.act_kind {
+                        ObservableActionKind::Reception => {
+                            return Interaction::Action(act.clone());
+                        },
+                        ObservableActionKind::Emission( targets ) => {
+                            let mut new_targets : Vec<usize> = Vec::new();
+                            for target_lf_id in targets {
+                                if !lfs_to_remove.contains(target_lf_id) {
+                                    new_targets.push( *target_lf_id );
+                                }
+                            }
+                            let new_act = ObservableAction{lf_id:act.lf_id,
+                                act_kind:ObservableActionKind::Emission(new_targets),
+                                ms_id:act.ms_id};
+                            return Interaction::Action(new_act);
+                        }
+                    }
+                }
+            },
+            Interaction::Seq(i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        return i2hid;
+                    },
+                    _ => {
+                        match &i2hid {
+                            Interaction::Empty => {
+                                return i1hid
+                            },
+                            _ => {
+                                return Interaction::Seq(Box::new(i1hid), Box::new(i2hid));
+                            }
+                        }
+                    }
+                }
+            },
+            Interaction::Strict(i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        return i2hid;
+                    },
+                    _ => {
+                        match &i2hid {
+                            Interaction::Empty => {
+                                return i1hid
+                            },
+                            _ => {
+                                return Interaction::Strict(Box::new(i1hid), Box::new(i2hid));
+                            }
+                        }
+                    }
+                }
+            },
+            Interaction::Alt(i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        match &i2hid {
+                            Interaction::Empty => {
+                                return Interaction::Empty
+                            },
+                            _ => {
+                                return Interaction::Alt(Box::new(i1hid), Box::new(i2hid));
+                            }
+                        }
+                    },
+                    _ => {
+                        return Interaction::Alt(Box::new(i1hid), Box::new(i2hid));
+                    }
+                }
+            },
+            Interaction::Par(i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        return i2hid;
+                    },
+                    _ => {
+                        match &i2hid {
+                            Interaction::Empty => {
+                                return i1hid
+                            },
+                            _ => {
+                                return Interaction::Par(Box::new(i1hid), Box::new(i2hid));
+                            }
+                        }
+                    }
+                }
+            },
+            Interaction::Loop(opkind,i1) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        return Interaction::Empty;
+                    },
+                    _ => {
+                        return Interaction::Loop(opkind.clone(),Box::new(i1hid) );
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
 }
 
 
-
+pub fn fold_reception_actions_with_seq(receptions : &mut Vec<ObservableAction>) -> Interaction {
+    let recepnum = receptions.len();
+    if recepnum == 2 {
+        let recep1 = receptions.pop().unwrap();
+        let recep2 = receptions.pop().unwrap();
+        return Interaction::Seq( Box::new(Interaction::Action(recep1)), Box::new(Interaction::Action(recep2)) );
+    } else if recepnum == 1 {
+        let recep1 = receptions.pop().unwrap();
+        return Interaction::Action(recep1);
+    } else if recepnum == 0 {
+        return Interaction::Empty
+    } else {
+        let recep1 = receptions.pop().unwrap();
+        return Interaction::Seq( Box::new(Interaction::Action(recep1)), Box::new( fold_reception_actions_with_seq(receptions) ) );
+    }
+}

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
 
 // ***
 use crate::core::syntax::position::*;
@@ -30,6 +30,11 @@ use crate::process::verdicts::CoverageVerdict;
 use crate::process::hibou_process::FilterEliminationKind;
 
 use crate::process::hibou_process::*;
+
+
+pub struct TransformationExecution {
+
+}
 
 pub trait ProcessLogger {
 
@@ -50,16 +55,26 @@ pub trait ProcessLogger {
                 new_interaction : &Interaction,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>);
 
+
+    fn log_hide(&mut self,
+                gen_ctx : &GeneralContext,
+                parent_state_id : u32,
+                new_state_id : u32,
+                lfs_to_hide : &HashSet<usize>,
+                hidden_interaction : &Interaction,
+                remaining_multi_trace : &Option<AnalysableMultiTrace>);
+
+    fn log_filtered(&mut self,
+                          gen_ctx : &GeneralContext,
+                          parent_state_id : u32,
+                          new_state_id : u32,
+                          elim_kind : &FilterEliminationKind);
+
     fn log_verdict(&mut self,
                    parent_state_id : u32,
                    verdict : &CoverageVerdict);
 
-    fn log_filtered(&mut self,gen_ctx : &GeneralContext,
-                    parent_state_id : u32,
-                    new_state_id : u32,
-                    action_position : &Position,
-                    action : &TraceAction,
-                    elim_kind : &FilterEliminationKind);
+
 
 }
 

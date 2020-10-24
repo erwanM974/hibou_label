@@ -1,7 +1,7 @@
 @analyze_option{
     semantics = accept;
     strategy = GreedyBestFS[step=1];
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     goal = Pass
 }
 @message{

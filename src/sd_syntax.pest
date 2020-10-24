@@ -59,9 +59,13 @@ SD_INTERACTION = { SD_EMPTY_INTERACTION
 // ***********************************************
 // ***********************************************
 // ***** hibou options
-GRAPHIC_LOGGER_KIND_png = { "png" }
-GRAPHIC_LOGGER_KIND_svg = { "svg" }
-OPTION_GRAPHIC_LOGGER = { "graphic" ~ ( "=" ~ (GRAPHIC_LOGGER_KIND_png|GRAPHIC_LOGGER_KIND_svg) )? }
+GRAPHIC_LOGGER_png = { "png" }
+GRAPHIC_LOGGER_svg = { "svg" }
+GRAPHIC_LOGGER_horizontal = { "horizontal" }
+GRAPHIC_LOGGER_vertical = { "vertical" }
+GRAPHIC_LOGGER_opt = _{ GRAPHIC_LOGGER_png | GRAPHIC_LOGGER_svg | GRAPHIC_LOGGER_horizontal | GRAPHIC_LOGGER_vertical }
+GRAPHIC_LOGGER_opts = { "[" ~ GRAPHIC_LOGGER_opt ~ ("," ~ GRAPHIC_LOGGER_opt)* ~ "]" }
+OPTION_GRAPHIC_LOGGER = { "graphic" ~ GRAPHIC_LOGGER_opts? }
 OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER }
 OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
 // ***********************************************
@@ -99,7 +103,10 @@ EXPLORE_OPTION_SECTION = { "@explore_option" ~ "{" ~
 // ***********************************************
 OPTION_SEMANTICS_accept = { "accept" }
 OPTION_SEMANTICS_prefix = { "prefix" }
-OPTION_SEMANTICS_KIND = _{ OPTION_SEMANTICS_accept | OPTION_SEMANTICS_prefix }
+OPTION_SEMANTICS_hide = { "hide" }
+OPTION_SEMANTICS_simulate_prefix = { "simulate" ~ "[" ~ "multi-prefix" ~ "]" }
+OPTION_SEMANTICS_simulate_slice = { "simulate" ~ "[" ~ "multi-slice" ~ "]" }
+OPTION_SEMANTICS_KIND = _{ OPTION_SEMANTICS_accept | OPTION_SEMANTICS_prefix | OPTION_SEMANTICS_hide | OPTION_SEMANTICS_simulate_prefix | OPTION_SEMANTICS_simulate_slice }
 OPTION_SEMANTICS_DECL = { "semantics" ~ "=" ~ OPTION_SEMANTICS_KIND }
 // ***********************************************
 OPTION_GOAL_pass = { "Pass" }

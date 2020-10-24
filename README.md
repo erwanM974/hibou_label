@@ -327,7 +327,7 @@ For this analysis we used the following options, declared in the "@analyze_optio
 
 ```
 @analyze_option{
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     semantics = prefix;
     strategy = DepthFS;
     goal = Pass
@@ -339,8 +339,8 @@ In this build only a "graphic" logger exists.
 It will create an image file (with the same name as the ".hsf" file) describing the treatment. 
 The generation of this image requires the graphviz tool to be installed ([https://www.graphviz.org/download/](https://www.graphviz.org/download/)),
 and the "dot" command to be in the "PATH" environment variable.
-The output of the graphic logger can either be a .png file (specified with "graphic=png") 
-or a .svg file (specified with "graphic=svg"), which requires cairo to be installed.
+The output of the graphic logger can either be a .png file (specified with ``graphic[png]``) 
+or a .svg file (specified with ``graphic[svg]``), which requires cairo to be installed.
 
 As explained earlier, we will use the "prefix" semantics to analyze the multi-trace.
 
@@ -396,7 +396,7 @@ the "frontier_priorities" option, for instance, as follows:
 @analyze_option{
     semantics = accept;
     strategy = DepthFS;
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     goal = Pass;
     frontier_priorities = [reception=1]
 }
@@ -442,7 +442,7 @@ which use can be specified and tweaked in the options with, for instance:
 @analyze_option{
     semantics = accept;
     strategy = GreedyBestFS[step=1];
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     goal = Pass
 }
 ```
@@ -507,7 +507,7 @@ Here we used the following options for the exploration:
 ```
 @explore_option{
     strategy = DepthFS;
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     pre_filters = [ max_depth = 3, 
                     max_loop_depth = 1, 
                     max_node_number = 7 ]

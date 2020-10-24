@@ -1,5 +1,5 @@
 @analyze_option{
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     semantics = prefix;
     strategy = DepthFS;
     goal = Pass

@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+
 use std::collections::HashSet;
 use crate::core::syntax::action::*;
 
@@ -56,7 +58,22 @@ impl TraceAction {
 #[derive(Clone, PartialEq, Debug)]
 pub struct MultiTraceCanal {
     pub lifelines : HashSet<usize>,
-    pub trace : Vec<TraceAction>
+    pub trace : Vec<TraceAction>,
+    pub flag_hidden : bool,
+    pub consumed : u32,
+    pub simulated_before : u32,
+    pub simulated_after : u32
+}
+
+impl MultiTraceCanal {
+    pub fn new(lifelines : HashSet<usize>,
+               trace : Vec<TraceAction>,
+               flag_hidden : bool,
+               consumed : u32,
+               simulated_before : u32,
+               simulated_after : u32) -> MultiTraceCanal {
+        return MultiTraceCanal{lifelines,trace,flag_hidden,consumed,simulated_before,simulated_after};
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -86,5 +103,22 @@ impl AnalysableMultiTrace {
         return false;
     }
 
+    pub fn is_any_component_hidden(&self) -> bool {
+        for canal in &self.canals {
+            if canal.flag_hidden {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    pub fn are_colocalizations_singletons(&self) -> bool {
+        for canal in &self.canals {
+            if canal.lifelines.len() > 1 {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
 use std::fs;
 use std::fs::File;
 use std::io::{Read,BufReader,BufRead,BufWriter,Write};
@@ -36,7 +36,7 @@ use crate::rendering::graphviz::node_style::*;
 use crate::rendering::graphviz::edge_style::*;
 use crate::rendering::graphviz::common::*;
 use crate::rendering::custom_draw::seqdiag::interaction::draw_interaction;
-use crate::rendering::custom_draw::firing::draw_firing::draw_firing;
+use crate::rendering::custom_draw::firing::draw_firing::{draw_firing,draw_hiding};
 use crate::process::verdicts::CoverageVerdict;
 use crate::core::trace::{TraceAction,TraceActionKind};
 
@@ -45,25 +45,34 @@ use crate::process::hibou_process::FilterEliminationKind;
 
 use crate::process::hibou_process::*;
 
-pub enum GraphicProcessLoggerKind {
+pub enum GraphicProcessLoggerOutputKind {
     svg,
     png
+}
+
+pub enum GraphicProcessLoggerLayout {
+    horizontal,
+    vertical
 }
 
 pub struct GraphicProcessLogger {
     log_name : String,
     file : File,
-    kind:GraphicProcessLoggerKind
+    output_kind:GraphicProcessLoggerOutputKind,
+    layout:GraphicProcessLoggerLayout
 }
 
 impl GraphicProcessLogger {
-    pub fn new(log_name : String,kind:GraphicProcessLoggerKind) -> GraphicProcessLogger {
+    pub fn new(log_name : String,
+               output_kind : GraphicProcessLoggerOutputKind,
+               layout : GraphicProcessLoggerLayout) -> GraphicProcessLogger {
         let file = File::create(&format!("{:}.dot",log_name)).unwrap();
         // ***
         return GraphicProcessLogger{
             log_name,
             file,
-            kind}
+            output_kind,
+            layout}
     }
 }
 
@@ -122,6 +131,14 @@ impl ProcessLogger for GraphicProcessLogger {
         // ***
         self.file.write("digraph G {\n".as_bytes() );
         // ***
+        match self.layout {
+            GraphicProcessLoggerLayout::horizontal => {
+                self.file.write("rankdir=LR;\n".as_bytes() );
+            },
+            GraphicProcessLoggerLayout::vertical => {
+                self.file.write("rankdir=TB;\n".as_bytes() );
+            }
+        }
         // ***
         let gv_node_path : String = format!("./temp/{:}_i1.png", self.log_name);
         draw_interaction(&gv_node_path, interaction, gen_ctx,remaining_multi_trace);
@@ -161,8 +178,8 @@ impl ProcessLogger for GraphicProcessLogger {
         // ***
         self.file.write( "}".as_bytes() );
         // ***
-        match self.kind {
-            GraphicProcessLoggerKind::png => {
+        match self.output_kind {
+            GraphicProcessLoggerOutputKind::png => {
                 let status = Command::new("dot")
                     .arg("-Tpng")
                     .arg(&format!("{:}.dot",self.log_name))
@@ -170,7 +187,7 @@ impl ProcessLogger for GraphicProcessLogger {
                     .arg(&format!("{:}.png",self.log_name))
                     .output();
             },
-            GraphicProcessLoggerKind::svg => {
+            GraphicProcessLoggerOutputKind::svg => {
                 let status = Command::new("dot")
                     .arg("-Tsvg:cairo")
                     .arg(&format!("{:}.dot",self.log_name))
@@ -238,11 +255,64 @@ impl ProcessLogger for GraphicProcessLogger {
         }
     }
 
+    fn log_hide(&mut self,
+                gen_ctx : &GeneralContext,
+                parent_state_id : u32,
+                new_state_id : u32,
+                lfs_to_hide : &HashSet<usize>,
+                hidden_interaction : &Interaction,
+                remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+        // *** Parent Interaction Node
+        let parent_interaction_node_name = format!("i{:}", parent_state_id);
+        // *** Hiding Node
+        let current_node_name = format!("i{:}", new_state_id);
+        let hiding_node_name = format!("h{:}", new_state_id);
+        {
+            let hiding_node_path : String = format!("./temp/{:}_{}.png",  self.log_name ,hiding_node_name);
+            draw_hiding(&hiding_node_path,lfs_to_hide,gen_ctx);
+            // ***
+            let mut hiding_gv_node_options : GraphvizNodeStyle = Vec::new();
+            hiding_gv_node_options.push( GraphvizNodeStyleItem::Image( hiding_node_path ) );
+            hiding_gv_node_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+            hiding_gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            let hiding_gv_node = GraphVizNode{id : hiding_node_name.clone(), style : hiding_gv_node_options};
+            self.file.write( hiding_gv_node.to_dot_string().as_bytes() );
+            self.file.write("\n".as_bytes() );
+        }
+        // *** Transition To Hiding
+        {
+            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
+            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            let gv_edge = GraphVizEdge{origin_id : parent_interaction_node_name, target_id : hiding_node_name.clone(), style : tran_gv_options};
+            self.file.write( gv_edge.to_dot_string().as_bytes() );
+            self.file.write("\n".as_bytes() );
+        }
+        // *** Resulting Interaction Node
+        {
+            let gv_path : String = format!("./temp/{:}_{}.png",  self.log_name ,current_node_name);
+            draw_interaction(&gv_path, hidden_interaction, gen_ctx, remaining_multi_trace);
+            // ***
+            let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+            node_gv_options.push( GraphvizNodeStyleItem::Image( gv_path ) );
+            node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            let gv_node = GraphVizNode{id : current_node_name.clone(), style : node_gv_options};
+            self.file.write( gv_node.to_dot_string().as_bytes() );
+            self.file.write("\n".as_bytes() );
+        }
+        // *** Transition To Interaction Node
+        {
+            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
+            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            let gv_edge = GraphVizEdge{origin_id : hiding_node_name, target_id : current_node_name, style : tran_gv_options};
+            self.file.write( gv_edge.to_dot_string().as_bytes() );
+            self.file.write("\n".as_bytes() );
+        }
+    }
+
     fn log_filtered(&mut self,gen_ctx : &GeneralContext,
                     parent_state_id : u32,
                     new_state_id : u32,
-                    action_position : &Position,
-                    action : &TraceAction,
                     elim_kind : &FilterEliminationKind) {
         // *** Node names
         let parent_interaction_node_name = format!("i{:}", parent_state_id);

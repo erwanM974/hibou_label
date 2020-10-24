@@ -19,6 +19,9 @@ limitations under the License.
 pub enum CoverageVerdict{
     Cov,
     TooShort,
+    MultiPref,
+    Slice,
+    Inconc,
     LackObs,
     UnCov,
     Out
@@ -33,6 +36,15 @@ impl std::string::ToString for CoverageVerdict {
             },
             CoverageVerdict::TooShort => {
                 return "TooShort".to_string();
+            },
+            CoverageVerdict::MultiPref => {
+                return "MultiPref".to_string();
+            },
+            CoverageVerdict::Slice => {
+                return "Slice".to_string();
+            },
+            CoverageVerdict::Inconc => {
+                return "Inconc".to_string();
             },
             CoverageVerdict::LackObs => {
                 return "LackObs".to_string();
@@ -95,7 +107,14 @@ pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:Cov
                 CoverageVerdict::Cov => {
                     return GlobalVerdict::Pass;
                 },
+                // ***
                 CoverageVerdict::TooShort => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::MultiPref => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::Slice => {
                     return GlobalVerdict::WeakPass;
                 },
                 _ => {
@@ -108,8 +127,19 @@ pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:Cov
                 CoverageVerdict::Cov => {
                     return GlobalVerdict::Pass;
                 },
+                // ***
                 CoverageVerdict::TooShort => {
                     return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::MultiPref => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::Slice => {
+                    return GlobalVerdict::WeakPass;
+                },
+                // ***
+                CoverageVerdict::Inconc => {
+                    return GlobalVerdict::Inconc;
                 },
                 CoverageVerdict::LackObs => {
                     return GlobalVerdict::Inconc;

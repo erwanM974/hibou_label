@@ -58,7 +58,7 @@ fn complete_canals_up_to_defined_lifelines(canals : &mut Vec<MultiTraceCanal>, g
     for lf_id in rem_lifelines {
         let lifelines : HashSet<usize> = HashSet::from_iter( vec![lf_id].iter().cloned() );
         let trace : Vec<TraceAction> = Vec::new();
-        canals.push( MultiTraceCanal{lifelines,trace})
+        canals.push( MultiTraceCanal::new(lifelines,trace,false,0,0,0) );
     }
     // ***
 }
@@ -167,7 +167,7 @@ pub fn trace_canal_from_pair(trace_pair : Pair<Rule>,
         }
     }
     // ***
-    return Ok( MultiTraceCanal{lifelines,trace} );
+    return Ok( MultiTraceCanal::new(lifelines,trace,false,0,0,0) );
 }
 
 pub fn inner_trace_from_pairs(content : &mut Pairs<Rule>,

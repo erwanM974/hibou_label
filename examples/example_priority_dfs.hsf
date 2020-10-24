@@ -1,7 +1,7 @@
 @analyze_option{
     semantics = accept;
     strategy = DepthFS;
-    loggers = [graphic=svg];
+    loggers = [graphic[svg]];
     goal = Pass;
     frontier_priorities = [reception=1]
 }
