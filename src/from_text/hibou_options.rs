@@ -104,6 +104,12 @@ fn parse_priorities(priority_pair : Pair<Rule>,
         Rule::OPTION_PRIORITY_loop => {
             pp.in_loop = priority_level;
         },
+        Rule::OPTION_PRIORITY_hide => {
+            pp.hide = priority_level;
+        },
+        Rule::OPTION_PRIORITY_simu => {
+            pp.simulate = priority_level;
+        },
         Rule::OPTION_PRIORITY_step => {
             if frontier_pp {
                 return Err( HibouParsingError::ProcessPriorityError("cannot specify \"step\" in frontier priorities".to_string()) );
@@ -285,6 +291,12 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     },
                     Rule::OPTION_SEMANTICS_hide => {
                         semantics = Some( SemanticKind::Hide );
+                    },
+                    Rule::OPTION_SEMANTICS_simulate_prefix => {
+                        semantics = Some( SemanticKind::Simulate(false) );
+                    },
+                    Rule::OPTION_SEMANTICS_simulate_slice => {
+                        semantics = Some( SemanticKind::Simulate(true) );
                     },
                     _ => {
                         panic!("what rule then ? : {:?}", semantics_pair.as_rule() );

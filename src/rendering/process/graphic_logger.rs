@@ -205,6 +205,7 @@ impl ProcessLogger for GraphicProcessLogger {
                      new_state_id : u32,
                      action_position : &Position,
                      action : &TraceAction,
+                     is_simulation : bool,
                      new_interaction : &Interaction,
                      remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         // *** Parent Interaction Node
@@ -214,12 +215,15 @@ impl ProcessLogger for GraphicProcessLogger {
         let firing_node_name = format!("f{:}", new_state_id);
         {
             let firing_node_path : String = format!("./temp/{:}_{}.png",  self.log_name ,firing_node_name);
-            draw_firing(&firing_node_path,action_position,action,gen_ctx);
+            draw_firing(&firing_node_path,action_position,action,is_simulation,gen_ctx);
             // ***
             let mut firing_gv_node_options : GraphvizNodeStyle = Vec::new();
             firing_gv_node_options.push( GraphvizNodeStyleItem::Image( firing_node_path ) );
             firing_gv_node_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
             firing_gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            if is_simulation {
+                firing_gv_node_options.push( GraphvizNodeStyleItem::Color(GraphvizColor::gray) );
+            }
             let firing_gv_node = GraphVizNode{id : firing_node_name.clone(), style : firing_gv_node_options};
             self.file.write( firing_gv_node.to_dot_string().as_bytes() );
             self.file.write("\n".as_bytes() );
@@ -228,6 +232,9 @@ impl ProcessLogger for GraphicProcessLogger {
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            if is_simulation {
+                tran_gv_options.push( GraphvizEdgeStyleItem::Color(GraphvizColor::gray) );
+            }
             let gv_edge = GraphVizEdge{origin_id : parent_interaction_node_name, target_id : firing_node_name.clone(), style : tran_gv_options};
             self.file.write( gv_edge.to_dot_string().as_bytes() );
             self.file.write("\n".as_bytes() );
@@ -249,6 +256,9 @@ impl ProcessLogger for GraphicProcessLogger {
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            if is_simulation {
+                tran_gv_options.push( GraphvizEdgeStyleItem::Color(GraphvizColor::gray) );
+            }
             let gv_edge = GraphVizEdge{origin_id : firing_node_name, target_id : current_node_name, style : tran_gv_options};
             self.file.write( gv_edge.to_dot_string().as_bytes() );
             self.file.write("\n".as_bytes() );
@@ -283,6 +293,7 @@ impl ProcessLogger for GraphicProcessLogger {
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
             let gv_edge = GraphVizEdge{origin_id : parent_interaction_node_name, target_id : hiding_node_name.clone(), style : tran_gv_options};
             self.file.write( gv_edge.to_dot_string().as_bytes() );
             self.file.write("\n".as_bytes() );
@@ -304,6 +315,7 @@ impl ProcessLogger for GraphicProcessLogger {
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
             let gv_edge = GraphVizEdge{origin_id : hiding_node_name, target_id : current_node_name, style : tran_gv_options};
             self.file.write( gv_edge.to_dot_string().as_bytes() );
             self.file.write("\n".as_bytes() );

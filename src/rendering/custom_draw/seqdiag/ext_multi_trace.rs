@@ -66,16 +66,27 @@ pub fn extract_texts_on_multi_trace(gen_ctx : &GeneralContext,
                 if canal_len > 0 {
                     canal_text.push( TextToPrint{text:"←".to_string(), color:Rgb(HC_Grammar_Symbol)} );
                     add_trace_text_to_canal(gen_ctx,canal_len,&mut canal_text,&(trace_canal.trace));
-                }
-                canal_text.push( TextToPrint{text:"⚑".to_string(), color:Rgb(HC_Grammar_Symbol)} );
-            } else {
-                canal_text.push( TextToPrint{text:"←⚐".to_string(), color:Rgb(HC_Grammar_Symbol)} );
-                if canal_len == 0 {
-                    canal_text.push( TextToPrint{text:"ε".to_string(), color:Rgb(HCP_LightGray)} );
                 } else {
-                    add_trace_text_to_canal(gen_ctx,canal_len,&mut canal_text,&(trace_canal.trace));
+                    canal_text.push( TextToPrint{text:"⚑".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+                    if trace_canal.simulated_after > 0 {
+                        canal_text.push( TextToPrint{text:format!("{:}♣", trace_canal.simulated_after), color:Rgb(HC_Grammar_Symbol)} );
+                    }
                 }
-                canal_text.push( TextToPrint{text:"⚑".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+            } else {
+                if canal_len > 0 {
+                    canal_text.push( TextToPrint{text:"←⚐".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+                    add_trace_text_to_canal(gen_ctx,canal_len,&mut canal_text,&(trace_canal.trace));
+                    canal_text.push( TextToPrint{text:"⚑".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+                } else {
+                    if trace_canal.simulated_after > 0 {
+                        canal_text.push( TextToPrint{text:format!("⚐{:}⚑", trace_canal.consumed), color:Rgb(HC_Grammar_Symbol)} );
+                        canal_text.push( TextToPrint{text:format!("{:}♣", trace_canal.simulated_after), color:Rgb(HC_Grammar_Symbol)} );
+                    } else {
+                        canal_text.push( TextToPrint{text:"←⚐".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+                        canal_text.push( TextToPrint{text:"ε".to_string(), color:Rgb(HCP_LightGray)} );
+                        canal_text.push( TextToPrint{text:"⚑".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+                    }
+                }
             }
         }
         // ***

@@ -197,6 +197,26 @@ impl Interaction {
         }
     }
 
+    pub fn max_nested_loop_depth(&self) -> u32 {
+        match self {
+            &Interaction::Empty => {
+                return 0;
+            }, &Interaction::Action(ref act) => {
+                return 0;
+            }, &Interaction::Strict(ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
+            }, &Interaction::Seq(ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
+            }, &Interaction::Par(ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
+            }, &Interaction::Alt(ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
+            }, &Interaction::Loop(_, ref i1) => {
+                return 1 + i1.max_nested_loop_depth();
+            }
+        }
+    }
+
     pub fn get_loop_depth_at_pos(&self, my_pos : &Position) -> u32 {
         match my_pos {
             Position::Epsilon => {

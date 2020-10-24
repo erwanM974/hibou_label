@@ -22,7 +22,7 @@ use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::*;
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
-use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction};
+use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction,WasMultiTraceConsumedWithSimulation};
 use crate::process::log::ProcessLogger;
 use crate::core::semantics::frontier::make_frontier;
 use crate::core::semantics::execute::execute;
@@ -136,6 +136,7 @@ impl HibouProcessManager {
     pub fn execution_loggers(&mut self,
                              action_position : &Position,
                              executed_action : &TraceAction,
+                             is_simulation : bool,
                              new_interaction : &Interaction,
                              parent_state_id : u32,
                              new_state_id :u32,
@@ -146,6 +147,7 @@ impl HibouProcessManager {
                                  new_state_id,
                                  action_position,
                                  executed_action,
+                                 is_simulation,
                                  new_interaction,
                                  remaining_multi_trace);
         }
@@ -209,6 +211,22 @@ impl HibouProcessManager {
             },
             &NextToProcessKind::Hide(lf_to_hide) => {
                 priority = priority + priorities.hide;
+            },
+            &NextToProcessKind::Simulate( ref front_pos, ref sim_kind ) => {
+                priority = priority + priorities.simulate;
+                let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
+                match front_act.act_kind {
+                    ObservableActionKind::Reception => {
+                        priority = priority + priorities.reception;
+                    },
+                    ObservableActionKind::Emission(_) => {
+                        priority = priority + priorities.emission;
+                    }
+                }
+                let loop_depth = (parent_state.interaction).get_loop_depth_at_pos(&front_pos);
+                if loop_depth > 0 {
+                    priority = priority + priorities.in_loop;
+                }
             }
         }
         // ***
@@ -306,8 +324,7 @@ impl HibouProcessManager {
                 let target_action = (parent_state.interaction).get_sub_interaction(position).as_leaf();
                 match self.apply_pre_filters(new_depth,Some(new_loop_depth),node_counter) {
                     None => {
-                        let ex_lf_id = target_action.occupation_before();
-                        let new_interaction = execute((parent_state.interaction).clone(),position.clone(),ex_lf_id);
+                        let new_interaction = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
                         // ***
                         let new_multi_trace : Option<AnalysableMultiTrace>;
                         match (parent_state.multi_trace).as_ref(){
@@ -317,7 +334,7 @@ impl HibouProcessManager {
                             Some( ref multi_trace ) => {
                                 let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
                                 for canal in &multi_trace.canals {
-                                    if canal.lifelines.contains(&ex_lf_id) {
+                                    if canal.lifelines.contains(&target_action.lf_id) {
                                         let mut new_trace = canal.trace.clone();
                                         new_trace.remove(0);
                                         new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
@@ -330,12 +347,12 @@ impl HibouProcessManager {
                                         new_canals.push(canal.clone());
                                     }
                                 }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals) );
+                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,new_interaction.max_nested_loop_depth()) );
                             }
                         }
                         // ***
                         self.execution_loggers(&position,
-                                          &target_action.to_trace_action(),
+                                          &target_action.to_trace_action(),false,
                                           &new_interaction,
                                           to_process.state_id,
                                                new_state_id,
@@ -382,7 +399,7 @@ impl HibouProcessManager {
                                                                              canal.simulated_after));
                                     }
                                 }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals) );
+                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,0) );
                             }
                         }
                         // ***
@@ -393,6 +410,68 @@ impl HibouProcessManager {
                                                &new_multi_trace);
                         // ***
                         return Some( (new_interaction,new_multi_trace,new_depth,parent_state.loop_depth) );
+                    },
+                    Some( elim_kind ) => {
+                        self.filtered_loggers(to_process.state_id,
+                                              new_state_id,
+                                              &elim_kind);
+                        return None;
+                    }
+                }
+            },
+            &NextToProcessKind::Simulate( ref position, ref sim_kind ) => {
+                let new_depth = parent_state.depth + 1;
+                let target_loop_depth = (parent_state.interaction).get_loop_depth_at_pos(position);
+                let new_loop_depth = parent_state.loop_depth + target_loop_depth;
+                // ***
+                let target_action = (parent_state.interaction).get_sub_interaction(position).as_leaf();
+                match self.apply_pre_filters(new_depth,Some(new_loop_depth), node_counter) {
+                    None => {
+                        let new_interaction = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
+                        // ***
+                        let new_multi_trace : Option<AnalysableMultiTrace>;
+                        match (parent_state.multi_trace).as_ref(){
+                            None => {
+                                new_multi_trace = None;
+                            },
+                            Some( ref multi_trace ) => {
+                                let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+                                for canal in &multi_trace.canals {
+                                    if canal.lifelines.contains(&target_action.lf_id) {
+                                        match sim_kind {
+                                            SimulationStepKind::BeforeStart => {
+                                                new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
+                                                                                      canal.trace.clone(),
+                                                                                      false,
+                                                                                      canal.consumed,
+                                                                                      canal.simulated_before + 1,
+                                                                                      canal.simulated_after) );
+                                            },
+                                            SimulationStepKind::AfterEnd => {
+                                                new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
+                                                                                      canal.trace.clone(),
+                                                                                      false,
+                                                                                      canal.consumed,
+                                                                                      canal.simulated_before,
+                                                                                      canal.simulated_after + 1) );
+                                            }
+                                        }
+                                    } else {
+                                        new_canals.push(canal.clone());
+                                    }
+                                }
+                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals, (multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth)) );
+                            }
+                        }
+                        // ***
+                        self.execution_loggers(&position,
+                                               &target_action.to_trace_action(),true,
+                                               &new_interaction,
+                                               to_process.state_id,
+                                               new_state_id,
+                                               &new_multi_trace);
+                        // ***
+                        return Some( (new_interaction,new_multi_trace,new_depth,new_loop_depth) );
                     },
                     Some( elim_kind ) => {
                         self.filtered_loggers(to_process.state_id,
@@ -455,6 +534,19 @@ impl HibouProcessManager {
                         } else {
                             return CoverageVerdict::Cov;
                         }
+                    },
+                    SemanticKind::Simulate(_) => {
+                        match multi_trace.is_simulated() {
+                            WasMultiTraceConsumedWithSimulation::No => {
+                                return CoverageVerdict::Cov;
+                            },
+                            WasMultiTraceConsumedWithSimulation::OnlyAfterEnd => {
+                                return CoverageVerdict::MultiPref;
+                            },
+                            WasMultiTraceConsumedWithSimulation::AsSlice => {
+                                return CoverageVerdict::Slice;
+                            }
+                        }
                     }
                 }
             } else {
@@ -475,6 +567,19 @@ impl HibouProcessManager {
                         } else {
                             return CoverageVerdict::TooShort;
                         }
+                    },
+                    SemanticKind::Simulate(_) => {
+                        match multi_trace.is_simulated() {
+                            WasMultiTraceConsumedWithSimulation::No => {
+                                return CoverageVerdict::TooShort;
+                            },
+                            WasMultiTraceConsumedWithSimulation::OnlyAfterEnd => {
+                                return CoverageVerdict::MultiPref;
+                            },
+                            WasMultiTraceConsumedWithSimulation::AsSlice => {
+                                return CoverageVerdict::Slice;
+                            }
+                        }
                     }
                 }
             }
@@ -492,7 +597,10 @@ impl HibouProcessManager {
                 },
                 SemanticKind::Hide => {
                     return CoverageVerdict::Out;
-                }
+                },
+                SemanticKind::Simulate(_) => {
+                    return CoverageVerdict::Out;
+                },
             }
         }
     }

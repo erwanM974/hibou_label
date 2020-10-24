@@ -32,10 +32,6 @@ use crate::process::hibou_process::FilterEliminationKind;
 use crate::process::hibou_process::*;
 
 
-pub struct TransformationExecution {
-
-}
-
 pub trait ProcessLogger {
 
     fn log_init(&mut self,
@@ -52,6 +48,7 @@ pub trait ProcessLogger {
                 new_state_id : u32,
                 action_position : &Position,
                 action : &TraceAction,
+                is_simulation : bool,
                 new_interaction : &Interaction,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>);
 

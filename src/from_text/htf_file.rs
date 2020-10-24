@@ -84,7 +84,7 @@ pub fn multitrace_from_text(multitrace_str : &String,
                         }
                     }
                     complete_canals_up_to_defined_lifelines(&mut canals,gen_ctx);
-                    return Ok( AnalysableMultiTrace::new(canals) );
+                    return Ok( AnalysableMultiTrace::new(canals,0) );
                 },
                 Rule::MULTI_TRACE => {
                     let mut unavailable_lifelines : HashSet<usize> = HashSet::new();
@@ -101,7 +101,7 @@ pub fn multitrace_from_text(multitrace_str : &String,
                         }
                     }
                     complete_canals_up_to_defined_lifelines(&mut canals,gen_ctx);
-                    return Ok( AnalysableMultiTrace::new(canals) );
+                    return Ok( AnalysableMultiTrace::new(canals,0) );
                 },
                 _ => {
                     panic!("what rule then ? : {:?}", first_pair.as_rule() );

@@ -57,10 +57,6 @@ impl ObservableAction {
         }
     }
 
-    pub fn occupation_before(&self) -> usize {
-        return self.lf_id;
-    }
-
     pub fn occupation_after(&self) -> HashSet<usize> {
         match self.act_kind {
             ObservableActionKind::Emission(ref targets) => {
@@ -68,12 +64,12 @@ impl ObservableAction {
                 for lf_id in targets {
                     occ.insert( *lf_id );
                 }
-                occ.insert( self.occupation_before() );
+                occ.insert( self.lf_id );
                 return occ;
             },
             _ => {
                 let mut occ : HashSet<usize> = HashSet::new();
-                occ.insert( self.occupation_before() );
+                occ.insert( self.lf_id );
                 return occ;
             }
         }

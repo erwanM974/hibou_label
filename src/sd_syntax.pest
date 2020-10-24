@@ -74,8 +74,10 @@ ARITH_INTEGER = { "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
 OPTION_PRIORITY_emission = { "emission" }
 OPTION_PRIORITY_reception = { "reception" }
 OPTION_PRIORITY_loop = { "loop" }
+OPTION_PRIORITY_hide = { "hide" }
+OPTION_PRIORITY_simu = { "simu" }
 OPTION_PRIORITY_step = { "step" }
-OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission | OPTION_PRIORITY_reception | OPTION_PRIORITY_loop | OPTION_PRIORITY_step }
+OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission | OPTION_PRIORITY_reception | OPTION_PRIORITY_loop | OPTION_PRIORITY_step | OPTION_PRIORITY_hide | OPTION_PRIORITY_simu }
 OPTION_PRIORITY_LEVEL = { ARITH_INTEGER | ("-" ~ ARITH_INTEGER ) }
 OPTION_PRIORITY = { OPTION_PRIORITY_KIND ~ "=" ~ OPTION_PRIORITY_LEVEL }
 // ***********************************************

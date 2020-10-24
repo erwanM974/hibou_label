@@ -50,9 +50,16 @@ impl MemorizedState {
 }
 
 #[derive(Clone, PartialEq, Debug)]
+pub enum SimulationStepKind {
+    BeforeStart,
+    AfterEnd
+}
+
+#[derive(Clone, PartialEq, Debug)]
 pub enum NextToProcessKind {
     Execute(Position),
-    Hide( HashSet<usize> )
+    Hide( HashSet<usize> ),
+    Simulate(Position,SimulationStepKind)
 }
 
 #[derive(Clone, PartialEq, Debug)]

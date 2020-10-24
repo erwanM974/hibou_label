@@ -60,17 +60,23 @@ use crate::core::trace::{TraceAction,TraceActionKind};
 pub fn draw_firing(path_str : &String,
                    action_position : &Position,
                    action : &TraceAction,
+                   is_simulation : bool,
                    gen_ctx : &GeneralContext) {
     let path = Path::new( path_str );
     // ***
     let mut text_lines : Vec<Vec<TextToPrint>> = Vec::new();
     // ***
     {
-        let mut ttp = diagram_repr_trace_action(action,gen_ctx);
+        let mut ttp: Vec<TextToPrint> = Vec::new();
+        if is_simulation {
+            ttp.push( TextToPrint{text:"/simu\\ ".to_string(),color:Rgb(HCP_LightGray)} );
+        }
+        ttp.append( &mut diagram_repr_trace_action(action,gen_ctx) );
         // ***
         ttp.push( TextToPrint{text:"@p".to_string(),color:Rgb(HCP_StandardPurple)} );
         ttp.push( TextToPrint{text:position_to_text(action_position),color:Rgb(HCP_Black)} );
         text_lines.push( ttp );
+
     }
     // ***
     let line_lens : Vec<usize> = text_lines.iter().map(|x| TextToPrint::char_count(x) ).collect();

@@ -17,8 +17,8 @@ limitations under the License.
 pub enum SemanticKind {
     Accept,
     Prefix,
-    Hide/*,
-    Simulate(bool)*/
+    Hide,
+    Simulate(bool)
 }
 
 
@@ -33,6 +33,13 @@ impl std::string::ToString for SemanticKind {
             },
             SemanticKind::Hide => {
                 return "hide".to_string();
+            },
+            SemanticKind::Simulate(sim_before) => {
+                if *sim_before {
+                    return "simulate multi-slices".to_string();
+                } else {
+                    return "simulate multi-prefixes".to_string();
+                }
             }
         }
     }

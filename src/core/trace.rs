@@ -78,12 +78,13 @@ impl MultiTraceCanal {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct AnalysableMultiTrace {
-    pub canals : Vec<MultiTraceCanal>
+    pub canals : Vec<MultiTraceCanal>,
+    pub remaining_loop_instantiations_in_simulation : u32
 }
 
 impl AnalysableMultiTrace {
-    pub fn new(canals:Vec<MultiTraceCanal>) -> AnalysableMultiTrace {
-        return AnalysableMultiTrace{canals};
+    pub fn new(canals:Vec<MultiTraceCanal>,remaining_loop_instantiations_in_simulation : u32) -> AnalysableMultiTrace {
+        return AnalysableMultiTrace{canals,remaining_loop_instantiations_in_simulation};
     }
 
     pub fn length(&self) -> usize {
@@ -112,6 +113,23 @@ impl AnalysableMultiTrace {
         return false;
     }
 
+    pub fn is_simulated(&self) -> WasMultiTraceConsumedWithSimulation {
+        let mut got_sim_after = false;
+        for canal in &self.canals {
+            if canal.simulated_before > 0 {
+                return WasMultiTraceConsumedWithSimulation::AsSlice;
+            }
+            if canal.simulated_after > 0 {
+                got_sim_after = true;
+            }
+        }
+        if got_sim_after {
+            return WasMultiTraceConsumedWithSimulation::OnlyAfterEnd;
+        } else {
+            return WasMultiTraceConsumedWithSimulation::No;
+        }
+    }
+
     pub fn are_colocalizations_singletons(&self) -> bool {
         for canal in &self.canals {
             if canal.lifelines.len() > 1 {
@@ -122,3 +140,8 @@ impl AnalysableMultiTrace {
     }
 }
 
+pub enum WasMultiTraceConsumedWithSimulation {
+    No,
+    OnlyAfterEnd,
+    AsSlice
+}

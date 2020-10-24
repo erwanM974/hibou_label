@@ -56,7 +56,8 @@ pub fn analyze(interaction : Interaction,
     // ***
     let multi_trace_option = Some(multi_trace);
     manager.init_loggers(&interaction,&multi_trace_option);
-    let multi_trace = multi_trace_option.unwrap();
+    let mut multi_trace = multi_trace_option.unwrap();
+    multi_trace.remaining_loop_instantiations_in_simulation = interaction.max_nested_loop_depth();
     // ***
     let mut next_state_id : u32 = 1;
     let mut node_counter : u32 = 0;
@@ -144,7 +145,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
             }
         }
     }
-    // *** Add Hiding steps in case of "hide" semantics
+    // *** Add Hiding steps in case of "hide" semantics OR Simulate steps in case of "simulate" semantics
     match manager.get_sem_kind() {
         &SemanticKind::Hide => {
             for canal in &multi_trace.canals {
@@ -155,6 +156,31 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                 }
             }
         },
+        &SemanticKind::Simulate(sim_before) => {
+            if multi_trace.length() > 0 {
+                for front_pos in make_frontier(&interaction) {
+                    if interaction.get_loop_depth_at_pos(&front_pos) <= multi_trace.remaining_loop_instantiations_in_simulation {
+                        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
+                        for canal in &multi_trace.canals {
+                            if canal.lifelines.contains(&front_act.lf_id) {
+                                if canal.trace.len() == 0 {
+                                    next_child_id = next_child_id +1;
+                                    let child_kind = NextToProcessKind::Simulate(front_pos,SimulationStepKind::AfterEnd);
+                                    to_enqueue.push( (next_child_id,child_kind) );
+                                } else {
+                                    if sim_before && (canal.consumed == 0) {
+                                        next_child_id = next_child_id +1;
+                                        let child_kind = NextToProcessKind::Simulate(front_pos,SimulationStepKind::BeforeStart);
+                                        to_enqueue.push( (next_child_id,child_kind) );
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         _ => {}
     }
     // ***
