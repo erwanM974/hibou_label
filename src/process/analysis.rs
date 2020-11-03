@@ -42,7 +42,7 @@ pub fn analyze(interaction : Interaction,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
                sem_kind: SemanticKind,
-               goal:GlobalVerdict) -> (GlobalVerdict,u32) {
+               goal : Option<GlobalVerdict>) -> (GlobalVerdict,u32) {
     // ***
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
@@ -63,19 +63,35 @@ pub fn analyze(interaction : Interaction,
     let mut node_counter : u32 = 0;
     let mut global_verdict = GlobalVerdict::Fail;
     // ***
+    // ***
+    let pursue_analysis : bool;
     match enqueue_next_node_in_analysis(&mut manager,
                                         next_state_id,
                                         interaction,multi_trace,
                                         0,0) {
-        None => {},
+        None => {
+            pursue_analysis = true;
+        },
         Some( coverage_verdict ) => {
             global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
+            match goal.as_ref() {
+                None => {
+                    pursue_analysis = true;
+                },
+                Some( target_goal ) => {
+                    if &global_verdict < target_goal {
+                        pursue_analysis = true;
+                    } else {
+                        pursue_analysis = false;
+                    }
+                }
+            }
         }
     }
     next_state_id = next_state_id +1;
     node_counter = node_counter +1;
     // ***
-    if global_verdict < goal {
+    if pursue_analysis {
         while let Some(next_to_process) = manager.extract_from_queue() {
             let new_state_id = next_state_id;
             next_state_id = next_state_id + 1;
@@ -98,8 +114,13 @@ pub fn analyze(interaction : Interaction,
                         None => {},
                         Some( coverage_verdict ) => {
                             global_verdict = update_global_verdict_from_new_coverage_verdict(global_verdict, coverage_verdict);
-                            if global_verdict >= goal {
-                                break;
+                            match goal.as_ref() {
+                                None => {},
+                                Some( target_goal ) => {
+                                    if &global_verdict >= target_goal {
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }

@@ -68,7 +68,7 @@ impl HibouProcessManager {
         return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,frontier_priorities,loggers};
     }
 
-    pub fn get_options_as_strings(&self,goal_and_verdict:Option<(&GlobalVerdict,&GlobalVerdict)>) -> Vec<String> {
+    pub fn get_options_as_strings(&self,goal_and_verdict:Option<(&Option<GlobalVerdict>,&GlobalVerdict)>) -> Vec<String> {
         let mut options_str : Vec<String> = Vec::new();
         match goal_and_verdict {
             None => {
@@ -77,7 +77,14 @@ impl HibouProcessManager {
             Some( (goal,verd) ) => {
                 options_str.push("process=analysis".to_string());
                 options_str.push( format!("semantics={}", self.sem_kind.as_ref().unwrap().to_string()) );
-                options_str.push( format!("goal={}", goal.to_string()) );
+                match goal {
+                    None => {
+                        options_str.push( "goal=None".to_string() );
+                    },
+                    Some( target_goal ) => {
+                        options_str.push( format!("goal={}", target_goal.to_string()) );
+                    }
+                }
                 options_str.push( format!("verdict={}", verd.to_string()) );
             }
         }
@@ -105,7 +112,7 @@ impl HibouProcessManager {
         }
     }
 
-    pub fn term_loggers(&mut self,goal_and_verdict:Option<(&GlobalVerdict,&GlobalVerdict)>) {
+    pub fn term_loggers(&mut self,goal_and_verdict:Option<(&Option<GlobalVerdict>,&GlobalVerdict)>) {
         let options_as_strs = (&self).get_options_as_strings(goal_and_verdict);
         for logger in self.loggers.iter_mut() {
             (*logger).log_term(&options_as_strs);

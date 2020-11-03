@@ -129,8 +129,8 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
     let mut frontier_priorities = ProcessPriorities::new(0,0,0, None, -2, -2);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
-    let mut semantics : Option<SemanticKind> = None;
-    let mut goal : Option<GlobalVerdict> = None;
+    let mut semantics : Option<SemanticKind> = Some(SemanticKind::Prefix);
+    let mut goal : Option<GlobalVerdict> = Some(GlobalVerdict::WeakPass);
     // ***
     let mut got_loggers   : bool = false;
     let mut got_strategy  : bool = false;
@@ -317,6 +317,9 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     Rule::OPTION_GOAL_weakpass => {
                         goal = Some( GlobalVerdict::WeakPass );
                     },
+                    Rule::OPTION_GOAL_none => {
+                        goal = None;
+                    },
                     _ => {
                         panic!("what rule then ? : {:?}", goal_pair.as_rule() );
                     }
@@ -329,26 +332,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     }
     match process_kind {
         ProcessKind::Analyze => {
-            let ana_sem : SemanticKind;
-            match semantics {
-                None => {
-                    ana_sem = SemanticKind::Prefix;
-                },
-                Some( sem_in ) => {
-                    ana_sem = sem_in;
-                }
-            }
-            let ana_goal : GlobalVerdict;
-            match goal {
-                None => {
-                    ana_goal = GlobalVerdict::Pass;
-                },
-                Some( goal_in ) => {
-                    ana_goal = goal_in;
-                }
-            }
-            // ***
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,Some(ana_sem), Some(ana_goal),frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,semantics, goal,frontier_priorities) );
         },
         _ => {
             return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, None,frontier_priorities) );
