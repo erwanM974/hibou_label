@@ -169,11 +169,13 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
     // *** Add Hiding steps in case of "hide" semantics OR Simulate steps in case of "simulate" semantics
     match manager.get_sem_kind() {
         &SemanticKind::Hide => {
-            for canal in &multi_trace.canals {
-                if (canal.trace.len() == 0) && (canal.flag_hidden == false) && (interaction.involves_any_of(&canal.lifelines)) {
-                    next_child_id = next_child_id +1;
-                    let child_kind = NextToProcessKind::Hide(canal.lifelines.clone());
-                    to_enqueue.push( (next_child_id,child_kind) );
+            if multi_trace.length() > 0 {
+                for canal in &multi_trace.canals {
+                    if (canal.trace.len() == 0) && (canal.flag_hidden == false) && (interaction.involves_any_of(&canal.lifelines)) {
+                        next_child_id = next_child_id +1;
+                        let child_kind = NextToProcessKind::Hide(canal.lifelines.clone());
+                        to_enqueue.push( (next_child_id,child_kind) );
+                    }
                 }
             }
         },

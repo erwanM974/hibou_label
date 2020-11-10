@@ -16,19 +16,19 @@
 
 
 name: hibou_label
-version: "0.4.7"
+version: "0.4.8"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for the analysis of traces and multi-traces of interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw as a sequence diagram an input hibou specification file (.hsf)
-        version: "0.4.7"
+        version: "0.4.8"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
                 required: true
                 index: 1
-                help: hibou specification file
+                help: input hibou specification file
             - output:
                 required: false
                 short: o
@@ -36,23 +36,45 @@ subcommands:
                 help: target file for drawing (default is 'the name of the hsf'.png)
     - explore:
         about: utility to explore the semantics of an input hibou specification file (.hsf)
-        version: "0.4.7"
+        version: "0.4.8"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
                 required: true
                 index: 1
-                help: hibou specification file
+                help: input hibou specification file
     - analyze:
         about: utility to analyze an input (multi-)trace from a hibou trace file (.htf) w.r.t. an input hibou specification file (.hsf)
-        version: "0.4.7"
+        version: "0.4.8"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
                 required: true
                 index: 1
-                help: hibou specification file
+                help: input hibou specification file
             - htf:
                 required: true
                 index: 2
-                help: hibou trace file
+                help: input hibou trace file
+    - bench_hvs1:
+        about: for testing hide vs simulation approach on multi-trace prefixes
+        version: "0.4.8"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+            - hsf:
+                required: true
+                index: 1
+                help: input hibou specification file
+            - htf:
+                required: true
+                index: 2
+                help: input hibou trace file
+            - out:
+                required: true
+                index: 3
+                help: output report file (.csv)
+            - csp:
+                required: false
+                short: s
+                takes_value: false
+                help: whether or not the search space is computed (may take a very long time for long traces)
