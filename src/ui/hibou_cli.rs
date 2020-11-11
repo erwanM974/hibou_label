@@ -42,6 +42,7 @@ use crate::from_text::hsf_file::{ProcessKind,parse_hsf_file};
 use crate::from_text::htf_file::parse_htf_file;
 
 use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
+use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
 
 fn get_ascii_border() -> &'static str {
     return r#"===================="#;
@@ -179,7 +180,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("bench") {
+    } else if let Some(matches) = matches.subcommand_matches("bench_hvs1") {
         let hsf_file = matches.value_of("hsf").unwrap();
         let htf_file = matches.value_of("htf").unwrap();
         let report_file = matches.value_of("out").unwrap();
@@ -188,6 +189,16 @@ pub fn hibou_cli() -> i32 {
         } else {
             hvs1_bench_analyze(hsf_file,htf_file,report_file,false);
         }
+        ret_print.push( "BENCHMARKING hide vs simulation".to_string());
+        ret_print.push( format!("with interaction from file '{}'",hsf_file) );
+        ret_print.push( format!("and trace from file '{}'",htf_file) );
+        ret_print.push( format!("output in file '{}'",report_file) );
+        ret_print.push( "".to_string());
+    } else if let Some(matches) = matches.subcommand_matches("bench_hvs2") {
+        let hsf_file = matches.value_of("hsf").unwrap();
+        let htf_file = matches.value_of("htf").unwrap();
+        let report_file = matches.value_of("out").unwrap();
+        hvs2_bench_analyze(hsf_file,htf_file,report_file);
         ret_print.push( "BENCHMARKING hide vs simulation".to_string());
         ret_print.push( format!("with interaction from file '{}'",hsf_file) );
         ret_print.push( format!("and trace from file '{}'",htf_file) );
