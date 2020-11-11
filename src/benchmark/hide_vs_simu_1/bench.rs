@@ -68,6 +68,9 @@ pub fn hvs1_bench_analyze(hsf_file : &str, htf_file : &str, report_file : &str, 
                     panic!();
                 },
                 Ok( multi_trace ) => {
+                    if !multi_trace.are_colocalizations_singletons() {
+                        panic!("comparing hiding and simulation only makes sense on multi-traces where co-localizations are singletons")
+                    }
                     // ***
                     bench_report_file.write( HVSBenchResult::get_csv_header(&gen_ctx,&multi_trace).as_bytes() );
                     bench_report_file.write( "\n".as_bytes() );
