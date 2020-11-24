@@ -81,29 +81,18 @@ pub fn parse_emission(gen_ctx : &mut GeneralContext, contents : &mut Pairs<Rule>
                             // ***
                         },
                         Rule::TARGET_LF_LIST => {
-                            let mut target_lfs : Vec<usize> = Vec::new();
-                            let mut inner_contents = next_pair.into_inner();
-                            for tar_lf_pair in inner_contents {
-                                let target_lf_name : String = tar_lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
-                                // ***
-                                match gen_ctx.get_lf_id( &target_lf_name ) {
-                                    None => {
-                                        return Err( HibouParsingError::MissingLifelineDeclarationError( target_lf_name ) );
-                                    },
-                                    Some( tar_lf_id ) => {
-                                        if tar_lf_id == lf_id {
-                                            return Err( HibouParsingError::EmissionDefinitionError( "emitting to sender not supported (in graphical representations)".to_string() ) );
-                                        } else {
-                                            if target_lfs.contains(&tar_lf_id) {
-                                                return Err( HibouParsingError::EmissionDefinitionError( "duplicate lifeline in emission targets".to_string() ) );
-                                            } else {
-                                                target_lfs.push(tar_lf_id);
-                                            }
-                                        }
+                            match parse_lifelines_list(gen_ctx, next_pair) {
+                                Err(e) => {
+                                    return Err(e);
+                                },
+                                Ok( target_lfs ) => {
+                                    if target_lfs.contains(&lf_id) {
+                                        return Err( HibouParsingError::EmissionDefinitionError( "emitting to sender not supported (in graphical representations)".to_string() ) );
+                                    } else {
+                                        return Ok( ObservableAction{lf_id,act_kind:ObservableActionKind::Emission(target_lfs),ms_id} );
                                     }
                                 }
                             }
-                            return Ok( ObservableAction{lf_id,act_kind:ObservableActionKind::Emission(target_lfs),ms_id} );
                         },
                         Rule::ENVIRONMENT_TARGET => {
                             return Ok( ObservableAction{lf_id,act_kind:ObservableActionKind::Emission(Vec::new()),ms_id} );
@@ -116,4 +105,27 @@ pub fn parse_emission(gen_ctx : &mut GeneralContext, contents : &mut Pairs<Rule>
             }
         }
     }
+}
+
+
+pub fn parse_lifelines_list(gen_ctx : &mut GeneralContext, next_pair : Pair<Rule>) -> Result<Vec<usize>,HibouParsingError> {
+    let mut target_lfs : Vec<usize> = Vec::new();
+    let mut inner_contents = next_pair.into_inner();
+    for tar_lf_pair in inner_contents {
+        let target_lf_name : String = tar_lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+        // ***
+        match gen_ctx.get_lf_id( &target_lf_name ) {
+            None => {
+                return Err( HibouParsingError::MissingLifelineDeclarationError( target_lf_name ) );
+            },
+            Some( tar_lf_id ) => {
+                if target_lfs.contains(&tar_lf_id) {
+                    return Err( HibouParsingError::EmissionDefinitionError( "duplicate lifeline in lifeline list".to_string() ) );
+                } else {
+                    target_lfs.push(tar_lf_id);
+                }
+            }
+        }
+    }
+    return Ok( target_lfs );
 }

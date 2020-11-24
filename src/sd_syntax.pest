@@ -38,6 +38,9 @@ SD_STRICT_INT = { SD_STRICT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ 
 SD_SEQ = {"seq"}
 SD_SEQ_INT = { SD_SEQ ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
+SD_COREG = {"coreg"}
+SD_COREG_INT = { SD_COREG ~ TARGET_LF_LIST ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
 SD_ALT = {"alt"}
 SD_ALT_INT = { SD_ALT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
@@ -52,6 +55,7 @@ SD_INTERACTION = { SD_EMPTY_INTERACTION
         | SD_ACTION_EMISSION
         | SD_STRICT_INT
         | SD_SEQ_INT
+        | SD_COREG_INT
         | SD_ALT_INT
         | SD_PAR_INT
         | SD_LOOP_INT

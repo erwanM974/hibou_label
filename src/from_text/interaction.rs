@@ -24,7 +24,7 @@ use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
 
 use crate::from_text::error::HibouParsingError;
-use crate::from_text::action::{parse_emission,parse_reception};
+use crate::from_text::action::{parse_emission,parse_reception,parse_lifelines_list};
 
 
 pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pair<Rule>) -> Result<Interaction,HibouParsingError> {
@@ -54,42 +54,69 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
             }
         },
         Rule::SD_STRICT_INT => {
-            match get_nary_sub_interactions(gen_ctx, sd_content_pair) {
+            match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {
                 Err(e) => {
                     return Err(e);
                 },
                 Ok( mut sub_ints ) => {
-                    return Ok( fold_interactions_in_binary_operator(BinaryOperatorKind::Strict,&mut sub_ints) );
+                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::Strict,&mut sub_ints) );
                 }
             }
         },
         Rule::SD_SEQ_INT => {
-            match get_nary_sub_interactions(gen_ctx, sd_content_pair) {
+            match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {
                 Err(e) => {
                     return Err(e);
                 },
                 Ok( mut sub_ints ) => {
-                    return Ok( fold_interactions_in_binary_operator(BinaryOperatorKind::Seq,&mut sub_ints) );
+                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::Seq,&mut sub_ints) );
                 }
             }
         },
+        Rule::SD_COREG_INT => {
+            let mut content = sd_content_pair.into_inner();
+            content.next(); // get rid of the operator name
+            let coreg_lfs_pair = content.next().unwrap();
+            match coreg_lfs_pair.as_rule() {
+                Rule::TARGET_LF_LIST => {
+                    match parse_lifelines_list(gen_ctx, coreg_lfs_pair) {
+                        Err(e) => {
+                            return Err(e);
+                        },
+                        Ok( coreg_lfs ) => {
+                            match get_nary_sub_interactions(gen_ctx, content) {
+                                Err(e) => {
+                                    return Err(e);
+                                },
+                                Ok( mut sub_ints ) => {
+                                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::CoReg(coreg_lfs),&mut sub_ints) );
+                                }
+                            }
+                        }
+                    }
+                },
+                _ => {
+                    panic!("what rule then ? : {:?}", coreg_lfs_pair.as_rule() );
+                }
+            }
+        }
         Rule::SD_ALT_INT => {
-            match get_nary_sub_interactions(gen_ctx, sd_content_pair) {
+            match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {
                 Err(e) => {
                     return Err(e);
                 },
                 Ok( mut sub_ints ) => {
-                    return Ok( fold_interactions_in_binary_operator(BinaryOperatorKind::Alt,&mut sub_ints) );
+                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::Alt,&mut sub_ints) );
                 }
             }
         },
         Rule::SD_PAR_INT => {
-            match get_nary_sub_interactions(gen_ctx, sd_content_pair) {
+            match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {
                 Err(e) => {
                     return Err(e);
                 },
                 Ok( mut sub_ints ) => {
-                    return Ok( fold_interactions_in_binary_operator(BinaryOperatorKind::Par,&mut sub_ints) );
+                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::Par,&mut sub_ints) );
                 }
             }
         },
@@ -124,11 +151,15 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
     }
 }
 
-fn get_nary_sub_interactions(gen_ctx : &mut GeneralContext, sd_content_pair : Pair<Rule>) -> Result<Vec<Interaction>,HibouParsingError> {
-    let mut strict_content = sd_content_pair.into_inner();
-    strict_content.next(); // get rid of the operator name
+fn get_nary_sub_interactions_from_pair(gen_ctx : &mut GeneralContext, sd_content_pair : Pair<Rule>) -> Result<Vec<Interaction>,HibouParsingError> {
+    let mut content = sd_content_pair.into_inner();
+    content.next(); // get rid of the operator name
+    return get_nary_sub_interactions(gen_ctx, content);
+}
+
+fn get_nary_sub_interactions(gen_ctx : &mut GeneralContext, content : Pairs<Rule>) -> Result<Vec<Interaction>,HibouParsingError> {
     let mut sub_ints : Vec<Interaction> = Vec::new();
-    for sub_interaction in strict_content {
+    for sub_interaction in content {
         match parse_interaction(gen_ctx,sub_interaction) {
             Err(e) => {
                 return Err(e);
@@ -142,19 +173,23 @@ fn get_nary_sub_interactions(gen_ctx : &mut GeneralContext, sd_content_pair : Pa
 }
 
 enum BinaryOperatorKind {
+    CoReg(Vec<usize>),
     Strict,
     Seq,
     Par,
     Alt
 }
 
-fn fold_interactions_in_binary_operator(op_kind : BinaryOperatorKind, sub_ints : &mut Vec<Interaction>) -> Interaction {
+fn fold_interactions_in_binary_operator(op_kind : &BinaryOperatorKind, sub_ints : &mut Vec<Interaction>) -> Interaction {
     assert!(sub_ints.len() > 0);
     if sub_ints.len() == 1 {
         return sub_ints.remove(0);
     } else {
         let first_int = sub_ints.remove(0);
         match op_kind {
+            BinaryOperatorKind::CoReg(ref cr) => {
+                return Interaction::CoReg( cr.clone(),Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
+            },
             BinaryOperatorKind::Strict => {
                 return Interaction::Strict( Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
             },

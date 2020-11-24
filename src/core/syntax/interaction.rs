@@ -37,6 +37,7 @@ pub enum Interaction {
     Action(ObservableAction),
     Strict(Box<Interaction>,Box<Interaction>),
     Seq(Box<Interaction>,Box<Interaction>),
+    CoReg(Vec<usize>,Box<Interaction>,Box<Interaction>),
     Alt(Box<Interaction>,Box<Interaction>),
     Par(Box<Interaction>,Box<Interaction>),
     Loop(ScheduleOperatorKind,Box<Interaction>)
@@ -66,6 +67,9 @@ impl Interaction {
                     &Interaction::Seq(ref i1, ref i2) => {
                         return (&*i1).get_outermost_loop_content( &(*sub_pos) );
                     },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
+                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
+                    },
                     &Interaction::Strict(ref i1, ref i2) => {
                         return (&*i1).get_outermost_loop_content( &(*sub_pos) );
                     },
@@ -86,6 +90,9 @@ impl Interaction {
             Position::Right(sub_pos) => {
                 match self {
                     &Interaction::Seq(ref i1, ref i2) => {
+                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
                         return (&*i2).get_outermost_loop_content( &(*sub_pos) );
                     },
                     &Interaction::Strict(ref i1, ref i2) => {
@@ -115,6 +122,9 @@ impl Interaction {
                     &Interaction::Seq(ref i1, ref i2) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
+                        return (&*i1).get_sub_interaction( &(*sub_pos) );
+                    },
                     &Interaction::Strict(ref i1, ref i2) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
@@ -135,6 +145,9 @@ impl Interaction {
             Position::Right(sub_pos) => {
                 match self {
                     &Interaction::Seq(ref i1, ref i2) => {
+                        return (&*i2).get_sub_interaction( &(*sub_pos) );
+                    },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
                     &Interaction::Strict(ref i1, ref i2) => {
@@ -164,6 +177,8 @@ impl Interaction {
                 return i1.express_empty() && i2.express_empty();
             }, &Interaction::Seq(ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.express_empty() && i2.express_empty();
             }, &Interaction::Par(ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
             }, &Interaction::Alt(ref i1, ref i2) => {
@@ -185,6 +200,10 @@ impl Interaction {
                 content.extend( i2.contained_actions() );
                 return content;
             }, &Interaction::Seq(ref i1, ref i2) => {
+                let mut content = i1.contained_actions();
+                content.extend( i2.contained_actions() );
+                return content;
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
                 let mut content = i1.contained_actions();
                 content.extend( i2.contained_actions() );
                 return content;
@@ -216,6 +235,8 @@ impl Interaction {
                 return i1.avoids(lf_id) && i2.avoids(lf_id);
             }, &Interaction::Seq(ref i1, ref i2) => {
                 return i1.avoids(lf_id) && i2.avoids(lf_id);
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.avoids(lf_id) && i2.avoids(lf_id);
             }, &Interaction::Par(ref i1, ref i2) => {
                 return i1.avoids(lf_id) && i2.avoids(lf_id);
             }, &Interaction::Alt(ref i1, ref i2) => {
@@ -239,6 +260,8 @@ impl Interaction {
             }, &Interaction::Strict(ref i1, ref i2) => {
                 return i1.involves(lf_id) || i2.involves(lf_id);
             }, &Interaction::Seq(ref i1, ref i2) => {
+                return i1.involves(lf_id) || i2.involves(lf_id);
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
                 return i1.involves(lf_id) || i2.involves(lf_id);
             }, &Interaction::Par(ref i1, ref i2) => {
                 return i1.involves(lf_id) || i2.involves(lf_id);
@@ -265,6 +288,8 @@ impl Interaction {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             }, &Interaction::Seq(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             }, &Interaction::Par(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             }, &Interaction::Alt(ref i1, ref i2) => {
@@ -284,6 +309,8 @@ impl Interaction {
             }, &Interaction::Strict(ref i1, ref i2) => {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
             }, &Interaction::Seq(ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
             }, &Interaction::Par(ref i1, ref i2) => {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
@@ -311,6 +338,9 @@ impl Interaction {
                     &Interaction::Seq(ref i1, ref i2) => {
                         return i1.get_loop_depth_at_pos(&(*sub_pos) );
                     },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
+                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
+                    },
                     &Interaction::Par(ref i1, ref i2) => {
                         return i1.get_loop_depth_at_pos(&(*sub_pos) );
                     },
@@ -331,6 +361,9 @@ impl Interaction {
                         return i2.get_loop_depth_at_pos(&(*sub_pos) );
                     },
                     &Interaction::Seq(ref i1, ref i2) => {
+                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
+                    },
+                    &Interaction::CoReg(_, ref i1, ref i2) => {
                         return i2.get_loop_depth_at_pos(&(*sub_pos) );
                     },
                     &Interaction::Par(ref i1, ref i2) => {
@@ -403,6 +436,25 @@ impl Interaction {
                             },
                             _ => {
                                 return Interaction::Seq(Box::new(i1hid), Box::new(i2hid));
+                            }
+                        }
+                    }
+                }
+            },
+            Interaction::CoReg(cr,i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                match &i1hid {
+                    Interaction::Empty => {
+                        return i2hid;
+                    },
+                    _ => {
+                        match &i2hid {
+                            Interaction::Empty => {
+                                return i1hid
+                            },
+                            _ => {
+                                return Interaction::CoReg(cr.clone(), Box::new(i1hid), Box::new(i2hid) );
                             }
                         }
                     }

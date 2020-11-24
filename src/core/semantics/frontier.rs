@@ -45,6 +45,16 @@ pub fn global_frontier(interaction : &Interaction) -> Vec<Position> {
             }
             return front;
         },
+        &Interaction::CoReg(ref cr, ref i1, ref i2) => {
+            let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
+            for pos2 in push_frontier(&PositionKind::Right, global_frontier(i2)) {
+                let act = interaction.get_sub_interaction(&pos2 ).as_leaf();
+                if cr.contains(&act.lf_id) || i1.avoids(act.lf_id) {
+                    front.push(pos2);
+                }
+            }
+            return front;
+        },
         &Interaction::Alt(ref i1, ref i2) => {
             let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
             front.append( &mut push_frontier(&PositionKind::Right, global_frontier(i2)) );

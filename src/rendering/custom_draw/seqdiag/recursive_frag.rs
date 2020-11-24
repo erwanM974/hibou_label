@@ -58,3 +58,20 @@ pub fn get_recursive_strict_frags(interaction : &Interaction) -> Vec<&Interactio
     return frags;
 }
 
+pub fn get_recursive_coreg_frags<'lifetime>(ref_cr : &Vec<usize>, interaction : &'lifetime Interaction) -> Vec<&'lifetime Interaction> {
+    let mut frags : Vec<&Interaction> = Vec::new();
+    match interaction {
+        &Interaction::CoReg(ref cr, ref i1, ref i2) => {
+            if cr == ref_cr {
+                frags.extend( get_recursive_coreg_frags(ref_cr,i1));
+                frags.extend( get_recursive_coreg_frags(ref_cr,i2));
+            } else {
+                frags.push(interaction);
+            }
+        },
+        _ => {
+            frags.push(interaction);
+        }
+    }
+    return frags;
+}

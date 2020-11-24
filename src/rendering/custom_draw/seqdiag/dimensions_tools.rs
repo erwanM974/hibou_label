@@ -45,6 +45,15 @@ fn get_interaction_depth(interaction : &Interaction ) -> usize {
             }
             return sum;
         },
+        &Interaction::CoReg(ref cr, ref i1, ref i2) => {
+            let mut frags = get_recursive_coreg_frags(cr, i1);
+            frags.extend( get_recursive_coreg_frags(cr, i2) );
+            let mut sum : usize = 0;
+            for frag in frags {
+                sum = sum + get_interaction_depth(frag) + 2;
+            }
+            return sum;
+        },
         &Interaction::Seq(ref i1, ref i2) => {
             return get_interaction_depth(i1) + get_interaction_depth(i2) + 1;
         },

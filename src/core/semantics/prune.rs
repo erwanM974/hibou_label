@@ -31,6 +31,9 @@ pub fn prune(my_int : Interaction, lf_id : usize) -> Interaction {
         Interaction::Seq(i1, i2) => {
             return Interaction::Seq( Box::new( prune(*i1,lf_id)), Box::new( prune(*i2,lf_id)) );
         },
+        Interaction::CoReg(cr, i1, i2) => {
+            return Interaction::CoReg( cr,Box::new( prune(*i1,lf_id)), Box::new( prune(*i2,lf_id)) );
+        },
         Interaction::Strict(i1, i2) => {
             return Interaction::Strict( Box::new( prune(*i1,lf_id)), Box::new( prune(*i2,lf_id)) );
         },
