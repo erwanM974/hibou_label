@@ -23,8 +23,6 @@ use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
 use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction};
 use crate::process::log::ProcessLogger;
-use crate::core::semantics::frontier::make_frontier;
-use crate::core::semantics::execute::execute;
 use crate::process::verdicts::CoverageVerdict;
 
 use crate::process::priorities::ProcessPriorities;

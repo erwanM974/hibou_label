@@ -1,6 +1,7 @@
 @message{
     reception;
     emission;
+    passage;
     broadcast
 }
 @lifeline{
@@ -11,5 +12,6 @@
 seq(
     reception -> lifeline2,
     lifeline2 -- emission ->|,
+    lifeline1 -- passage -> lifeline2,
     lifeline1 -- broadcast -> (lifeline2,lifeline3)
 )

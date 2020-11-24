@@ -117,7 +117,11 @@ OPTION_GOAL_none = { "None" }
 OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | OPTION_GOAL_none }
 OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
 // ***********************************************
-ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_SEMANTICS_DECL | OPTION_GOAL_DECL }
+OPTION_LOCFRONT_true = { "use_locfront" ~ "=" ~ "true" }
+OPTION_LOCFRONT_false = { "use_locfront" ~ "=" ~ "false" }
+OPTION_LOCFRONT = _{ OPTION_LOCFRONT_true | OPTION_LOCFRONT_false }
+// ***********************************************
+ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_SEMANTICS_DECL | OPTION_GOAL_DECL | OPTION_LOCFRONT }
 ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
                                	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)*
                                    ~ "}"}

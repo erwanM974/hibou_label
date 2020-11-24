@@ -172,6 +172,7 @@ pub fn hibou_cli() -> i32 {
                                                            hoptions.frontier_priorities,
                                                            hoptions.loggers,
                                                            hoptions.sem_kind.unwrap(),
+                                                           hoptions.use_locfront,
                                                            hoptions.goal);
 
                         ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );

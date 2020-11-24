@@ -150,7 +150,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                                HibouSearchStrategy::DFS,
                                                                ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                                Vec::new(),
-                                                               sem_kind.clone(),
+                                                               sem_kind.clone(),true,
                                                                None);
         // ***
         let (verdict_wp_goal,node_count_wp_goal) = analyze(interaction.clone(),
@@ -160,7 +160,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                            HibouSearchStrategy::DFS,
                                                            ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                            Vec::new(),
-                                                           sem_kind.clone(),
+                                                           sem_kind.clone(),true,
                                                            Some(GlobalVerdict::WeakPass));
         // ***
         assert!( verdict_none_goal == verdict_wp_goal );
@@ -178,7 +178,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                            HibouSearchStrategy::DFS,
                                                            ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                            Vec::new(),
-                                                           sem_kind.clone(),
+                                                           sem_kind.clone(),true,
                                                            Some(GlobalVerdict::WeakPass));
         // ***
         return AnalysisBenchResult::new(

@@ -24,7 +24,7 @@ use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
 use crate::core::trace::*;
 use crate::process::log::ProcessLogger;
-use crate::core::semantics::frontier::make_frontier;
+use crate::core::semantics::frontier::global_frontier;
 
 use crate::process::verdicts::CoverageVerdict;
 use crate::process::hibou_process::*;
@@ -42,6 +42,7 @@ pub fn explore(interaction : Interaction,
     let mut manager = HibouProcessManager::new(gen_ctx,
                                                strategy,
                                                None,
+                                               false,
                                                pre_filters,
                                                HashMap::new(),
                                                Box::new(SimpleProcessQueue::new()),
@@ -103,7 +104,7 @@ fn enqueue_next_node_in_exploration(manager      : &mut HibouProcessManager,
     let mut next_child_id : u32 = 0;
     // ***
     let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
-    for front_pos in make_frontier(&interaction) {
+    for front_pos in global_frontier(&interaction) {
         next_child_id = next_child_id +1;
         let child_kind = NextToProcessKind::Execute(front_pos);
         to_enqueue.push( (next_child_id,child_kind) );

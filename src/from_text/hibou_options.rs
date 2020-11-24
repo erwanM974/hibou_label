@@ -44,6 +44,7 @@ pub struct HibouOptions {
     pub strategy : HibouSearchStrategy,
     pub pre_filters : Vec<HibouPreFilter>,
     pub sem_kind : Option<SemanticKind>,
+    pub use_locfront : bool,
     pub goal : Option<GlobalVerdict>,
     pub frontier_priorities : ProcessPriorities
 }
@@ -55,9 +56,10 @@ impl HibouOptions {
                strategy : HibouSearchStrategy,
                pre_filters : Vec<HibouPreFilter>,
                sem_kind : Option<SemanticKind>,
+               use_locfront : bool,
                goal:Option<GlobalVerdict>,
                frontier_priorities : ProcessPriorities) -> HibouOptions {
-        return HibouOptions{loggers,strategy,pre_filters,sem_kind,goal,frontier_priorities};
+        return HibouOptions{loggers,strategy,pre_filters,sem_kind,use_locfront,goal,frontier_priorities};
     }
 
     pub fn default_explore() -> HibouOptions {
@@ -66,6 +68,7 @@ impl HibouOptions {
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
             sem_kind:None,
             goal:None,
+            use_locfront:false,
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
 
@@ -74,6 +77,7 @@ impl HibouOptions {
             strategy:HibouSearchStrategy::BFS,
             pre_filters:Vec::new(),
             sem_kind:Some(SemanticKind::Prefix),
+            use_locfront:true,
             goal:Some(GlobalVerdict::Pass),
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
@@ -130,6 +134,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut frontier_priorities = ProcessPriorities::new(0,0,0, None, -2, -2);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
     let mut semantics : Option<SemanticKind> = Some(SemanticKind::Prefix);
+    let mut use_locfront = true;
     let mut goal : Option<GlobalVerdict> = Some(GlobalVerdict::WeakPass);
     // ***
     let mut got_loggers   : bool = false;
@@ -137,12 +142,29 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut got_frontier_priorities : bool = false;
     let mut got_pre_filters : bool = false;
     let mut got_semantics : bool = false;
+    let mut got_locfront : bool = false;
     let mut got_goal : bool = false;
     // ***
     let mut declared_loggers : HashSet<LoggerKinds> = HashSet::new();
     // ***
     for option_decl_pair in option_pair.into_inner() {
         match option_decl_pair.as_rule() {
+            Rule::OPTION_LOCFRONT_true => {
+                if got_locfront {
+                    return Err( HibouParsingError::HsfSetupError("several 'use_locfront=X' declared in the same '@X_option' section".to_string()));
+                }
+                got_locfront = true;
+                // ***
+                use_locfront = true;
+            },
+            Rule::OPTION_LOCFRONT_false => {
+                if got_locfront {
+                    return Err( HibouParsingError::HsfSetupError("several 'use_locfront=X' declared in the same '@X_option' section".to_string()));
+                }
+                got_locfront = true;
+                // ***
+                use_locfront = false;
+            },
             Rule::OPTION_LOGGER_DECL => {
                 if got_loggers {
                     return Err( HibouParsingError::HsfSetupError("several 'loggers=[X]' declared in the same '@X_option' section".to_string()));
@@ -332,10 +354,10 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     }
     match process_kind {
         ProcessKind::Analyze => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,semantics, goal,frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,semantics, use_locfront, goal,frontier_priorities) );
         },
         _ => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, None,frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, false, None,frontier_priorities) );
         }
     }
 }

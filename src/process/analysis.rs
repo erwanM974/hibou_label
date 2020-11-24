@@ -23,7 +23,10 @@ use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
 use crate::core::trace::*;
 use crate::process::log::ProcessLogger;
-use crate::core::semantics::frontier::make_frontier;
+use crate::core::semantics::frontier::global_frontier;
+use crate::core::semantics::locfront::local_frontier;
+
+use crate::core::semantics::execute::execute;
 
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
@@ -42,12 +45,14 @@ pub fn analyze(interaction : Interaction,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
                sem_kind: SemanticKind,
+               use_locfront : bool,
                goal : Option<GlobalVerdict>) -> (GlobalVerdict,u32) {
     // ***
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
                                                strategy,
                                                Some(sem_kind),
+                                               use_locfront,
                                                pre_filters,
                                                HashMap::new(),
                                                Box::new(SimpleProcessQueue::new()),
@@ -142,6 +147,7 @@ pub fn analyze(interaction : Interaction,
     return (global_verdict,node_counter);
 }
 
+
 fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                                  state_id    : u32,
                                  interaction : Interaction,
@@ -151,9 +157,29 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
     // ***
     let mut next_child_id : u32 = 0;
     // ***
+    if manager.use_locfront {
+        if manager.is_dead_loc_front(&interaction,&multi_trace) {
+            let verdict = CoverageVerdict::Dead;
+            manager.verdict_loggers(&verdict,state_id);
+            return Some( verdict );
+        }
+    }
+    // ***
+    let head_actions = multi_trace.head_actions();
+    // ***
     let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
-    for front_pos in make_frontier(&interaction) {
+    // ***
+    for front_pos in global_frontier(&interaction) {
         let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
+        for head_act in &head_actions {
+            if head_act.is_match(front_act) {
+                next_child_id = next_child_id +1;
+                let child_kind = NextToProcessKind::Execute(front_pos);
+                to_enqueue.push( (next_child_id,child_kind) );
+                break;
+            }
+        }
+        /*
         for canal in &multi_trace.canals {
             if canal.trace.len() > 0 {
                 let head_act : &TraceAction = canal.trace.get(0).unwrap();
@@ -164,7 +190,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                     break;
                 }
             }
-        }
+        }*/
     }
     // *** Add Hiding steps in case of "hide" semantics OR Simulate steps in case of "simulate" semantics
     match manager.get_sem_kind() {
@@ -181,20 +207,53 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
         },
         &SemanticKind::Simulate(sim_before) => {
             if multi_trace.length() > 0 {
-                for front_pos in make_frontier(&interaction) {
+                for front_pos in global_frontier(&interaction) {
                     if interaction.get_loop_depth_at_pos(&front_pos) <= multi_trace.remaining_loop_instantiations_in_simulation {
                         let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
                         for canal in &multi_trace.canals {
                             if canal.lifelines.contains(&front_act.lf_id) {
+                                // ***
+                                let ok_to_simulate : Option<SimulationStepKind>;
+                                // ***
                                 if canal.trace.len() == 0 {
-                                    next_child_id = next_child_id +1;
-                                    let child_kind = NextToProcessKind::Simulate(front_pos,SimulationStepKind::AfterEnd);
-                                    to_enqueue.push( (next_child_id,child_kind) );
+                                    ok_to_simulate = Some(SimulationStepKind::AfterEnd);
                                 } else {
+                                    // ***
                                     if sim_before && (canal.consumed == 0) {
-                                        next_child_id = next_child_id +1;
-                                        let child_kind = NextToProcessKind::Simulate(front_pos,SimulationStepKind::BeforeStart);
-                                        to_enqueue.push( (next_child_id,child_kind) );
+                                        ok_to_simulate = Some(SimulationStepKind::BeforeStart);
+                                    } else {
+                                        ok_to_simulate = None;
+                                    }
+                                }
+                                match ok_to_simulate {
+                                    None => {},
+                                    Some( sim_step_kind ) => {
+                                        // ***
+                                        // additional checking; we instanciate content from loops
+                                        // iff it contains actions susceptible to allow duther consumption of the multi-trace
+                                        let mut confirm_simulate : bool = false;
+                                        match interaction.get_outermost_loop_content(&front_pos) {
+                                            None => {
+                                                confirm_simulate = true;
+                                            },
+                                            Some( (loop_content,relative_front_pos) ) => {
+                                                let after_execute_content = execute(loop_content,relative_front_pos, front_act.lf_id);
+                                                let contained_actions = after_execute_content.contained_actions();
+                                                for head_act in &head_actions {
+                                                    if contained_actions.contains(head_act){
+                                                        confirm_simulate = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // ***
+                                        if confirm_simulate {
+                                            next_child_id = next_child_id +1;
+                                            let child_kind = NextToProcessKind::Simulate(front_pos,sim_step_kind);
+                                            to_enqueue.push( (next_child_id,child_kind) );
+                                        }
+                                        // ***
                                     }
                                 }
                                 break;
@@ -206,7 +265,6 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
         }
         _ => {}
     }
-    // ***
     // ***
     if next_child_id > 0 {
         let rem_child_ids : HashSet<u32> = HashSet::from_iter((1..(next_child_id+1)).collect::<Vec<u32>>().iter().cloned() );

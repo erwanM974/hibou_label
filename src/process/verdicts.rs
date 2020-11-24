@@ -23,6 +23,7 @@ pub enum CoverageVerdict{
     Slice,
     Inconc,
     LackObs,
+    Dead,
     UnCov,
     Out
 }
@@ -51,6 +52,9 @@ impl std::string::ToString for CoverageVerdict {
             },
             CoverageVerdict::UnCov => {
                 return "UnCov".to_string();
+            },
+            CoverageVerdict::Dead => {
+                return "Dead".to_string();
             },
             CoverageVerdict::Out => {
                 return "Out".to_string();

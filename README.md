@@ -260,24 +260,44 @@ Diagrams, such as the one on the previous images can be drawn using the "hibou d
 <img src="./README_images/building_blocks.png" alt="building blocks" width="500">
 
 
-## Analyze
+## Analyze - Introduction
 
 The "analyze" sub-command of HIBOU can analyse multi-traces w.r.t. interactions. 
-For any multi-trace and any interaction, it returns a verdict about the conformity of the multi-trace w.r.t. a certain semantics of the interaction. 
+For any multi-trace and any interaction, it returns a verdict about the conformity of the multi-trace w.r.t.
+a certain semantics of the interaction.
 
-We consider two semantics:
+Indeed, one can consider several semantics (sets of multi-traces specified by a given interaction) when dealing with interaction languages.
+In our approach, we distinguish between:
 - "AccMult", the semantics which is that of exactly accepted multi-traces (projections of accepted global traces)
 - "SemMult", the semantics which is that of multi-traces which are obtained from projecting prefixes of accepted global traces
+- "MultiPref", that of prefixes (in the sense of multi-traces) of multi-traces from "AccMult" (i.e. one can remove actions at the end of each 
+local component of the multi-trace independently)
+- "Slices", that of slices of multi-traces from "AccMult" (i.e. one can remove actions at both the end and the beginning
+of each local component of the multi-trace independently)
 
-In hibou_label, we implemented accordingly two modes for the analysis:
-- the "accept" mode, which returns a verdict "Pass" if the multi-trace is in "AccMult" or "Fail" if not
-- the "prefix" mode, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "SemMult" but not in "AccMult", 
+You may have guessed that for any given interaction, its associated semantics (using those 4 semantics) form a set of
+russian matryoshka dolls i.e. they are included in one another as follows:
+AccMult is in SemMult which is in MultiPref, itself in Slices.
+
+In hibou_label, we propose several distinct methods (abusively called "semantics") to identify if a given multi-trace is in 
+any one of those sets w.r.t. a given interaction.
+The method used is specified using the "semantics" attribute ("prefix" is the default) in the "@analysis_option" 
+section of the input ".hsf" file.
+
+The proposed methods are:
+- ``semantics=accept``, which returns a verdict "Pass" if the multi-trace is in "AccMult" or "Fail" if not
+- ``semantics=prefix``, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "SemMult" but not in "AccMult", 
 and either "Inconc" or "Fail" if not, as explained in Sec.4.5 of [this paper](https://arxiv.org/abs/2009.01777)
-
-To select one of those modes ("prefix" is the default), you can write "semantics=accept" or "semantics=prefix" 
-in the "@analyze_option" section of the input ".hsf" file.
-
-In the following we will only consider example using the "prefix" mode given that it is the more advanced one.
+- ``semantics=hide``, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "SemMult" but not in "AccMult", 
+either "WeakPass" or "Inconc" if it is in "MultiPref" but not in "SemMult" (WeakPass if all local components of the
+multi-trace are defined on a single lifeline i.e. co-localizations are singletons), and "Fail" if none of the above. This method uses
+a specific "hide" function that we will detail in an upcoming paper.
+- ``semantics=simulate[multi-prefix]``, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "MultiPref" 
+but not in "AccMult", and "Fail" if none of the above. This method simulate the execution of the actions that are missing at the end
+of the multi-trace's components so as to complete it (if possible) into a multi-trace from "SemMult".
+- ``semantics=simulate[multi-slice]``, which returns "Pass" if the multi-trace is in "AccMult", "WeakPass" if it is in "Slices" 
+but not in "AccMult", and "Fail" if none of the above. This method simulate the execution of the actions that are missing 
+at the beginning and/or at end of the multi-trace's components so as to complete it (if possible) into a multi-trace from "SemMult".
 
 We have proven in [this Coq proof](https://erwanm974.github.io/coq_hibou_label_multi_trace_analysis/) that the verdict "Pass" 
 is equivalent to the membership of the multi-trace to the "AccMult" semantics of the interaction.
@@ -294,15 +314,38 @@ We then repeat the process with this new interaction model and the new multi-tra
 
 Consequently, any given analysis opens-up paths which are successions of couples (interaction,multi-trace).
 Each such path terminates either with:
-- in "accept" mode, either:
+- in ``accept`` mode, either:
   + a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution (statically verified on the interaction term)
   + or an "UnCov" local verdict in the other cases (i.e. either when the consumption of the multi-trace is impossible, or when the multi-trace has been emptied but the interaction cannot express the empty execution)
-- in "prefix" mode either:
+- in ``prefix`` mode either:
   + a "Cov" local verdict, when the multi-trace has been entirely consumed and the interaction can express the empty execution
   + a "TooShort" local verdict, when the multi-trace has been entirely consumed but the interaction cannot express the empty execution
   + an "Out" local verdict, when no component of the multi-trace can be entirely consumed
   + a "LackObs" local verdict, when some but not all of the components of the multi-trace can be entirely consumed
-  
+- in ``hide`` mode either:
+  + a "Cov" local verdict, when the multi-trace has been entirely consumed without having to take a hiding step
+    and the interaction can express the empty execution
+  + a "TooShort" local verdict, when the multi-trace has been entirely consumed, no hiding step has been taken,
+    but the interaction cannot express the empty execution
+  + a "MultiPref" or "Inconc" local verdict, when the multi-trace has been entirely consumed 
+    but in the path corresponding to this consumption, there was a hiding step 
+    (as explained, we have "MultiPref" if the multi-trace is defined on canals that are singletons and "Inconc" if not)
+  + an "Out" local verdict, when the multi-trace cannot be entirely consumed
+- in ``simulate`` mode either:
+  + a "Cov" local verdict, when the multi-trace has been entirely consumed without any simulation step 
+    and the interaction can express the empty execution
+  + a "TooShort" local verdict, when the multi-trace has been entirely consumed, no simulation step has been taken,
+    but the interaction cannot express the empty execution
+  + a "MultiPref" local verdict, when the multi-trace has been entirely consumed and in the path
+    corresponding to this consumption, there were simulation steps but only corresponding 
+    to missing actions at the end of local components (ceased local observation too early)
+  + a "Slice" local verdict, when the multi-trace has been entirely consumed and in the path
+    corresponding to this consumption, there were simulation steps corresponding 
+    to missing actions at the beginning of local components (started local observation too late)
+    Let us note that simulation step at the beginning of local components is only enabled if ``semantics=simulate[multi-slice]``
+    and not if ``semantics=simulate[multi-prefix]``
+  + an "Out" local verdict, when the multi-trace cannot be entirely consumed
+
 From those local verdicts, the global verdict is inferred:
 - in "accept" mode: 
   + "Pass" is returned if there exists a path terminating in "Cov"
@@ -312,9 +355,20 @@ From those local verdicts, the global verdict is inferred:
   + "WeakPass" is returned if there are no paths leading to "Cov" but there exist one terminating in "TooShort"
   + "Inconc" is returned if there are no paths leading to either "Cov" or "TooShort" but there is one leading to "LackObs"
   + "Fail" is returned otherwise
+- in "hide" mode:
+  + "Pass" is returned if there exists a path terminating in "Cov"
+  + "WeakPass" is returned if there are no paths leading to "Cov" but there exist one terminating in "TooShort" or "MultiPref"
+  + "Inconc" is returned if there are no paths leading to either "Cov", "TooShort" or "MultiPref" but there is one leading to "Inconc"
+  + "Fail" is returned otherwise
+- in "simulate" mode:
+  + "Pass" is returned if there exists a path terminating in "Cov"
+  + "WeakPass" is returned if there are no paths leading to "Cov" but there exist one terminating in "TooShort" or "MultiPref" or "Slice"
+  + "Fail" is returned otherwise
 
 
-#### Example 1
+## Analyze - "accept" & "prefix" modes
+
+### Example 1
 
 Below is given an example analysis, that you can reproduce by using the files from the "examples" folder.
 
@@ -365,7 +419,7 @@ Let us note that we would have had the following if we had used the Breadth Firs
 
 <img src="./README_images/ana_mutrace_bfs_none.svg" alt="analysis ex1 with bfs" width="900">
 
-#### Example 2
+### Example 2
 
 Below is another example, this time of the analysis of a global trace, and yielding the "WeakPass" verdict.
 You can also reproduce it by using the files from the "examples" folder.
@@ -379,7 +433,7 @@ once the goal verdict (or a verdict that is stronger) is reached.
 
 <img src="./README_images/ana_glotrace_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
 
-#### Example showcasing frontier priorities
+### Example showcasing frontier priorities
 
 The child nodes of a given couple (interaction,multi-trace) correspond to the execution of a
 frontier action of the interaction which match a head action of a trace component of the multi-trace.
@@ -433,7 +487,7 @@ and for cases where no action are prioritized (first row) and receptions are pri
 | DepthFS with no priorities | 4 | 12 | 39 |145 |
 | DepthFS with reception=1   | 4 | 10 | 27 | 89 |
 
-#### Example showcasing Greedy Best First Search
+### Example showcasing Greedy Best First Search
 
 In addition to the classical Breadth First Search and Depth First Search strategies, we experimented with a Greedy Best First Search strategy, 
 which use can be specified and tweaked in the options with, for instance: 
@@ -493,6 +547,15 @@ With ``step=0`` (others to 0), GreedyBestFS is equivalent to BreadthFirstSearch.
 
 To summarize, GreedyBestFS can be considered to be another implementation of a search strategy 
 that includes the possible combinations of BreadthFS and DepthFS with frontier priorities.
+
+
+## Analyze - "hide" mode
+
+TODO: write README section
+
+## Analyze - "simulate" mode
+
+TODO: write README section
 
 ## Explore
 

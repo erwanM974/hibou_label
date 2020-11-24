@@ -24,7 +24,8 @@ use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
 use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction,WasMultiTraceConsumedWithSimulation};
 use crate::process::log::ProcessLogger;
-use crate::core::semantics::frontier::make_frontier;
+use crate::core::semantics::frontier::global_frontier;
+use crate::core::semantics::locfront::local_frontier;
 use crate::core::semantics::execute::execute;
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
@@ -40,6 +41,7 @@ pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
     strategy : HibouSearchStrategy,
     sem_kind : Option<SemanticKind>,
+    pub use_locfront : bool,
     pre_filters : Vec<HibouPreFilter>,
     // ***
     memorized_states : HashMap<u32,MemorizedState>,
@@ -59,13 +61,22 @@ impl HibouProcessManager {
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
                sem_kind : Option<SemanticKind>,
+               use_locfront : bool,
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
                process_queue : Box<ProcessQueue>,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>
     ) -> HibouProcessManager {
-        return HibouProcessManager{gen_ctx,strategy,sem_kind,pre_filters,memorized_states,process_queue,frontier_priorities,loggers};
+        return HibouProcessManager{gen_ctx,
+            strategy,
+            sem_kind,
+            use_locfront,
+            pre_filters,
+            memorized_states,
+            process_queue,
+            frontier_priorities,
+            loggers};
     }
 
     pub fn get_options_as_strings(&self,goal_and_verdict:Option<(&Option<GlobalVerdict>,&GlobalVerdict)>) -> Vec<String> {
@@ -77,6 +88,11 @@ impl HibouProcessManager {
             Some( (goal,verd) ) => {
                 options_str.push("process=analysis".to_string());
                 options_str.push( format!("semantics={}", self.sem_kind.as_ref().unwrap().to_string()) );
+                if self.use_locfront {
+                    options_str.push("use_locfront=true".to_string());
+                } else {
+                    options_str.push("use_locfront=false".to_string());
+                }
                 match goal {
                     None => {
                         options_str.push( "goal=None".to_string() );
@@ -104,6 +120,40 @@ impl HibouProcessManager {
             options_str.push( filters_str );
         }
         return options_str;
+    }
+
+    pub fn is_dead_loc_front(&self, interaction : &Interaction, multi_trace : &AnalysableMultiTrace) -> bool {
+        for canal in &(multi_trace.canals) {
+            if canal.trace.len() > 0 {
+                // ***
+                match self.sem_kind.as_ref().unwrap() {
+                    SemanticKind::Simulate( sim_before ) => {
+                        if *sim_before && (canal.consumed == 0) {
+                            // here we allow the simulation of actions before the start of
+                            // the given component trace
+                            // hence we shouldn't discard the node
+                            break;
+                        }
+                    },
+                    _ => {}
+                }
+                // ***
+                let loc_front = local_frontier(&self.gen_ctx, interaction, &canal.lifelines);
+                // ***
+                let head_act : &TraceAction = canal.trace.get(0).unwrap();
+                let mut is_in_local_frontier = false;
+                for front_act in loc_front {
+                    if head_act.is_match(&front_act) {
+                        is_in_local_frontier = true;
+                        break;
+                    }
+                }
+                if !is_in_local_frontier {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<AnalysableMultiTrace>) {

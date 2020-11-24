@@ -19,13 +19,13 @@ use std::collections::HashSet;
 use crate::core::syntax::action::*;
 
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum TraceActionKind {
     Reception,
     Emission
 }
 
-#[derive(Clone, PartialEq, Debug)] //Eq, Hash,
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct TraceAction {
     pub lf_id : usize,
     pub act_kind : TraceActionKind,
@@ -85,6 +85,16 @@ pub struct AnalysableMultiTrace {
 impl AnalysableMultiTrace {
     pub fn new(canals:Vec<MultiTraceCanal>,remaining_loop_instantiations_in_simulation : u32) -> AnalysableMultiTrace {
         return AnalysableMultiTrace{canals,remaining_loop_instantiations_in_simulation};
+    }
+
+    pub fn head_actions(&self) -> HashSet<&TraceAction> {
+        let mut heads : HashSet<&TraceAction> = HashSet::new();
+        for canal in &self.canals {
+            if canal.trace.len() > 0 {
+                heads.insert( canal.trace.get(0).unwrap() );
+            }
+        }
+        return heads;
     }
 
     pub fn length(&self) -> usize {

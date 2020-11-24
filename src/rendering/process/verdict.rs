@@ -40,6 +40,9 @@ impl CoverageVerdict {
             CoverageVerdict::LackObs => {
                 return GraphvizColor::orangered3;
             },
+            CoverageVerdict::Dead => {
+                return GraphvizColor::firebrick;
+            },
             CoverageVerdict::Out => {
                 return GraphvizColor::red3;
             },

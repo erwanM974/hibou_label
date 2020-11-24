@@ -20,7 +20,7 @@ use crate::core::syntax::interaction::*;
 
 
 
-pub fn make_frontier(interaction : &Interaction) -> Vec<Position> {
+pub fn global_frontier(interaction : &Interaction) -> Vec<Position> {
     match interaction {
         &Interaction::Empty => {
             return Vec::new();
@@ -29,15 +29,15 @@ pub fn make_frontier(interaction : &Interaction) -> Vec<Position> {
             return vec![Position::Epsilon];
         },
         &Interaction::Strict(ref i1, ref i2) => {
-            let mut front = push_frontier(&PositionKind::Left, make_frontier(i1));
+            let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
             if i1.express_empty() {
-                front.append( &mut push_frontier(&PositionKind::Right, make_frontier(i2)) )
+                front.append( &mut push_frontier(&PositionKind::Right, global_frontier(i2)) )
             }
             return front;
         },
         &Interaction::Seq(ref i1, ref i2) => {
-            let mut front = push_frontier(&PositionKind::Left, make_frontier(i1));
-            for pos2 in push_frontier(&PositionKind::Right, make_frontier(i2)) {
+            let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
+            for pos2 in push_frontier(&PositionKind::Right, global_frontier(i2)) {
                 let act = interaction.get_sub_interaction(&pos2 ).as_leaf();
                 if i1.avoids(act.lf_id) {
                     front.push(pos2);
@@ -46,17 +46,17 @@ pub fn make_frontier(interaction : &Interaction) -> Vec<Position> {
             return front;
         },
         &Interaction::Alt(ref i1, ref i2) => {
-            let mut front = push_frontier(&PositionKind::Left, make_frontier(i1));
-            front.append( &mut push_frontier(&PositionKind::Right, make_frontier(i2)) );
+            let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
+            front.append( &mut push_frontier(&PositionKind::Right, global_frontier(i2)) );
             return front;
         },
         &Interaction::Par(ref i1, ref i2) => {
-            let mut front = push_frontier(&PositionKind::Left, make_frontier(i1));
-            front.append( &mut push_frontier(&PositionKind::Right, make_frontier(i2)) );
+            let mut front = push_frontier(&PositionKind::Left, global_frontier(i1));
+            front.append( &mut push_frontier(&PositionKind::Right, global_frontier(i2)) );
             return front;
         },
         &Interaction::Loop(_, ref i1) => {
-            return push_frontier(&PositionKind::Left, make_frontier(i1));
+            return push_frontier(&PositionKind::Left, global_frontier(i1));
         }
     }
 }

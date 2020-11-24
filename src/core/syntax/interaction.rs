@@ -22,6 +22,7 @@ use std::collections::hash_map::DefaultHasher;
 
 use crate::core::syntax::position::*;
 use crate::core::syntax::action::*;
+use crate::core::trace::TraceAction;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ScheduleOperatorKind {
@@ -51,6 +52,55 @@ impl Interaction {
             },
             _ => {
                 panic!("called as_leaf on something that's not a leaf : {:?}", self);
+            }
+        }
+    }
+
+    pub fn get_outermost_loop_content(&self, my_pos : &Position) -> Option<(Interaction,Position)> {
+        match my_pos {
+            Position::Epsilon => {
+                return None;
+            },
+            Position::Left(sub_pos) => {
+                match self {
+                    &Interaction::Seq(ref i1, ref i2) => {
+                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Strict(ref i1, ref i2) => {
+                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Alt(ref i1, ref i2) => {
+                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Par(ref i1, ref i2) => {
+                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Loop(_ , ref i1) => {
+                        return Some( ( *(i1.clone()) , *(sub_pos.clone()) ) );
+                    },
+                    _ => {
+                        panic!();
+                    }
+                }
+            },
+            Position::Right(sub_pos) => {
+                match self {
+                    &Interaction::Seq(ref i1, ref i2) => {
+                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Strict(ref i1, ref i2) => {
+                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Alt(ref i1, ref i2) => {
+                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    &Interaction::Par(ref i1, ref i2) => {
+                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
+                    },
+                    _ => {
+                        panic!();
+                    }
+                }
             }
         }
     }
@@ -120,6 +170,34 @@ impl Interaction {
                 return i1.express_empty() || i2.express_empty();
             }, &Interaction::Loop(_, _) => {
                 return true;
+            }
+        }
+    }
+
+    pub fn contained_actions(&self) -> HashSet<TraceAction> {
+        match &self {
+            &Interaction::Empty => {
+                return HashSet::new();
+            }, &Interaction::Action(ref act) => {
+                return act.get_all_atomic_actions();
+            }, &Interaction::Strict(ref i1, ref i2) => {
+                let mut content = i1.contained_actions();
+                content.extend( i2.contained_actions() );
+                return content;
+            }, &Interaction::Seq(ref i1, ref i2) => {
+                let mut content = i1.contained_actions();
+                content.extend( i2.contained_actions() );
+                return content;
+            }, &Interaction::Par(ref i1, ref i2) => {
+                let mut content = i1.contained_actions();
+                content.extend( i2.contained_actions() );
+                return content;
+            }, &Interaction::Alt(ref i1, ref i2) => {
+                let mut content = i1.contained_actions();
+                content.extend( i2.contained_actions() );
+                return content;
+            }, &Interaction::Loop(_, i1) => {
+                return i1.contained_actions();
             }
         }
     }

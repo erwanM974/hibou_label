@@ -35,6 +35,22 @@ pub struct ObservableAction {
 
 impl ObservableAction {
 
+    pub fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
+        let mut contents : HashSet<TraceAction> = HashSet::new();
+        match &self.act_kind {
+            ObservableActionKind::Reception => {
+                contents.insert( TraceAction::new(self.lf_id,TraceActionKind::Reception,self.ms_id) );
+            },
+            ObservableActionKind::Emission( targets ) => {
+                contents.insert( TraceAction::new(self.lf_id,TraceActionKind::Emission,self.ms_id) );
+                for tar_lf_id in targets {
+                    contents.insert( TraceAction::new(*tar_lf_id,TraceActionKind::Reception, self.ms_id) );
+                }
+            }
+        }
+        return contents;
+    }
+
     pub fn to_trace_action(&self) -> TraceAction {
         match self.act_kind {
             ObservableActionKind::Reception => {
