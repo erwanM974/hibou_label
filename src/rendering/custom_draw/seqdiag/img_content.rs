@@ -257,7 +257,17 @@ fn draw_coregion_frame(    image : &mut RgbImage,
                                     coreg_ids : &Vec<usize>,
                                     y_drafts : Vec<u32>) {
 
-    let x_coords : Vec<&DrawingLifelineCoords> = coreg_ids.into_iter().map(|lf_id| lf_x_widths.get(lf_id).unwrap() ).collect::< Vec<&DrawingLifelineCoords> >();
+    let mut x_coords : Vec<&DrawingLifelineCoords> = Vec::new();
+    {
+        for lf_id in coreg_ids {
+            match lf_x_widths.get(lf_id) {
+                None => {},
+                Some( xcord ) => {
+                    x_coords.push(xcord);
+                }
+            }
+        }
+    }
 
     let mut y_coords : Vec<f32> = y_drafts.into_iter().map(|y| get_y_pos_from_yshift(y) ).collect::< Vec<f32> >();
     let y_start : f32 = y_coords.remove(0);
