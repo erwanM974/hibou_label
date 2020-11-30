@@ -18,9 +18,10 @@ use std::cmp;
 
 use crate::core::syntax::action::*;
 use crate::core::syntax::interaction::{Interaction};
+use crate::core::syntax::util::recursive_frag::*;
 
 use crate::rendering::sd_drawing_conf::*;
-use crate::rendering::custom_draw::seqdiag::recursive_frag::*;
+
 
 
 pub fn get_interaction_max_yshift(interaction : &Interaction) -> usize {

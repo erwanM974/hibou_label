@@ -56,6 +56,15 @@ subcommands:
                 required: true
                 index: 2
                 help: input hibou trace file
+    - puml_sd:
+            about: utility to translate an input hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
+            version: "0.4.8"
+            author: Erwan Mahe <github.com/erwanM974>
+            args:
+                - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou specification file
     - bench_hvs1:
         about: for testing hide vs simulation approach on multi-trace prefixes
         version: "0.4.8"

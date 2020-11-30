@@ -36,6 +36,7 @@ use rusttype::{FontCollection, Scale};
 // **********
 
 use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::util::recursive_frag::*;
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 
@@ -44,7 +45,6 @@ use crate::core::general_context::GeneralContext;
 use crate::rendering::sd_drawing_conf::*;
 use crate::rendering::textual::convention::*;
 use crate::rendering::textual::colored::colored_text::*;
-use crate::rendering::custom_draw::seqdiag::recursive_frag::*;
 use crate::rendering::custom_draw::seqdiag::dimensions_tools::*;
 use crate::rendering::custom_draw::seqdiag::action::draw_action;
 use crate::rendering::custom_draw::seqdiag::lf_coords::DrawingLifelineCoords;

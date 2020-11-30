@@ -19,6 +19,5 @@ mod lf_coords;
 mod action;
 mod img_content;
 mod img_frame;
-mod recursive_frag;
 pub mod interaction;
 mod ext_multi_trace;

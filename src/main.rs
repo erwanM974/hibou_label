@@ -40,6 +40,7 @@ pub mod from_text;
 pub mod rendering;
 pub mod process;
 pub mod ui;
+pub mod plantuml;
 
 pub mod benchmark;
 
