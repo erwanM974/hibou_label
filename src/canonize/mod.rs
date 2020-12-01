@@ -14,41 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-extern crate strum;
+pub mod term_repr;
+pub mod term_repr_out;
 
-#[macro_use]
-extern crate strum_macros;
 
-extern crate rusttype;
-
-extern crate image;
-
-extern crate imageproc;
-
-extern crate pest;
-
-#[macro_use]
-extern crate pest_derive;
-
-#[macro_use]
-extern crate clap;
-
-// **********
-
-pub mod core;
-pub mod from_text;
-pub mod rendering;
-pub mod process;
-pub mod ui;
-pub mod plantuml;
-pub mod canonize;
-
-pub mod benchmark;
-
-// **********
-
-use crate::ui::hibou_cli::hibou_cli;
-
-fn main() {
-    hibou_cli();
-}

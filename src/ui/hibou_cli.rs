@@ -42,6 +42,7 @@ use crate::from_text::hsf_file::{ProcessKind,parse_hsf_file};
 use crate::from_text::htf_file::parse_htf_file;
 
 use crate::plantuml::sequence::to_plant_uml_sd;
+use crate::canonize::term_repr_out::to_term_repr;
 
 use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
 use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
@@ -136,6 +137,26 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("on file : {}",spec_output_file) );
                 ret_print.push( "".to_string());
                 to_plant_uml_sd(&spec_output_file,file_name, &my_int, &gen_ctx);
+            }
+        }
+    } else if let Some(matches) = matches.subcommand_matches("term_repr") {
+        let hsf_file_path = matches.value_of("hsf").unwrap();
+        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+            Err(e) => {
+                ret_print.push( e.to_string() );
+                print_retval(ret_print);
+                return -1;
+            },
+            Ok( (gen_ctx,my_int,hoptions) ) => {
+                let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
+                let output_name = format!("{}_repr", file_name);
+                // ***
+                ret_print.push( "".to_string());
+                ret_print.push( "DRAWING INTERACTION as syntax tree".to_string());
+                ret_print.push( format!("from file '{}'",hsf_file_path) );
+                ret_print.push( format!("on file : {}.svg",output_name) );
+                ret_print.push( "".to_string());
+                to_term_repr(&output_name, &my_int, &gen_ctx);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("explore") {

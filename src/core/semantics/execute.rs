@@ -32,7 +32,7 @@ use crate::core::trace::*;
 
 
 
-fn deploy_receptions(ms_id : usize, rem_targets : &mut Vec<usize>) -> Interaction {
+pub fn deploy_receptions(ms_id : usize, rem_targets : &mut Vec<usize>) -> Interaction {
     let rem_tlen = rem_targets.len();
     if rem_tlen == 0 {
         return Interaction::Empty;
