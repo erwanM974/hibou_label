@@ -74,6 +74,15 @@ subcommands:
                     required: true
                     index: 1
                     help: input hibou specification file
+    - canonize:
+            about: experimental utility to draw possible transformations of an interaction term that preserve semantics and lead towards a canonic form
+            version: "0.4.8"
+            author: Erwan Mahe <github.com/erwanM974>
+            args:
+                - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou specification file
     - bench_hvs1:
         about: for testing hide vs simulation approach on multi-trace prefixes
         version: "0.4.8"

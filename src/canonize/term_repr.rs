@@ -30,7 +30,14 @@ use crate::core::semantics::execute::deploy_receptions;
 pub fn interaction_repr(interaction : &Interaction, gen_ctx : &GeneralContext, name : &String, as_subgraph : bool) -> String {
     let mut repr : String = String::new();
     if as_subgraph {
-        repr.push_str( &format!("subgraph {} {{\n", name) );
+        repr.push_str( &format!("subgraph cluster_{} {{\n", name) );
+        let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+        node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+        node_gv_options.push( GraphvizNodeStyleItem::Style(vec![GvNodeStyleKind::Filled]) );
+        node_gv_options.push( GraphvizNodeStyleItem::Label("".to_string()) );
+        let gv_node = GraphVizNode{id : format!("{}_anchor",name), style : node_gv_options};
+        repr.push_str( &gv_node.to_dot_string() );
+        repr.push_str("\n");
     } else {
         repr.push_str( &format!("digraph {} {{\n", name) );
     }

@@ -46,3 +46,26 @@ pub fn to_term_repr(name : &String,
         .arg(&format!("{:}.svg",name))
         .output();
 }
+
+pub fn to_term_repr_temp(name : &String,
+                         interaction : &Interaction,
+                         gen_ctx : &GeneralContext) {
+    let mut file = File::create(&format!("temp/{:}.dot",name)).unwrap();
+    file.write( interaction_repr(interaction,gen_ctx,name,false).as_bytes() );
+    let status = Command::new("dot")
+        .arg("-Tpng")
+        .arg(&format!("temp/{:}.dot",name))
+        .arg("-o")
+        .arg(&format!("temp/{:}.png",name))
+        .output();
+}
+
+
+
+
+
+
+
+
+
+

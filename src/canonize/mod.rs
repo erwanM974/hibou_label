@@ -16,5 +16,7 @@ limitations under the License.
 
 pub mod term_repr;
 pub mod term_repr_out;
-
+pub mod transformations;
+pub mod measure;
+pub mod process;
 

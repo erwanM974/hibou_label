@@ -136,6 +136,8 @@ impl DotTranslatable for GvEdgeLineStyle {
 pub enum GraphvizEdgeStyleItem {
     LineStyle(GvEdgeLineStyle),
     Label(String),
+    LHead(String),
+    LTail(String),
     Head(GvArrowHeadStyle),
     Tail(GvArrowHeadStyle),
     Color(GraphvizColor),
@@ -156,6 +158,14 @@ impl DotTranslatable for GraphvizEdgeStyleItem {
                 res.push_str("label=\"");
                 res.push_str(&label);
                 res.push_str("\"");
+            },
+            GraphvizEdgeStyleItem::LHead(label) => {
+                res.push_str("lhead=");
+                res.push_str(label );
+            },
+            GraphvizEdgeStyleItem::LTail(label) => {
+                res.push_str("ltail=");
+                res.push_str(label );
             },
             GraphvizEdgeStyleItem::Head(arrow_head_style) => {
                 res.push_str("arrowhead=");
