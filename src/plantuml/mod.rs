@@ -16,3 +16,5 @@ limitations under the License.
 
 
 pub mod sequence;
+
+pub mod automata_product;

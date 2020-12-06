@@ -55,7 +55,7 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
                         output_file.write( format!("{}-> : {}\n", &lf_name, &ms_name).as_bytes() );
                     } else if tars_len == 1 {
                         let tar_lf_id = targets.get(0).unwrap();
-                        let tar_lf_name = gen_ctx.get_ms_name(*tar_lf_id).unwrap();
+                        let tar_lf_name = gen_ctx.get_lf_name(*tar_lf_id).unwrap();
                         output_file.write( format!("{}->{} : {}\n", &lf_name, &tar_lf_name, &ms_name).as_bytes() );
                     } else {
                         panic!("translation towards puml-sd does not implement broadcasts");

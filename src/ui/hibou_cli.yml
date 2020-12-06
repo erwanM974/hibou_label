@@ -65,6 +65,15 @@ subcommands:
                     required: true
                     index: 1
                     help: input hibou specification file
+    - puml_ap:
+            about: utility to translate an input hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
+            version: "0.4.8"
+            author: Erwan Mahe <github.com/erwanM974>
+            args:
+                - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou specification file
     - term_repr:
             about: utility to draw an input hibou specification file (.hsf) as a binary syntax tree
             version: "0.4.8"
