@@ -165,7 +165,7 @@ seq(
 
 And the corresponding graphical representation (as a sequence diagram):
 
-<img src="./README_images/example_with_coreg.png" alt="example with coregion" width="500">
+<img src="./README_images/example_with_coreg.png" alt="example with coregion" width="400">
 
 ## Process options
 
@@ -427,9 +427,10 @@ For this analysis we used the following options, declared in the "@analyze_optio
 
 ```
 @analyze_option{
-    loggers = [graphic[svg]];
+    loggers = [graphic[svg,vertical]];
     semantics = prefix;
     strategy = DepthFS;
+    use_locfront = false;
     goal = Pass
 }
 ```
@@ -439,20 +440,30 @@ In this build only a "graphic" logger exists.
 It will create an image file (with the same name as the ".hsf" file) describing the treatment. 
 The generation of this image requires the graphviz tool to be installed ([https://www.graphviz.org/download/](https://www.graphviz.org/download/)),
 and the "dot" command to be in the "PATH" environment variable.
-The output of the graphic logger can either be a .png file (specified with ``graphic[png]``) 
-or a .svg file (specified with ``graphic[svg]``), which requires cairo to be installed.
+The output of the graphic logger can be configured by certain options as such ``graphic[options]``.
+Here we have ``graphic[svg,vertical]``, which means the output will be a .svg file (requires cairo to be installed)
+and the graph will have a vertical layout.
+With ``graphic[png]``, the output would be a .png file. 
+And with ``graphic[horizontal]``, the layout of the graph would be horizontal.
+Default values of options for the graphic logger are ``[png,vertical]``.
 
 As explained earlier, we will use the "prefix" semantics to analyze the multi-trace.
+Here it is specified with ``semantics = prefix`` (default value is ``prefix``).
 
 A search strategy: for instance Breadth First Search (BreadthFS) or Depth First Search (DepthFS) can be specified using the "strategy" option.
 Indeed, for any given (interaction,multi-trace) couple, several matches may be evaluated, leading to several other couples (interaction,multi-trace).
 We can then explore those child nodes and their children using any search heuristic.
+In this example we used ``strategy = DepthFS``.
+
+So as to reduce the search space there is an option to eliminate certain nodes of the execution tree
+by computing "local frontiers". We will discuss this in another example. Here we deactivated this
+feature with ``use_locfront = false``.
 
 We can also specify the verdict which will be the goal of the analysis, meaning that the analysis will stop once a verdict that is greater or equal to the goal
 is found. This is done using the "goal" option. 
 For instance, if we set the goal to "Pass" then, the analysis will stop either when a "Cov" is found, or when all paths have been exploited. 
-If we set the goal "WeakPass", it will then suffice to find either a "Cov" or a "TooShort". 
-
+If we set the goal "WeakPass", it will then suffice to find either a "Cov" or a "TooShort" (or "MultiPref" or "Slice" in some semantics). 
+In this example we used ``goal = Pass``.
 
 The options specified here allowed us, in the case of this example, to quickly find a path that consumed the entire
 multi-trace and we did not need to explore further executions of the initial interaction model.
