@@ -7,6 +7,8 @@ HIBOU (for Holistic Interaction Behavioral Oracle Utility) provides utilities fo
 multi-traces collected from the execution of Distributed Systems against interaction models.
 
 This present version "hibou_label" treats labelled interaction models.
+An extension "[hibou_efm](https://github.com/erwanM974/hibou_efm)" that treats interaction
+models enriched with data and time is also available.
 
 This piece of software has been developed as part of my PhD thesis in 2018-2020 at the 
 [CentraleSupelec](https://www.centralesupelec.fr/)
@@ -17,12 +19,12 @@ in collaboration with the
 
 We described our approach in the following paper: 
 "[Revisiting Semantics of Interactions for Trace Validity Analysis](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24)"
-which was published in the 23rd International Conference on Fundamental Approaches to Software Engineering
-i.e. the 2020 edition of the FASE conference, which is part of ETAPS (European joint conferences on Theory And Practice of Software).
+which was published in the 
+23rd International Conference on Fundamental Approaches to Software Engineering
+(FASE-2020), which is part of ETAPS (European joint conferences on Theory And Practice of Software).
 
 The theoretical background of this version of HIBOU is described in [this paper](https://arxiv.org/abs/2009.01777)
 (currently available on Arxiv).
-
 If you are interested in the Coq proof associated with [this paper](https://arxiv.org/abs/2009.01777), please click on this 
 [link](https://erwanm974.github.io/coq_hibou_label_multi_trace_analysis/) or visit the following
 [repository](https://github.com/erwanM974/coq_hibou_label_multi_trace_analysis).
@@ -42,7 +44,9 @@ The figure below illustrates:
 The signature of the interaction model is declared in the "@message" and "@lifeline" sections of the ".hsf" file.
 It suffices then to list the different message names and lifeline names that will be used in the model.
 
-For instance, in the example above (which you can find in the "examples" folder), we have the following:
+For instance, in the example above 
+(which you can find as "example_for_analysis.hsf" in the "examples" folder),
+we have the following:
 
 ```
 @message{
@@ -78,7 +82,7 @@ The most basic interactions can either be:
 
 Interaction terms can be composed inductively using some operators so as to build more complex interaction terms.
 We define the following operators:
-- "strict", "seq" and "par", which are the "scheduling operators"
+- "strict", "seq" and "par", which are the classical "scheduling operators" and "coreg", which is another special "scheduling operator"
 - "alt" which is the "alternative operator"
 - "loop_strict", "loop_seq" and "loop_par" which are "repetition operators"
 
@@ -91,6 +95,8 @@ We allow n-ary expressions in the entry language but the interaction term is con
 - the "strict" operator specifies strict sequencing i.e. preceding sub-interactions must be executed entirely before any following interaction can be
 - the "seq" operator specifies weak sequencing i.e. a strict scheduling is only enforced between actions occurring on the same lifeline 
 - the "par" operator allow any interleaving of the executions of sub-interactions
+- "coreg(PL)" operators can be configured by a subset PL of lifelines which behaviors are to be parallelized.
+"coreg(PL)" then behaves as "seq" for lifelines not in PL, and as "par" for lifelines which belong to PL
 
 #### Alternative operator
 
@@ -105,7 +111,8 @@ For instance "loop_seq(m->a)" is equivalent to the infinite alternative "alt(∅
 
 ### Example
 
-From the previously defined building blocks and operators we can define interaction terms such as the one below:
+From the previously defined building blocks and operators we can define interaction terms 
+such as the one below, which is the example from the introduction:
 
 ```
 seq(
@@ -125,6 +132,40 @@ seq(
     )
 )
 ```
+
+### Another example, with the full .hsf specification
+
+Below is given another example, showcasing a (trinary) co-region.
+
+```
+@message{
+    m1;m2;m3;m4;m5;m6;m7
+}
+@lifeline{
+    l1;l2;l3
+}
+seq(
+    coreg(l2)(
+        l1 -- m1 -> l2,
+        l1 -- m2 -> l2,
+        l1 -- m3 -> l2
+    ),
+    loop_seq(    
+        alt(
+            l2 -- m4 -> l1,
+            seq(
+                l2 -- m5 -> l3,
+                l3 -- m6 -> (l1,l2)
+            )
+        )
+    ),
+    l2 -- m7 -> l1
+)
+```
+
+And the corresponding graphical representation (as a sequence diagram):
+
+<img src="./README_images/example_with_coreg.png" alt="example with coregion" width="500">
 
 ## Process options
 
@@ -147,7 +188,12 @@ trace of the events that were observed during the execution. We consider two kin
 of sub-systems: emissions and receptions of messages.
 
 As the lifelines of an interaction model represent the sub-systems of the distributed system modelled by the interaction,
-we can understand those collected logs - called traces - as sequences of words "a!m" or "a?m" - called actions - where "a" is a lifeline and "m" a message.
+we can understand those collected logs - called traces - as sequences of words 
+"l!m" or "l?m" - called actions - where "l" is a lifeline and "m" a message.
+An action "l!m" corresponds to the emission of message "m" from lifeline "l"
+(disregarding the target of said emission).
+An action "l?m" corresponds to the reception of message "m" on lifeline "l"
+(disregarding the source of the message).
 
 ## Centralized traces
 A centralized trace is a sequence of any such action regardless of the lifelines on which they occur. 
