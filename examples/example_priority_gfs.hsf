@@ -1,7 +1,8 @@
 @analyze_option{
+    loggers = [graphic[svg,vertical]];
     semantics = accept;
     strategy = GreedyBestFS[step=1];
-    loggers = [graphic[svg]];
+    use_locfront = false;
     goal = Pass
 }
 @message{

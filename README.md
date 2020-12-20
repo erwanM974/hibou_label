@@ -623,9 +623,10 @@ which use can be specified and tweaked in the options with, for instance:
 
 ```
 @analyze_option{
+    loggers = [graphic[svg,vertical]];
     semantics = accept;
     strategy = GreedyBestFS[step=1];
-    loggers = [graphic[svg]];
+    use_locfront = false;
     goal = Pass
 }
 ```
@@ -690,6 +691,48 @@ Then, we have below the same analysis (same interaction and same multi-trace to 
 i.e. with ``use_locfront = true``.
 
 <img src="./README_images/example_locfront_true.svg" alt="example showcasing locfront set at true" width="800">
+
+We can see that far less nodes are explored in the analysis when the option ``use_locfront`` is set to ``true``.
+In facts, in this example we have 2 nested loops; an outer loop and an inner loop.
+The multi-trace that is analysed in both cases illustrated above is the following:
+
+```
+{
+    [l1] l1!m1.l1!m1;
+    [l2] l2?m1.l2?m1.l2?m2.l2?m2;
+    [l3] l3!m2.l3!m2
+}
+```
+
+We have 2 repetitions of the passing of message "m1" (specified in the outer loop)
+followed by 2 repetitions of the passing of message "m2" (specified in the inner loop).
+
+When the outer loop have been instanciated once (third node from the top in both cases), we have, in the interaction term
+two occurrences of the inner loop. One that is above (outside the outer loop), and one that is below (inside the outer loop).
+When the algorithm want to consume "l3!m2", it can interpret it as instanciating the inner loop that is above, or the one that is below (both have "l3!m2" in the frontier).
+However if we instanciate the inner loop that is above by executing "l3!m2", 
+then the subsequent reception "l2?m2" must occur on lifeline "l2" immediately after (no other action can be interleaved)
+this is not the case in the trace, as we have, on lifeline "l2", 1 other reception of "m1" before receiving "m2".
+As a result, exploring this branch is fruitless but the bare algorithm (from [this paper](https://arxiv.org/abs/2009.01777))
+do not have the tools to realize this. Therefore it keeps exploring while consuming the multi-trace until it cannot do so anymore.
+
+However, in the case where ``use_locfront = true``, we can see that the exploration is stopped immediately in the left child of the third node from the top, with a "Dead" verdict.
+This "Dead" verdict corresponds to a mismatch that have been detected when verifying the local frontiers (which we will detail in an upcoming paper.
+Here, the local frontier of lifeline "l2" contains only "l2?m2" and hence we cannot match "l2?m1" which is the head action of the corresponding component trace of the multi-trace.
+
+The gain of using ``use_locfront = true`` (in terms of number of nodes that are explored) can be considerable in certain cases (depending on the interaction models).
+In this precise example, let us consider the numbers of repetitions of the inner and outer loops.
+Our example from above had 2 repetitions of the outer loop followed by 2 repetitions of the inner loop (no interleavings). 
+We will note it "2o2i" for 2 outer 2 inner.
+In the table below we also consider analysis for multi-traces corresponding to 3, 4 and 5 repetitions of the outer loops, followed by 2 repetitions of the inner loop
+(denoted 3o2i, ..., 5o2i).
+In the first row is the number of nodes required to reach the verdict without the ``use_locfront`` option, and in the second row with the option.
+
+|                            | 2o2i | 3o2i | 4o2i | 5o2i |
+|----------------------------|------|------|------|------|
+| DepthFS without locfront   |   22 |   55 |  116 |  217 |
+| DepthFS with locfront      |   11 |   15 |   19 |   23 |
+
 
 
 
