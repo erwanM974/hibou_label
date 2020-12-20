@@ -165,7 +165,7 @@ seq(
 
 And the corresponding graphical representation (as a sequence diagram):
 
-<img src="./README_images/example_with_coreg.png" alt="example with coregion" width="400">
+<img src="./README_images/example_with_coreg.png" alt="example with coregion" width="350">
 
 ## Process options
 
@@ -180,6 +180,29 @@ The "@explore_option" section specifies options to be used when the model is exp
 for the exploration of its possible executions with the "explore" command.
 
 We will detail the available options when describing the "analyze" and "explore" commands.
+
+
+# General principle of the execution / animation of interaction models
+
+The core of HIBOU revolves around the execution / animation of interaction models. This consists in obtaining
+"follow-up" interactions, resulting from the execution of atomic actions within an initial interaction model.
+This approach is detailed in
+[this paper](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24) and [this one](https://arxiv.org/abs/2009.01777).
+
+In short, this consists in:
+- identifying which atomic actions are immediately executable (frontier actions)
+- when one such action is executed, computing, through the rewriting of the interaction term, the "follow-up" interaction
+
+This is illustrated in the example below, where, for a given initial interaction, we represent all the atomic actions that can be
+immediately executed within it, and, for each of those, the corresponding "follow-up" interactions.
+This process can of course be repeated in a next step, making possible the computation of the expected behaviors (semantics)
+of the initial interaction.
+Also, the fact that we are able to identify frontier actions enables us to implement some form of runtime verification
+for distributed systems which is detailed in [this paper](https://arxiv.org/abs/2009.01777), and which is implemented in HIBOU.
+We discuss this in more detail below in this README.
+
+<img src="./README_images/interaction_execution_principle.svg" alt="interaction execution principle" width="1000">
+
 
 # Entry language : traces & multi-traces (.htf files)
 
@@ -414,7 +437,7 @@ From those local verdicts, the global verdict is inferred:
 
 ## Analyze - "accept" & "prefix" modes
 
-### Example 1
+### Example 1 (introducing analysis options)
 
 Below is given an example analysis, that you can reproduce by using the files from the "examples" folder.
 
@@ -453,17 +476,17 @@ Here it is specified with ``semantics = prefix`` (default value is ``prefix``).
 A search strategy: for instance Breadth First Search (BreadthFS) or Depth First Search (DepthFS) can be specified using the "strategy" option.
 Indeed, for any given (interaction,multi-trace) couple, several matches may be evaluated, leading to several other couples (interaction,multi-trace).
 We can then explore those child nodes and their children using any search heuristic.
-In this example we used ``strategy = DepthFS``.
+In this example we used ``strategy = DepthFS``. The default strategy is "BreadthFS".
 
 So as to reduce the search space there is an option to eliminate certain nodes of the execution tree
-by computing "local frontiers". We will discuss this in another example. Here we deactivated this
-feature with ``use_locfront = false``.
+by making use of "local frontiers". We will discuss this in another example. Here we deactivated this
+feature with ``use_locfront = false``. By default it is activated.
 
 We can also specify the verdict which will be the goal of the analysis, meaning that the analysis will stop once a verdict that is greater or equal to the goal
 is found. This is done using the "goal" option. 
 For instance, if we set the goal to "Pass" then, the analysis will stop either when a "Cov" is found, or when all paths have been exploited. 
 If we set the goal "WeakPass", it will then suffice to find either a "Cov" or a "TooShort" (or "MultiPref" or "Slice" in some semantics). 
-In this example we used ``goal = Pass``.
+In this example we used ``goal = Pass``. By default the goal is "Pass".
 
 The options specified here allowed us, in the case of this example, to quickly find a path that consumed the entire
 multi-trace and we did not need to explore further executions of the initial interaction model.
@@ -476,7 +499,7 @@ Let us note that we would have had the following if we had used the Breadth Firs
 
 <img src="./README_images/ana_mutrace_bfs_none.svg" alt="analysis ex1 with bfs" width="900">
 
-### Example 2
+### Example 2 (global trace and "WeakPass" as goal)
 
 Below is another example, this time of the analysis of a global trace, and yielding the "WeakPass" verdict.
 You can also reproduce it by using the files from the "examples" folder.
@@ -490,7 +513,7 @@ once the goal verdict (or a verdict that is stronger) is reached.
 
 <img src="./README_images/ana_glotrace_with_weakpass_as_goal.svg" alt="analysis ex2 with weakpass as goal" width="600">
 
-### Example showcasing frontier priorities
+### Example 3 (showcasing frontier priorities)
 
 The child nodes of a given couple (interaction,multi-trace) correspond to the execution of a
 frontier action of the interaction which match a head action of a trace component of the multi-trace.
@@ -505,9 +528,10 @@ the "frontier_priorities" option, for instance, as follows:
 
 ```
 @analyze_option{
+    loggers = [graphic[svg,vertical]];
     semantics = accept;
     strategy = DepthFS;
-    loggers = [graphic[svg]];
+    use_locfront = false;
     goal = Pass;
     frontier_priorities = [reception=1]
 }
