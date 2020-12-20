@@ -483,7 +483,7 @@ instances of a same action that match the head action of the trace in the intera
 As illustrated below, in certain cases we may not be able to consume the trace entirely. Here, the action "l2?m2" cannot be consumed in any of the 2 paths.
 In this case, the algorithm detected a non-conformity and returns an "UnCov" verdict (with ``semantics = accept`` mode).
 
-<img src="./README_images/analysis_accept_principle_2.svg" alt="principle of analysis with accept semantics 2" width="900">
+<img src="./README_images/analysis_accept_principle_2.svg" alt="principle of analysis with accept semantics 2" width="850">
 
 ### Example 1 (introducing analysis options)
 
@@ -616,7 +616,7 @@ and for cases where no action are prioritized (first row) and receptions are pri
 | DepthFS with no priorities | 4 | 12 | 39 |145 |
 | DepthFS with reception=1   | 4 | 10 | 27 | 89 |
 
-### Example showcasing Greedy Best First Search
+### Example 4 (showcasing Greedy Best First Search)
 
 In addition to the classical Breadth First Search and Depth First Search strategies, we experimented with a Greedy Best First Search strategy, 
 which use can be specified and tweaked in the options with, for instance: 
@@ -633,8 +633,8 @@ which use can be specified and tweaked in the options with, for instance:
 Our implementations of the BreadthFS and DepthFS strategies rely on a single simple queue so as to enqueue the newly computed nodes 
 and to dequeue the nodes to be treated next.
 
-By contrast, our implementation of GreedyBestFS rely on several queues, each corresponding to a certain priority level 
-(this system implements efficiently a priority queue). The highest priority queue is dequeued first at each step of the algorithm.
+By contrast, our implementation of GreedyBestFS rely on several queues, each corresponding to a certain priority level.
+The highest priority queue is dequeued first at each step of the algorithm.
 
 Priority levels are computed according to the user-defined numbers set between the brackets, and they work in a similar manner as the frontier priorities.
 For instance, if we set ``strategy = GreedyBestFS[step=0,emission=1,loop=-2]``, then the priority level of actions that are emissions 
@@ -665,7 +665,7 @@ In facts, with ``step=1`` (others to 0) and no frontier priorities, GreedyBestFS
 i.e. it prioritizes the evaluation of actions that are farther
 (in the lexicographic order of positions) in the interaction term.
 
-This is why in this particular example, GreedyBestFS is more efficient than DepthFS ("sheer luck"). 
+This is why in this particular example, GreedyBestFS is more efficient than DepthFS (it is entirely dependent on the model). 
 Indeed, the matching of "a!m" with the trigger action of "a -- m -> c" is done before that with "a -- m -> b"
 so the algorithm doesn't explore those "dead-ends".
 
@@ -676,6 +676,21 @@ With ``step=0`` (others to 0), GreedyBestFS is equivalent to BreadthFirstSearch.
 
 To summarize, GreedyBestFS can be considered to be another implementation of a search strategy 
 that includes the possible combinations of BreadthFS and DepthFS with frontier priorities.
+
+### Example 5 (showcasing verification of local frontiers)
+
+As we hinted earlier, we have developed a manner to reduce the size of the search space of analysis.
+This consists in preventing useless explorations of some branches of the execution tree that are destined to yield an "Out"/"UnCov" verdict.
+Let us first see this optional feature in action.
+Below we have an analysis without the feature activated i.e. with ``use_locfront = false``.
+
+<img src="./README_images/example_locfront_false.svg" alt="example showcasing locfront set at false" width="1600">
+
+Then, we have below the same analysis (same interaction and same multi-trace to analyze) but with the feature activated
+i.e. with ``use_locfront = true``.
+
+<img src="./README_images/example_locfront_true.svg" alt="example showcasing locfront set at true" width="800">
+
 
 
 ## Analyze - "hide" mode

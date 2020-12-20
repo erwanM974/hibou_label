@@ -14,6 +14,10 @@
 
 ./hibou_label analyze example_priority_gfs.hsf example_priority_2.htf
 
+./hibou_label analyze example_locfront_false.hsf example_locfront_multitrace.htf
+
+./hibou_label analyze example_locfront_true.hsf example_locfront_multitrace.htf
+
 ./hibou_label explore example_for_exploration_1.hsf
 
 ./hibou_label explore example_for_exploration_2.hsf

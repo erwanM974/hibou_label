@@ -1,0 +1,20 @@
+@analyze_option{
+    strategy = DepthFS;
+    loggers = [graphic[svg]];
+    semantics = prefix;
+    use_locfront = true
+}
+@message{
+    m1;m2
+}
+@lifeline{
+    l1;l2;l3
+}
+loop_seq(
+    seq(
+        l1 -- m1 -> l2,
+        loop_seq(
+            l3 -- m2 -> l2
+        )
+    )
+)
