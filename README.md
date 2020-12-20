@@ -485,7 +485,7 @@ In this case, the algorithm detected a non-conformity and returns an "UnCov" ver
 
 <img src="./README_images/analysis_accept_principle_2.svg" alt="principle of analysis with accept semantics 2" width="850">
 
-### Example 1 (introducing analysis options)
+### Example 1 (introducing analysis options & basic search strategies)
 
 Below is given an example analysis, that you can reproduce by using the files from the "examples" folder.
 
@@ -714,10 +714,10 @@ However if we instanciate the inner loop that is above by executing "l3!m2",
 then the subsequent reception "l2?m2" must occur on lifeline "l2" immediately after (no other action can be interleaved)
 this is not the case in the trace, as we have, on lifeline "l2", 1 other reception of "m1" before receiving "m2".
 As a result, exploring this branch is fruitless but the bare algorithm (from [this paper](https://arxiv.org/abs/2009.01777))
-do not have the tools to realize this. Therefore it keeps exploring while consuming the multi-trace until it cannot do so anymore.
+does not have the tools to realize this. Therefore it keeps exploring while consuming the multi-trace until it cannot do so anymore.
 
 However, in the case where ``use_locfront = true``, we can see that the exploration is stopped immediately in the left child of the third node from the top, with a "Dead" verdict.
-This "Dead" verdict corresponds to a mismatch that have been detected when verifying the local frontiers (which we will detail in an upcoming paper.
+This "Dead" verdict corresponds to a mismatch that have been detected when verifying the local frontiers (which we will detail in an upcoming paper).
 Here, the local frontier of lifeline "l2" contains only "l2?m2" and hence we cannot match "l2?m1" which is the head action of the corresponding component trace of the multi-trace.
 
 The gain of using ``use_locfront = true`` (in terms of number of nodes that are explored) can be considerable in certain cases (depending on the interaction models).
