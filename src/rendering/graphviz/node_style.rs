@@ -76,7 +76,8 @@ pub enum GvNodeShape {
     InvTriangle,
     InvTrapezium,
     InvHouse,
-    Star
+    Star,
+    PlainText
 }
 
 impl DotTranslatable for GvNodeShape {

@@ -36,7 +36,7 @@ use rusttype::{FontCollection, Scale};
 // **********
 
 use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
-use crate::core::syntax::util::recursive_frag::*;
+use crate::core::syntax::util::get_recursive_frag::*;
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 

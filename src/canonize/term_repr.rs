@@ -56,7 +56,7 @@ fn action_repr(to_write : &mut String,
     match &act.act_kind {
         &ObservableActionKind::Reception => {
             let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
             node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}?{}", &lf_name, &ms_name) ) );
             let gv_node = GraphVizNode{id : format!("{}p{}",interaction_name,position_to_id(&current_pos)), style : node_gv_options};
             to_write.push_str( &gv_node.to_dot_string() );
@@ -67,7 +67,7 @@ fn action_repr(to_write : &mut String,
             let node_name = format!("{}p{}",interaction_name,position_to_id(&current_pos));
             // ***
             let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
             node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}!{}", &lf_name, &ms_name) ) );
             // ***
             let tars_len = targets.len();
@@ -80,7 +80,7 @@ fn action_repr(to_write : &mut String,
                 // the parent strict node
                 {
                     let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
-                    strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+                    strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
                     strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "strict".to_string() ) );
                     let strict_gv_node = GraphVizNode{id : node_name.clone(), style : strict_node_gv_options};
                     to_write.push_str( &strict_gv_node.to_dot_string() );
@@ -123,7 +123,7 @@ fn interaction_repr_rec(to_write : &mut String,
     match interaction {
         &Interaction::Empty => {
             let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
             node_gv_options.push( GraphvizNodeStyleItem::Label( "o".to_string() ) );
             let gv_node = GraphVizNode{id : node_name.clone(), style : node_gv_options};
             to_write.push_str( &gv_node.to_dot_string() );
@@ -162,7 +162,7 @@ fn interaction_repr_rec(to_write : &mut String,
             // the parent loop node
             {
                 let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
-                strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+                strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
                 match lp_kind {
                     &ScheduleOperatorKind::Strict => {
                         strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "loop_strict".to_string() ) );
@@ -204,7 +204,7 @@ fn repr_binary_operator(to_write : &mut String,
     // the parent strict node
     {
         let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
-        strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+        strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
         strict_node_gv_options.push( GraphvizNodeStyleItem::Label( operator_label.to_string() ) );
         let strict_gv_node = GraphVizNode{id : node_name.clone(), style : strict_node_gv_options};
         to_write.push_str( &strict_gv_node.to_dot_string() );

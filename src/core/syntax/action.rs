@@ -19,13 +19,13 @@ use std::collections::HashSet;
 
 use crate::core::trace::{TraceActionKind,TraceAction};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum ObservableActionKind {
     Reception,
     Emission(Vec<usize>)
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub struct ObservableAction {
     pub lf_id : usize,
     pub act_kind : ObservableActionKind,

@@ -18,7 +18,7 @@ use std::cmp;
 
 use crate::core::syntax::action::*;
 use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::util::recursive_frag::*;
+use crate::core::syntax::util::get_recursive_frag::*;
 
 use crate::rendering::sd_drawing_conf::*;
 

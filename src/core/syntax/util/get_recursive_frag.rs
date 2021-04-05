@@ -60,6 +60,21 @@ pub fn get_recursive_strict_frags(interaction : &Interaction) -> Vec<&Interactio
     return frags;
 }
 
+pub fn get_recursive_seq_frags(interaction : &Interaction) -> Vec<&Interaction> {
+    let mut frags : Vec<&Interaction> = Vec::new();
+    match interaction {
+        &Interaction::Seq(ref i1, ref i2) => {
+            frags.extend( get_recursive_seq_frags(i1));
+            frags.extend( get_recursive_seq_frags(i2));
+        },
+        _ => {
+            frags.push(interaction);
+        }
+    }
+    return frags;
+}
+
+
 pub fn get_recursive_coreg_frags<'lifetime>(ref_cr : &Vec<usize>, interaction : &'lifetime Interaction) -> Vec<&'lifetime Interaction> {
     let mut frags : Vec<&Interaction> = Vec::new();
     match interaction {
@@ -77,3 +92,6 @@ pub fn get_recursive_coreg_frags<'lifetime>(ref_cr : &Vec<usize>, interaction : 
     }
     return frags;
 }
+
+
+

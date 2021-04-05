@@ -24,14 +24,69 @@ use crate::core::syntax::position::*;
 use crate::core::syntax::action::*;
 use crate::core::trace::TraceAction;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum ScheduleOperatorKind {
     Strict,
     Seq,
     Par
 }
 
-#[derive(Clone, PartialEq, Debug)]
+impl ScheduleOperatorKind {
+
+    pub fn min(&self, other : &ScheduleOperatorKind) -> ScheduleOperatorKind {
+        match self {
+            &ScheduleOperatorKind::Par => {
+                return ScheduleOperatorKind::Par;
+            },
+            &ScheduleOperatorKind::Seq => {
+                match other {
+                    &ScheduleOperatorKind::Par => {
+                        return ScheduleOperatorKind::Par;
+                    },
+                    _ => {
+                        return ScheduleOperatorKind::Seq;
+                    },
+                }
+            },
+            &ScheduleOperatorKind::Strict => {
+                return other.clone();
+            }
+        }
+    }
+
+    pub fn lower_than(&self, other : &ScheduleOperatorKind) -> bool {
+        match self {
+            &ScheduleOperatorKind::Par => {
+                match other {
+                    &ScheduleOperatorKind::Par => {
+                        return false;
+                    },
+                    _ => {
+                        return true;
+                    }
+                }
+            },
+            &ScheduleOperatorKind::Seq => {
+                match other {
+                    &ScheduleOperatorKind::Par => {
+                        return false;
+                    },
+                    &ScheduleOperatorKind::Seq => {
+                        return false;
+                    },
+                    &ScheduleOperatorKind::Strict => {
+                        return true;
+                    }
+                }
+            },
+            &ScheduleOperatorKind::Strict => {
+                return false;
+            }
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum Interaction {
     Empty,
     Action(ObservableAction),
