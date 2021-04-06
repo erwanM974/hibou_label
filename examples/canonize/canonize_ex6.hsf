@@ -1,0 +1,39 @@
+@analyze_option{
+    loggers = [graphic[svg,vertical]];
+    strategy = DepthFS;
+    semantics = simulate[multi-slice];
+    goal = None
+}
+@message{
+    m1;
+    m2;
+    m3
+}
+@lifeline{
+    a;b
+}
+alt(
+    alt(
+        a -- m2 ->|,
+        alt(
+            seq(
+                a -- m1 ->|,
+                m1 -> b
+            ),
+            a -- m3 ->|
+        )
+    ),
+    alt(
+        seq(
+            a -- m1 ->|,
+            m2 -> b
+        ),
+        seq(
+            seq(
+                a -- m1 ->|,
+                o
+            ),
+            m1 -> b
+        )
+    )
+)

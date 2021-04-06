@@ -782,7 +782,13 @@ with the files from "examples" folder.
 
 <img src="./README_images/example_for_exploration_2.svg" alt="exploration ex2" width="650">
 
-## Build
+## Canonize
+
+TODO: write README section
+
+# Other information
+
+## How to compile HIBOU
 
 You can build the Rust project with cargo using "cargo build --release".
 

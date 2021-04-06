@@ -49,6 +49,8 @@ use crate::canonize::process::canon_process_interaction_term;
 use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
 use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
 
+use crate::canonize::precondition::InteractionPreconditionCheckForCanonization;
+
 fn get_ascii_border() -> &'static str {
     return r#"===================="#;
 }
@@ -173,12 +175,29 @@ pub fn hibou_cli() -> i32 {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
                 let process_name = format!("{}_canon", file_name);
                 // ***
+                let is_sugar_free : bool;
+                match canon_process_interaction_term(&my_int,&gen_ctx,&process_name) {
+                    InteractionPreconditionCheckForCanonization::HasCoReg => {
+                        ret_print.push( "Interaction term has CoReg -> Not Implemented".to_string() );
+                        print_retval(ret_print);
+                        return -1;
+                    },
+                    InteractionPreconditionCheckForCanonization::HasTargets => {
+                        is_sugar_free = false;
+                    },
+                    _ => {
+                        is_sugar_free = true;
+                    }
+                }
+                // ***
                 ret_print.push( "".to_string());
                 ret_print.push( "CANONIZING process for INTERACTION".to_string());
                 ret_print.push( format!("from file '{}'",hsf_file_path) );
                 ret_print.push( format!("on file : {}.svg",process_name) );
                 ret_print.push( "".to_string());
-                canon_process_interaction_term(&my_int,&gen_ctx,&process_name);
+                if !is_sugar_free {
+                    ret_print.push( "WARNING: interaction was not sugar-free (emission targets have been flattened)".to_string());
+                }
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("term_repr") {

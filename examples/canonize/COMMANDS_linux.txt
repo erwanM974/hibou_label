@@ -1,0 +1,13 @@
+// Example commands to run
+
+./hibou_label canonize canonize_ex1.hsf
+
+./hibou_label canonize canonize_ex2.hsf
+
+./hibou_label canonize canonize_ex3.hsf
+
+./hibou_label canonize canonize_ex4.hsf
+
+./hibou_label canonize canonize_ex5.hsf
+
+./hibou_label canonize canonize_ex6.hsf

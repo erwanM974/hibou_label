@@ -70,6 +70,11 @@ fn action_repr(to_write : &mut String,
             node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
             node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}!{}", &lf_name, &ms_name) ) );
             // ***
+            assert!(targets.len() == 0);
+            let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
+            to_write.push_str( &gv_node.to_dot_string() );
+            to_write.push_str("\n");
+            /*
             let tars_len = targets.len();
             if tars_len == 0 {
                 let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
@@ -109,7 +114,7 @@ fn action_repr(to_write : &mut String,
                     to_write.push_str(&gv_edge.to_dot_string());
                     to_write.push_str("\n");
                 }
-            }
+            }*/
         }
     }
 }

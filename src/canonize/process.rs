@@ -36,31 +36,42 @@ use crate::core::general_context::GeneralContext;
 use crate::canonize::term_repr_out::to_term_repr_temp;
 use crate::canonize::transformations::get_all_transfos::*;
 
-pub fn canon_process_interaction_term(interaction : &Interaction, gen_ctx : &GeneralContext, name : &String) {
+use crate::canonize::precondition::*;
+
+pub fn canon_process_interaction_term(interaction : &Interaction,
+                                      gen_ctx : &GeneralContext,
+                                      name : &String) -> InteractionPreconditionCheckForCanonization {
     // ***
-    // empties temp directory if exists
-    match fs::remove_dir_all("./temp") {
-        Ok(_) => {
-            // do nothing
-        },
-        Err(e) => {
-            // do nothing
+    let (new_int,precond_check) = check_and_make_interaction_preconditions(interaction);
+    match &precond_check {
+        InteractionPreconditionCheckForCanonization::HasCoReg => {},
+        _ => {
+            // empties temp directory if exists
+            match fs::remove_dir_all("./temp") {
+                Ok(_) => {
+                    // do nothing
+                },
+                Err(e) => {
+                    // do nothing
+                }
+            }
+            // creates temp directory
+            fs::create_dir_all("./temp").unwrap();
+            // ***
+            let mut file = File::create(&format!("{:}.dot", name)).unwrap();
+            file.write(format!("digraph {} {{\n", name).as_bytes());
+            file.write("overlap=false;\n".as_bytes());
+            canonize_process(&mut file, &new_int, gen_ctx);
+            file.write("}\n".as_bytes());
+            let status = Command::new("dot")
+                .arg("-Tsvg:cairo")
+                .arg(&format!("{:}.dot", name))
+                .arg("-o")
+                .arg(&format!("{:}.svg", name))
+                .output();
         }
     }
-    // creates temp directory
-    fs::create_dir_all("./temp").unwrap();
-    // ***
-    let mut file = File::create(&format!("{:}.dot",name)).unwrap();
-    file.write( format!("digraph {} {{\n", name).as_bytes() );
-    file.write( "overlap=false;\n".as_bytes() );
-    canonize_process(&mut file, interaction, gen_ctx);
-    file.write( "}\n".as_bytes() );
-    let status = Command::new("dot")
-        .arg("-Tsvg:cairo")
-        .arg(&format!("{:}.dot",name))
-        .arg("-o")
-        .arg(&format!("{:}.svg",name))
-        .output();
+    return precond_check;
 }
 
 fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx : &GeneralContext) {
@@ -76,18 +87,6 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
         file.write("\n".as_bytes() );
     }
     // ***
-    // first node
-    {
-        to_term_repr_temp(&"i1".to_string(),init_interaction,gen_ctx);
-        let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-        node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-        node_gv_options.push( GraphvizNodeStyleItem::Image( "temp/i1.png".to_string() ) );
-        node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
-        let gv_node = GraphVizNode{id : "i1".to_string(), style : node_gv_options};
-        file.write( gv_node.to_dot_string().as_bytes() );
-        file.write("\n".as_bytes() );
-    }
-    // ***
     // transition from source
     {
         let gv_edge = GraphVizEdge{origin_id : "i0".to_string(), target_id : "i1".to_string(), style : Vec::new()};
@@ -99,11 +98,24 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     let mut queue : Vec<(u32,Interaction)> = vec![(1,init_interaction.clone())];
     let mut next_index : u32 = 2;
     // ***
-    // phase 1 loop
+    // =====================================================================================================
+    // PHASE 1
     let mut known : HashMap<Interaction,u32> = HashMap::new();
     known.insert( init_interaction.clone(), 1 );
     file.write("subgraph cluster_phase1 {\n".as_bytes() );
     file.write("style=filled;color=lightyellow1;label=\"phase 1\";\n".as_bytes() );
+    // ***
+    // first node
+    {
+        to_term_repr_temp(&"i1".to_string(),init_interaction,gen_ctx);
+        let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+        node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+        node_gv_options.push( GraphvizNodeStyleItem::Image( "temp/i1.png".to_string() ) );
+        node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
+        let gv_node = GraphVizNode{id : "i1".to_string(), style : node_gv_options};
+        file.write( gv_node.to_dot_string().as_bytes() );
+        file.write("\n".as_bytes() );
+    }
     let mut finals : HashSet<(u32,Interaction)> = HashSet::new();
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
@@ -158,14 +170,43 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     }
     file.write("}\n".as_bytes() );
     // ***
-    // phase 2 loop
-    file.write("subgraph cluster_phase2 {\n".as_bytes() );
-    file.write("style=filled;color=lightblue1;label=\"phase 2\";\n".as_bytes() );
+    // =====================================================================================================
+    // PHASE 2
     known = HashMap::new();
-    for (iid,iterm) in finals.drain() {
-        known.insert( iterm.clone(), iid );
-        queue.push( (iid,iterm) );
+    {
+        let mut temp_string : String = String::new();
+        for (iid,iterm) in finals.drain() {
+            let old_id_str = format!("i{}", iid);
+            let new_id_str = format!("i{}", next_index);
+            // new interaction node
+            {
+                let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+                node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+                node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",old_id_str) ) );
+                node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
+                let gv_node = GraphVizNode{id : new_id_str.clone(), style : node_gv_options};
+                temp_string.push_str( &gv_node.to_dot_string() );
+                temp_string.push_str( "\n" );
+            }
+            // new transition
+            {
+                let tran_gv_options : GraphvizEdgeStyle = Vec::new();
+                let gv_edge = GraphVizEdge{origin_id : old_id_str,
+                    target_id : new_id_str,
+                    style : tran_gv_options};
+                file.write( gv_edge.to_dot_string().as_bytes() );
+                file.write( "\n".as_bytes() );
+            }
+            // save the old final
+            known.insert( iterm.clone(), next_index );
+            queue.push( (next_index,iterm) );
+            next_index = next_index + 1;
+        }
+        file.write("subgraph cluster_phase2 {\n".as_bytes() );
+        file.write("style=filled;color=lightblue1;label=\"phase 2\";\n".as_bytes() );
+        file.write( temp_string.as_bytes() );
     }
+    // ***
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
         let parent_id_str = format!("i{}", parent_id);
@@ -219,14 +260,43 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     }
     file.write("}\n".as_bytes() );
     // ***
-    // phase 3 loop
-    file.write("subgraph cluster_phase3 {\n".as_bytes() );
-    file.write("style=filled;color=palegreen;label=\"phase 3\";\n".as_bytes() );
+    // =====================================================================================================
+    // PHASE 3
     known = HashMap::new();
-    for (iid,iterm) in finals.drain() {
-        known.insert( iterm.clone(), iid );
-        queue.push( (iid,iterm) );
+    {
+        let mut temp_string : String = String::new();
+        for (iid,iterm) in finals.drain() {
+            let old_id_str = format!("i{}", iid);
+            let new_id_str = format!("i{}", next_index);
+            // new interaction node
+            {
+                let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+                node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+                node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",old_id_str) ) );
+                node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
+                let gv_node = GraphVizNode{id : new_id_str.clone(), style : node_gv_options};
+                temp_string.push_str( &gv_node.to_dot_string() );
+                temp_string.push_str( "\n" );
+            }
+            // new transition
+            {
+                let tran_gv_options : GraphvizEdgeStyle = Vec::new();
+                let gv_edge = GraphVizEdge{origin_id : old_id_str,
+                    target_id : new_id_str,
+                    style : tran_gv_options};
+                file.write( gv_edge.to_dot_string().as_bytes() );
+                file.write( "\n".as_bytes() );
+            }
+            // save the old final
+            known.insert( iterm.clone(), next_index );
+            queue.push( (next_index,iterm) );
+            next_index = next_index + 1;
+        }
+        file.write("subgraph cluster_phase3 {\n".as_bytes() );
+        file.write("style=filled;color=palegreen;label=\"phase 3\";\n".as_bytes() );
+        file.write( temp_string.as_bytes() );
     }
+    // ***
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
         let parent_id_str = format!("i{}", parent_id);
