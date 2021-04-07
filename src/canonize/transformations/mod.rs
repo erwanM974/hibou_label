@@ -20,6 +20,6 @@ pub mod transfodef;
 pub mod phases;
 
 pub mod get_all_transfos;
-//pub mod get_one_transfo;
+pub mod get_one_transfo;
 
 

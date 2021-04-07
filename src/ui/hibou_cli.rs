@@ -63,7 +63,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-2020-10 "#);
+    my_vec.push(r#"  V-label-2021-04 "#);
     return my_vec;
 }
 
@@ -173,10 +173,19 @@ pub fn hibou_cli() -> i32 {
             },
             Ok( (gen_ctx,my_int,hoptions) ) => {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
-                let process_name = format!("{}_canon", file_name);
+                let process_name : String;
+                let search_all : bool;
+                // ***
+                if matches.is_present("searchall") {
+                    process_name = format!("{}_canon_all", file_name);
+                    search_all = true;
+                } else {
+                    process_name = format!("{}_canon_one", file_name);
+                    search_all = false;
+                }
                 // ***
                 let is_sugar_free : bool;
-                match canon_process_interaction_term(&my_int,&gen_ctx,&process_name) {
+                match canon_process_interaction_term(&my_int,&gen_ctx,&process_name,search_all) {
                     InteractionPreconditionCheckForCanonization::HasCoReg => {
                         ret_print.push( "Interaction term has CoReg -> Not Implemented".to_string() );
                         print_retval(ret_print);
@@ -195,6 +204,11 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("from file '{}'",hsf_file_path) );
                 ret_print.push( format!("on file : {}.svg",process_name) );
                 ret_print.push( "".to_string());
+                if search_all {
+                    ret_print.push( "(searched all transformation sequences)".to_string());
+                } else {
+                    ret_print.push( "(searched one transformation sequence)".to_string());
+                }
                 if !is_sugar_free {
                     ret_print.push( "WARNING: interaction was not sugar-free (emission targets have been flattened)".to_string());
                 }

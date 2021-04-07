@@ -35,12 +35,15 @@ use crate::core::general_context::GeneralContext;
 
 use crate::canonize::term_repr_out::to_term_repr_temp;
 use crate::canonize::transformations::get_all_transfos::*;
+use crate::canonize::transformations::get_one_transfo::*;
 
 use crate::canonize::precondition::*;
+use crate::canonize::transformations::phases::InteractionTermTransformation;
 
 pub fn canon_process_interaction_term(interaction : &Interaction,
                                       gen_ctx : &GeneralContext,
-                                      name : &String) -> InteractionPreconditionCheckForCanonization {
+                                      name : &String,
+                                      search_all : bool) -> InteractionPreconditionCheckForCanonization {
     // ***
     let (new_int,precond_check) = check_and_make_interaction_preconditions(interaction);
     match &precond_check {
@@ -61,7 +64,11 @@ pub fn canon_process_interaction_term(interaction : &Interaction,
             let mut file = File::create(&format!("{:}.dot", name)).unwrap();
             file.write(format!("digraph {} {{\n", name).as_bytes());
             file.write("overlap=false;\n".as_bytes());
-            canonize_process(&mut file, &new_int, gen_ctx);
+            if search_all {
+                canonize_process_all_transfos(&mut file, &new_int, gen_ctx);
+            } else {
+                canonize_process_one_transfo(&mut file, &new_int, gen_ctx);
+            }
             file.write("}\n".as_bytes());
             let status = Command::new("dot")
                 .arg("-Tsvg:cairo")
@@ -74,7 +81,24 @@ pub fn canon_process_interaction_term(interaction : &Interaction,
     return precond_check;
 }
 
-fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx : &GeneralContext) {
+fn canonize_process_one_transfo(file : &mut File,
+                                  init_interaction : &Interaction,
+                                  gen_ctx : &GeneralContext) {
+    canonize_process(file,init_interaction,gen_ctx,&phase_1_one_transfo, &phase_2_one_transfo, &phase_3_one_transfo);
+}
+
+fn canonize_process_all_transfos(file : &mut File,
+                                 init_interaction : &Interaction,
+                                 gen_ctx : &GeneralContext) {
+    canonize_process(file,init_interaction,gen_ctx,&phase_1_all_transfos, &phase_2_all_transfos, &phase_3_all_transfos);
+}
+
+fn canonize_process(file : &mut File,
+                    init_interaction : &Interaction,
+                    gen_ctx : &GeneralContext,
+                    phase_1 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>,
+                    phase_2 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>,
+                    phase_3 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>) {
     // ***
     // source node
     {
@@ -120,7 +144,9 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
         let parent_id_str = format!("i{}", parent_id);
-        let mut available_transfos = phase_1_all_transfos(&parent_interaction);
+        // ***
+        let mut available_transfos = phase_1(&parent_interaction);
+        // ***
         if available_transfos.len() > 0 {
             for transformed in available_transfos {
                 if known.contains_key(&transformed.result) {
@@ -210,7 +236,9 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
         let parent_id_str = format!("i{}", parent_id);
-        let mut available_transfos = phase_2_all_transfos(&parent_interaction);
+        // ***
+        let mut available_transfos = phase_2(&parent_interaction);
+        // ***
         if available_transfos.len() > 0 {
             for transformed in available_transfos {
                 if known.contains_key(&transformed.result) {
@@ -300,7 +328,9 @@ fn canonize_process(file : &mut File, init_interaction : &Interaction, gen_ctx :
     while queue.len() > 0 {
         let (parent_id,parent_interaction) = queue.pop().unwrap();
         let parent_id_str = format!("i{}", parent_id);
-        let mut available_transfos = phase_3_all_transfos(&parent_interaction);
+        // ***
+        let mut available_transfos = phase_3(&parent_interaction);
+        // ***
         if available_transfos.len() > 0 {
             for transformed in available_transfos {
                 if known.contains_key(&transformed.result) {
