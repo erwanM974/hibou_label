@@ -168,17 +168,21 @@ pub fn execute(my_int : Interaction, my_pos : Position, tar_lf_id : usize) -> In
                 },
                 Interaction::CoReg(cr,i1,i2) => {
                     let new_i1 : Interaction;
-                    let new_i2 = execute(*i2,*p2, tar_lf_id);
                     if cr.contains(&tar_lf_id) {
                         new_i1 = *i1;
                     } else {
                         new_i1 = prune(*i1, tar_lf_id);
                     }
                     // ***
-                    if new_i2 == Interaction::Empty {
-                        return new_i1;
+                    if new_i1 == Interaction::Empty {
+                        return execute(*i2,*p2, tar_lf_id);
                     } else {
-                        return Interaction::CoReg( cr,Box::new(new_i1), Box::new(new_i2));
+                        let new_i2 = execute(*i2,*p2, tar_lf_id);
+                        if new_i2 == Interaction::Empty {
+                            return new_i1;
+                        } else {
+                            return Interaction::CoReg( cr,Box::new(new_i1), Box::new(new_i2));
+                        }
                     }
                 },
                 Interaction::Par(i1,i2) => {
