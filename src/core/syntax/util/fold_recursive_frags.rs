@@ -22,15 +22,15 @@ use crate::core::syntax::interaction::Interaction;
 pub fn fold_recursive_strict_frags(frags : &mut Vec<&Interaction>) -> Interaction {
     let frag_num = frags.len();
     if frag_num == 2 {
-        let i1 = frags.pop().unwrap();
         let i2 = frags.pop().unwrap();
+        let i1 = frags.pop().unwrap();
         return Interaction::Strict( Box::new(i1.clone()), Box::new(i2.clone()) );
     } else if frag_num == 1 {
         return frags.pop().unwrap().clone();
     } else if frag_num == 0 {
         return Interaction::Empty
     } else {
-        let i1 = frags.pop().unwrap();
+        let i1 = frags.remove(0);
         return Interaction::Strict( Box::new(i1.clone()), Box::new( fold_recursive_strict_frags(frags) ) );
     }
 }
@@ -38,15 +38,15 @@ pub fn fold_recursive_strict_frags(frags : &mut Vec<&Interaction>) -> Interactio
 pub fn fold_recursive_seq_frags(frags : &mut Vec<&Interaction>) -> Interaction {
     let frag_num = frags.len();
     if frag_num == 2 {
-        let i1 = frags.pop().unwrap();
         let i2 = frags.pop().unwrap();
+        let i1 = frags.pop().unwrap();
         return Interaction::Seq( Box::new(i1.clone()), Box::new(i2.clone()) );
     } else if frag_num == 1 {
         return frags.pop().unwrap().clone();
     } else if frag_num == 0 {
         return Interaction::Empty
     } else {
-        let i1 = frags.pop().unwrap();
+        let i1 = frags.remove(0);
         return Interaction::Seq( Box::new(i1.clone()), Box::new( fold_recursive_seq_frags(frags) ) );
     }
 }
@@ -54,15 +54,15 @@ pub fn fold_recursive_seq_frags(frags : &mut Vec<&Interaction>) -> Interaction {
 pub fn fold_recursive_par_frags(frags : &mut Vec<&Interaction>) -> Interaction {
     let frag_num = frags.len();
     if frag_num == 2 {
-        let i1 = frags.pop().unwrap();
         let i2 = frags.pop().unwrap();
+        let i1 = frags.pop().unwrap();
         return Interaction::Par( Box::new(i1.clone()), Box::new(i2.clone()) );
     } else if frag_num == 1 {
         return frags.pop().unwrap().clone();
     } else if frag_num == 0 {
         return Interaction::Empty
     } else {
-        let i1 = frags.pop().unwrap();
+        let i1 = frags.remove(0);
         return Interaction::Par( Box::new(i1.clone()), Box::new( fold_recursive_par_frags(frags) ) );
     }
 }
@@ -70,15 +70,15 @@ pub fn fold_recursive_par_frags(frags : &mut Vec<&Interaction>) -> Interaction {
 pub fn fold_recursive_coreg_frags(ref_cr : &Vec<usize>, frags : &mut Vec<&Interaction>) -> Interaction {
     let frag_num = frags.len();
     if frag_num == 2 {
-        let i1 = frags.pop().unwrap();
         let i2 = frags.pop().unwrap();
+        let i1 = frags.pop().unwrap();
         return Interaction::CoReg(ref_cr.clone(), Box::new(i1.clone()), Box::new(i2.clone()) );
     } else if frag_num == 1 {
         return frags.pop().unwrap().clone();
     } else if frag_num == 0 {
         return Interaction::Empty
     } else {
-        let i1 = frags.pop().unwrap();
+        let i1 = frags.remove(0);
         return Interaction::CoReg( ref_cr.clone(),Box::new(i1.clone()), Box::new( fold_recursive_coreg_frags(ref_cr, frags) ) );
     }
 }

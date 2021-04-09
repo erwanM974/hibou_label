@@ -206,9 +206,10 @@ fn canonize_process(file : &mut File,
             let new_id_str = format!("i{}", next_index);
             // new interaction node
             {
+                to_term_repr_temp(&new_id_str,&iterm,gen_ctx);
                 let mut node_gv_options : GraphvizNodeStyle = Vec::new();
                 node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-                node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",old_id_str) ) );
+                node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",new_id_str) ) );
                 node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
                 let gv_node = GraphVizNode{id : new_id_str.clone(), style : node_gv_options};
                 temp_string.push_str( &gv_node.to_dot_string() );

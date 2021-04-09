@@ -784,7 +784,38 @@ with the files from "examples" folder.
 
 ## Canonize
 
-TODO: write README section
+A process to obtain normal forms of interaction terms.
+Three phases of rewriting are successively applied (only once / one time each).
+The remaining interaction term is a simplified, compact form, which have the same semantics as the original.
+
+### Remarks
+
+This process works for interaction terms without co-regions.
+
+Patterns of message emissions and broadcasts are flattened i.e.
+```
+a -- m -> (b,c)
+```
+becomes
+```
+strict(
+    a -- m ->|,
+    seq(
+        m -> b,
+        m -> c
+    )
+)
+```
+
+### Example
+
+See "examples/canonize" folder
+
+<img src="./README_images/canonize/canonize_ex1_canon_all.svg" alt="canonize ex1" width="850">
+
+### Command line usage
+
+See COMMAND readme file in "examples/canonize"
 
 # Other information
 

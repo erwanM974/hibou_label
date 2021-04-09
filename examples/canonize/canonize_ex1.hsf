@@ -1,9 +1,3 @@
-@analyze_option{
-    loggers = [graphic[svg,vertical]];
-    strategy = DepthFS;
-    semantics = simulate[multi-slice];
-    goal = None
-}
 @message{
     m1;
     m2;
