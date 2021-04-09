@@ -1,5 +1,8 @@
 // Example commands to run
 
+// ***
+// to compute (and display) directly the normal form by exploring a single possible sequence of transformations
+
 ./hibou_label canonize canonize_ex1.hsf
 
 ./hibou_label canonize canonize_ex2.hsf
@@ -11,3 +14,19 @@
 ./hibou_label canonize canonize_ex5.hsf
 
 ./hibou_label canonize canonize_ex6.hsf
+
+
+// ***
+// to compute (and display) all possible sequences of transformations
+
+./hibou_label canonize -s canonize_ex1.hsf
+
+./hibou_label canonize -s canonize_ex2.hsf
+
+./hibou_label canonize -s canonize_ex3.hsf
+
+./hibou_label canonize -s canonize_ex4.hsf
+
+./hibou_label canonize -s canonize_ex5.hsf
+
+./hibou_label canonize -s canonize_ex6.hsf
