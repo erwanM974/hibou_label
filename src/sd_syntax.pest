@@ -47,7 +47,11 @@ SD_ALT_INT = { SD_ALT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 SD_PAR = {"par"}
 SD_PAR_INT = { SD_PAR ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
-SD_LOOP = {"loop_" ~ (SD_STRICT | SD_SEQ | SD_PAR)}
+SD_LOOP_KIND_X = { "X" }
+SD_LOOP_KIND_H = { "H" }
+SD_LOOP_KIND_S = { "S" }
+SD_LOOP_KIND_P = { "P" }
+SD_LOOP = {"loop" ~ (SD_LOOP_KIND_X | SD_LOOP_KIND_H | SD_LOOP_KIND_S | SD_LOOP_KIND_P)}
 SD_LOOP_INT = { SD_LOOP ~ "(" ~ SD_INTERACTION ~ ")" }
 
 SD_INTERACTION = { SD_EMPTY_INTERACTION
@@ -100,20 +104,27 @@ OPTION_PREFILTERS_DECL = { "pre_filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~
 // ***********************************************
 OPTION_FRONTIER_PRIORITIES_DECL = { "frontier_priorities" ~ "=" ~ "[" ~ OPTION_PRIORITY ~ ("," ~ OPTION_PRIORITY)* ~ "]" }
 // ***********************************************
-GENERAL_OPTION_DECL  = _{ OPTION_LOGGER_DECL | OPTION_STRATEGY_DECL | OPTION_PREFILTERS_DECL | OPTION_FRONTIER_PRIORITIES_DECL }
+GENERAL_OPTION_DECL  = _{ OPTION_LOGGER_DECL
+                          | OPTION_STRATEGY_DECL
+                          | OPTION_PREFILTERS_DECL
+                          | OPTION_FRONTIER_PRIORITIES_DECL }
 // ***********************************************
 EXPLORE_OPTION_DECL = _{ GENERAL_OPTION_DECL }
 EXPLORE_OPTION_SECTION = { "@explore_option" ~ "{" ~
                                	EXPLORE_OPTION_DECL ~ (";" ~ EXPLORE_OPTION_DECL)*
                                    ~ "}"}
 // ***********************************************
-OPTION_SEMANTICS_accept = { "accept" }
-OPTION_SEMANTICS_prefix = { "prefix" }
-OPTION_SEMANTICS_hide = { "hide" }
-OPTION_SEMANTICS_simulate_prefix = { "simulate" ~ "[" ~ "multi-prefix" ~ "]" }
-OPTION_SEMANTICS_simulate_slice = { "simulate" ~ "[" ~ "multi-slice" ~ "]" }
-OPTION_SEMANTICS_KIND = _{ OPTION_SEMANTICS_accept | OPTION_SEMANTICS_prefix | OPTION_SEMANTICS_hide | OPTION_SEMANTICS_simulate_prefix | OPTION_SEMANTICS_simulate_slice }
-OPTION_SEMANTICS_DECL = { "semantics" ~ "=" ~ OPTION_SEMANTICS_KIND }
+OPTION_ANA_KIND_accept = { "accept" }
+OPTION_ANA_KIND_prefix = { "prefix" }
+OPTION_ANA_KIND_hide = { "hide" }
+OPTION_ANA_KIND_simulate_prefix = { "simulate" ~ "[" ~ "multi-prefix" ~ "]" }
+OPTION_ANA_KIND_simulate_slice = { "simulate" ~ "[" ~ "multi-slice" ~ "]" }
+OPTION_ANALYSIS_KIND = _{ OPTION_ANA_KIND_accept
+                          | OPTION_ANA_KIND_prefix
+                          | OPTION_ANA_KIND_hide
+                          | OPTION_ANA_KIND_simulate_prefix
+                          | OPTION_ANA_KIND_simulate_slice }
+OPTION_ANALYSIS_KIND_DECL = { "ana_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
 // ***********************************************
 OPTION_GOAL_pass = { "Pass" }
 OPTION_GOAL_weakpass = { "WeakPass" }
@@ -125,7 +136,7 @@ OPTION_LOCFRONT_true = { "use_locfront" ~ "=" ~ "true" }
 OPTION_LOCFRONT_false = { "use_locfront" ~ "=" ~ "false" }
 OPTION_LOCFRONT = _{ OPTION_LOCFRONT_true | OPTION_LOCFRONT_false }
 // ***********************************************
-ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_SEMANTICS_DECL | OPTION_GOAL_DECL | OPTION_LOCFRONT }
+ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_ANALYSIS_KIND_DECL | OPTION_GOAL_DECL | OPTION_LOCFRONT }
 ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
                                	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)*
                                    ~ "}"}

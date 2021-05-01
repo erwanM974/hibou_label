@@ -30,8 +30,6 @@ use crate::core::error::HibouCoreError;
 
 use crate::core::trace::*;
 
-
-
 pub fn deploy_receptions(ms_id : usize, rem_targets : &mut Vec<usize>) -> Interaction {
     let rem_tlen = rem_targets.len();
     if rem_tlen == 0 {
@@ -56,7 +54,9 @@ pub fn deploy_receptions(ms_id : usize, rem_targets : &mut Vec<usize>) -> Intera
 }
 
 
-pub fn execute(my_int : Interaction, my_pos : Position, tar_lf_id : usize) -> Interaction {
+pub fn execute(my_int : Interaction,
+               my_pos : Position,
+               tar_lf_id : usize) -> Interaction {
     match my_pos {
         Position::Epsilon => {
             match my_int {
@@ -89,15 +89,27 @@ pub fn execute(my_int : Interaction, my_pos : Position, tar_lf_id : usize) -> In
                         return Interaction::Loop(lkind, old_i1 );
                     } else {
                         match &lkind {
-                            ScheduleOperatorKind::Seq => {
-                                let orig_i = Interaction::Loop(lkind, old_i1 );
-                                return Interaction::Seq( Box::new(new_i1), Box::new(orig_i) );
-                            },
-                            ScheduleOperatorKind::Strict => {
+                            LoopKind::XStrictSeq => {
                                 let orig_i = Interaction::Loop(lkind, old_i1 );
                                 return Interaction::Strict( Box::new(new_i1), Box::new(orig_i) );
                             },
-                            ScheduleOperatorKind::Par => {
+                            LoopKind::HHeadFirstWS => {
+                                let orig_i = Interaction::Loop(lkind, old_i1 );
+                                return Interaction::Seq( Box::new(new_i1), Box::new(orig_i) );
+                            },
+                            LoopKind::SWeakSeq => {
+                                // ***
+                                let orig_i = Interaction::Loop(lkind, old_i1.clone() );
+                                let new_right_int_wsloop = Interaction::Seq( Box::new(new_i1), Box::new(orig_i) );
+                                // ***
+                                let pruned_loop = prune(Interaction::Loop(LoopKind::SWeakSeq, old_i1 ),tar_lf_id);
+                                if pruned_loop == Interaction::Empty {
+                                    return new_right_int_wsloop;
+                                } else {
+                                    return Interaction::Seq( Box::new(pruned_loop), Box::new(new_right_int_wsloop) );
+                                }
+                            },
+                            LoopKind::PInterleaving => {
                                 let orig_i = Interaction::Loop(lkind, old_i1 );
                                 return Interaction::Par( Box::new(new_i1), Box::new(orig_i) );
                             }

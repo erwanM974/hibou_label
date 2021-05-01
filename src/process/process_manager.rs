@@ -34,13 +34,14 @@ use crate::process::queue::*;
 
 use crate::process::priorities::ProcessPriorities;
 
-use crate::process::semkind::SemanticKind;
+
+use crate::process::anakind::AnalysisKind;
 
 
 pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
     strategy : HibouSearchStrategy,
-    sem_kind : Option<SemanticKind>,
+    ana_kind : Option<AnalysisKind>,
     pub use_locfront : bool,
     pre_filters : Vec<HibouPreFilter>,
     // ***
@@ -54,13 +55,13 @@ pub struct HibouProcessManager {
 
 impl HibouProcessManager {
 
-    pub fn get_sem_kind(&self) -> &SemanticKind {
-        return self.sem_kind.as_ref().unwrap();
+    pub fn get_ana_kind(&self) -> &AnalysisKind {
+        return self.ana_kind.as_ref().unwrap();
     }
 
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
-               sem_kind : Option<SemanticKind>,
+               ana_kind : Option<AnalysisKind>,
                use_locfront : bool,
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
@@ -70,7 +71,7 @@ impl HibouProcessManager {
     ) -> HibouProcessManager {
         return HibouProcessManager{gen_ctx,
             strategy,
-            sem_kind,
+            ana_kind,
             use_locfront,
             pre_filters,
             memorized_states,
@@ -87,7 +88,7 @@ impl HibouProcessManager {
             },
             Some( (goal,verd) ) => {
                 options_str.push("process=analysis".to_string());
-                options_str.push( format!("semantics={}", self.sem_kind.as_ref().unwrap().to_string()) );
+                options_str.push( format!("analysis kind={}", self.ana_kind.as_ref().unwrap().to_string()) );
                 if self.use_locfront {
                     options_str.push("use_locfront=true".to_string());
                 } else {
@@ -126,8 +127,8 @@ impl HibouProcessManager {
         for canal in &(multi_trace.canals) {
             if canal.trace.len() > 0 {
                 // ***
-                match self.sem_kind.as_ref().unwrap() {
-                    SemanticKind::Simulate( sim_before ) => {
+                match self.ana_kind.as_ref().unwrap() {
+                    AnalysisKind::Simulate( sim_before ) => {
                         if *sim_before && (canal.consumed == 0) {
                             // here we allow the simulation of actions before the start of
                             // the given component trace
@@ -574,14 +575,14 @@ impl HibouProcessManager {
                                 multi_trace:&AnalysableMultiTrace) -> CoverageVerdict {
         if multi_trace.length() == 0 {
             if interaction.express_empty() {
-                match self.sem_kind.as_ref().unwrap() {
-                    SemanticKind::Accept => {
+                match self.ana_kind.as_ref().unwrap() {
+                    AnalysisKind::Accept => {
                         return CoverageVerdict::Cov;
                     },
-                    SemanticKind::Prefix => {
+                    AnalysisKind::Prefix => {
                         return CoverageVerdict::Cov;
                     },
-                    SemanticKind::Hide => {
+                    AnalysisKind::Hide => {
                         if multi_trace.is_any_component_hidden() {
                             if multi_trace.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
@@ -592,7 +593,7 @@ impl HibouProcessManager {
                             return CoverageVerdict::Cov;
                         }
                     },
-                    SemanticKind::Simulate(_) => {
+                    AnalysisKind::Simulate(_) => {
                         match multi_trace.is_simulated() {
                             WasMultiTraceConsumedWithSimulation::No => {
                                 return CoverageVerdict::Cov;
@@ -607,14 +608,14 @@ impl HibouProcessManager {
                     }
                 }
             } else {
-                match self.sem_kind.as_ref().unwrap() {
-                    SemanticKind::Accept => {
+                match self.ana_kind.as_ref().unwrap() {
+                    AnalysisKind::Accept => {
                         return CoverageVerdict::UnCov;
                     },
-                    SemanticKind::Prefix => {
+                    AnalysisKind::Prefix => {
                         return CoverageVerdict::TooShort;
                     },
-                    SemanticKind::Hide => {
+                    AnalysisKind::Hide => {
                         if multi_trace.is_any_component_hidden() {
                             if multi_trace.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
@@ -625,7 +626,7 @@ impl HibouProcessManager {
                             return CoverageVerdict::TooShort;
                         }
                     },
-                    SemanticKind::Simulate(_) => {
+                    AnalysisKind::Simulate(_) => {
                         match multi_trace.is_simulated() {
                             WasMultiTraceConsumedWithSimulation::No => {
                                 return CoverageVerdict::TooShort;
@@ -641,21 +642,21 @@ impl HibouProcessManager {
                 }
             }
         } else {
-            match self.sem_kind.as_ref().unwrap() {
-                SemanticKind::Accept => {
+            match self.ana_kind.as_ref().unwrap() {
+                AnalysisKind::Accept => {
                     return CoverageVerdict::UnCov;
                 },
-                SemanticKind::Prefix => {
+                AnalysisKind::Prefix => {
                     if multi_trace.is_any_component_empty() {
                         return CoverageVerdict::LackObs;
                     } else {
                         return CoverageVerdict::Out;
                     }
                 },
-                SemanticKind::Hide => {
+                AnalysisKind::Hide => {
                     return CoverageVerdict::Out;
                 },
-                SemanticKind::Simulate(_) => {
+                AnalysisKind::Simulate(_) => {
                     return CoverageVerdict::Out;
                 },
             }

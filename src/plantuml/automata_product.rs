@@ -18,7 +18,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{Read,BufReader,BufRead,BufWriter,Write};
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction};
 use crate::core::syntax::util::get_recursive_frag::*;
 use crate::core::syntax::action::*;
 

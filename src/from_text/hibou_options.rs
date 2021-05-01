@@ -37,13 +37,13 @@ use crate::from_text::hsf_file::ProcessKind;
 
 use crate::process::priorities::ProcessPriorities;
 use crate::process::verdicts::GlobalVerdict;
-use crate::process::semkind::SemanticKind;
+use crate::process::anakind::AnalysisKind;
 
 pub struct HibouOptions {
     pub loggers : Vec<Box<dyn ProcessLogger>>,
     pub strategy : HibouSearchStrategy,
     pub pre_filters : Vec<HibouPreFilter>,
-    pub sem_kind : Option<SemanticKind>,
+    pub ana_kind : Option<AnalysisKind>,
     pub use_locfront : bool,
     pub goal : Option<GlobalVerdict>,
     pub frontier_priorities : ProcessPriorities
@@ -55,18 +55,18 @@ impl HibouOptions {
     pub fn new(loggers : Vec<Box<dyn ProcessLogger>>,
                strategy : HibouSearchStrategy,
                pre_filters : Vec<HibouPreFilter>,
-               sem_kind : Option<SemanticKind>,
+               ana_kind : Option<AnalysisKind>,
                use_locfront : bool,
                goal:Option<GlobalVerdict>,
                frontier_priorities : ProcessPriorities) -> HibouOptions {
-        return HibouOptions{loggers,strategy,pre_filters,sem_kind,use_locfront,goal,frontier_priorities};
+        return HibouOptions{loggers,strategy,pre_filters,ana_kind,use_locfront,goal,frontier_priorities};
     }
 
     pub fn default_explore() -> HibouOptions {
         return HibouOptions{loggers:Vec::new(),
             strategy:HibouSearchStrategy::BFS,
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
-            sem_kind:None,
+            ana_kind:None,
             goal:None,
             use_locfront:false,
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
@@ -76,7 +76,7 @@ impl HibouOptions {
         return HibouOptions{loggers:Vec::new(),
             strategy:HibouSearchStrategy::BFS,
             pre_filters:Vec::new(),
-            sem_kind:Some(SemanticKind::Prefix),
+            ana_kind:Some(AnalysisKind::Prefix),
             use_locfront:true,
             goal:Some(GlobalVerdict::Pass),
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
@@ -133,7 +133,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
     let mut frontier_priorities = ProcessPriorities::new(0,0,0, None, -2, -2);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
-    let mut semantics : Option<SemanticKind> = Some(SemanticKind::Prefix);
+    let mut ana_kind_opt : Option<AnalysisKind> = Some(AnalysisKind::Prefix);
     let mut use_locfront = true;
     let mut goal : Option<GlobalVerdict> = Some(GlobalVerdict::WeakPass);
     // ***
@@ -141,7 +141,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut got_strategy  : bool = false;
     let mut got_frontier_priorities : bool = false;
     let mut got_pre_filters : bool = false;
-    let mut got_semantics : bool = false;
+    let mut got_ana_kind : bool = false;
     let mut got_locfront : bool = false;
     let mut got_goal : bool = false;
     // ***
@@ -297,31 +297,31 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     }
                 }
             },
-            Rule::OPTION_SEMANTICS_DECL => {
-                if got_semantics {
-                    return Err( HibouParsingError::HsfSetupError("several 'semantics=X' declared in the same '@X_option' section".to_string()));
+            Rule::OPTION_ANALYSIS_KIND_DECL => {
+                if got_ana_kind {
+                    return Err( HibouParsingError::HsfSetupError("several 'ana_kind=X' declared in the same '@X_option' section".to_string()));
                 }
-                got_semantics = true;
+                got_ana_kind = true;
                 // ***
-                let semantics_pair =  option_decl_pair.into_inner().next().unwrap();
-                match semantics_pair.as_rule() {
-                    Rule::OPTION_SEMANTICS_accept => {
-                        semantics = Some( SemanticKind::Accept );
+                let ana_kind_pair =  option_decl_pair.into_inner().next().unwrap();
+                match ana_kind_pair.as_rule() {
+                    Rule::OPTION_ANA_KIND_accept => {
+                        ana_kind_opt = Some( AnalysisKind::Accept );
                     },
-                    Rule::OPTION_SEMANTICS_prefix => {
-                        semantics = Some( SemanticKind::Prefix );
+                    Rule::OPTION_ANA_KIND_prefix => {
+                        ana_kind_opt = Some( AnalysisKind::Prefix );
                     },
-                    Rule::OPTION_SEMANTICS_hide => {
-                        semantics = Some( SemanticKind::Hide );
+                    Rule::OPTION_ANA_KIND_hide => {
+                        ana_kind_opt = Some( AnalysisKind::Hide );
                     },
-                    Rule::OPTION_SEMANTICS_simulate_prefix => {
-                        semantics = Some( SemanticKind::Simulate(false) );
+                    Rule::OPTION_ANA_KIND_simulate_prefix => {
+                        ana_kind_opt = Some( AnalysisKind::Simulate(false) );
                     },
-                    Rule::OPTION_SEMANTICS_simulate_slice => {
-                        semantics = Some( SemanticKind::Simulate(true) );
+                    Rule::OPTION_ANA_KIND_simulate_slice => {
+                        ana_kind_opt = Some( AnalysisKind::Simulate(true) );
                     },
                     _ => {
-                        panic!("what rule then ? : {:?}", semantics_pair.as_rule() );
+                        panic!("what rule then ? : {:?}", ana_kind_pair.as_rule() );
                     }
                 }
             },
@@ -354,7 +354,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     }
     match process_kind {
         ProcessKind::Analyze => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,semantics, use_locfront, goal,frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,ana_kind_opt, use_locfront, goal,frontier_priorities) );
         },
         _ => {
             return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, false, None,frontier_priorities) );

@@ -34,7 +34,8 @@ use crate::process::process_manager::*;
 use crate::process::queue::*;
 use crate::process::priorities::ProcessPriorities;
 
-use crate::process::semkind::SemanticKind;
+
+use crate::process::anakind::AnalysisKind;
 
 
 pub fn analyze(interaction : Interaction,
@@ -44,14 +45,14 @@ pub fn analyze(interaction : Interaction,
                strategy : HibouSearchStrategy,
                frontier_priorities : ProcessPriorities,
                loggers : Vec<Box<dyn ProcessLogger>>,
-               sem_kind: SemanticKind,
+               ana_kind: AnalysisKind,
                use_locfront : bool,
                goal : Option<GlobalVerdict>) -> (GlobalVerdict,u32) {
     // ***
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
                                                strategy,
-                                               Some(sem_kind),
+                                               Some(ana_kind),
                                                use_locfront,
                                                pre_filters,
                                                HashMap::new(),
@@ -193,8 +194,8 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
         }*/
     }
     // *** Add Hiding steps in case of "hide" semantics OR Simulate steps in case of "simulate" semantics
-    match manager.get_sem_kind() {
-        &SemanticKind::Hide => {
+    match manager.get_ana_kind() {
+        &AnalysisKind::Hide => {
             if multi_trace.length() > 0 {
                 for canal in &multi_trace.canals {
                     if (canal.trace.len() == 0) && (canal.flag_hidden == false) && (interaction.involves_any_of(&canal.lifelines)) {
@@ -205,7 +206,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                 }
             }
         },
-        &SemanticKind::Simulate(sim_before) => {
+        &AnalysisKind::Simulate(sim_before) => {
             if multi_trace.length() > 0 {
                 for front_pos in global_frontier(&interaction) {
                     if interaction.get_loop_depth_at_pos(&front_pos) <= multi_trace.remaining_loop_instantiations_in_simulation {

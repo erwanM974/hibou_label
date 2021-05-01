@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction};
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::Position;
 use crate::core::syntax::util::get_recursive_frag::*;
@@ -495,10 +495,10 @@ pub(in crate::canonize) fn loop_simpl(interaction : &Interaction) -> Option<Inte
 
 pub(in crate::canonize) fn loop_unnest(interaction : &Interaction) -> Option<Interaction> {
     match interaction {
-        &Interaction::Loop(ref skA, ref i1) => {
+        &Interaction::Loop(ref lkA, ref i1) => {
             match **i1 {
-                Interaction::Loop(ref skB, ref i11) => {
-                    return Some( Interaction::Loop(skA.min(skB), i11.clone()) );
+                Interaction::Loop(ref lkB, ref i11) => {
+                    return Some( Interaction::Loop((lkA.min(lkB)).clone(), i11.clone()) );
                 },
                 _ => {}
             }

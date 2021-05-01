@@ -35,7 +35,7 @@ use rusttype::{FontCollection, Scale};
 
 // **********
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction,LoopKind};
 use crate::core::syntax::util::get_recursive_frag::*;
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
@@ -104,16 +104,20 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
         },
         &Interaction::Loop(ref lkind, ref i1) => {
             match lkind {
-                ScheduleOperatorKind::Strict => {
-                    let label = vec![TextToPrint{text:SYNTAX_LOOP_STRICT.to_string(),color:Rgb(HCP_Black)}];
+                LoopKind::XStrictSeq => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_X.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 },
-                ScheduleOperatorKind::Seq => {
-                    let label = vec![TextToPrint{text:SYNTAX_LOOP_SEQ.to_string(),color:Rgb(HCP_Black)}];
+                LoopKind::HHeadFirstWS => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_H.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 },
-                ScheduleOperatorKind::Par => {
-                    let label = vec![TextToPrint{text:SYNTAX_LOOP_PAR.to_string(),color:Rgb(HCP_Black)}];
+                LoopKind::SWeakSeq => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_S.to_string(),color:Rgb(HCP_Black)}];
+                    return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
+                },
+                LoopKind::PInterleaving => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_P.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 }
             }

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use std::cmp::Ordering;
+
 
 use std::cmp;
 use std::collections::{HashMap,HashSet};
@@ -24,66 +26,12 @@ use crate::core::syntax::position::*;
 use crate::core::syntax::action::*;
 use crate::core::trace::TraceAction;
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
-pub enum ScheduleOperatorKind {
-    Strict,
-    Seq,
-    Par
-}
-
-impl ScheduleOperatorKind {
-
-    pub fn min(&self, other : &ScheduleOperatorKind) -> ScheduleOperatorKind {
-        match self {
-            &ScheduleOperatorKind::Par => {
-                return ScheduleOperatorKind::Par;
-            },
-            &ScheduleOperatorKind::Seq => {
-                match other {
-                    &ScheduleOperatorKind::Par => {
-                        return ScheduleOperatorKind::Par;
-                    },
-                    _ => {
-                        return ScheduleOperatorKind::Seq;
-                    },
-                }
-            },
-            &ScheduleOperatorKind::Strict => {
-                return other.clone();
-            }
-        }
-    }
-
-    pub fn lower_than(&self, other : &ScheduleOperatorKind) -> bool {
-        match self {
-            &ScheduleOperatorKind::Par => {
-                match other {
-                    &ScheduleOperatorKind::Par => {
-                        return false;
-                    },
-                    _ => {
-                        return true;
-                    }
-                }
-            },
-            &ScheduleOperatorKind::Seq => {
-                match other {
-                    &ScheduleOperatorKind::Par => {
-                        return false;
-                    },
-                    &ScheduleOperatorKind::Seq => {
-                        return false;
-                    },
-                    &ScheduleOperatorKind::Strict => {
-                        return true;
-                    }
-                }
-            },
-            &ScheduleOperatorKind::Strict => {
-                return false;
-            }
-        }
-    }
+#[derive(Clone, PartialEq, Debug, Eq, PartialOrd, Ord, Hash)]
+pub enum LoopKind {
+    PInterleaving  = 1,
+    SWeakSeq       = 2,
+    HHeadFirstWS   = 3,
+    XStrictSeq     = 4
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
@@ -95,7 +43,7 @@ pub enum Interaction {
     CoReg(Vec<usize>,Box<Interaction>,Box<Interaction>),
     Alt(Box<Interaction>,Box<Interaction>),
     Par(Box<Interaction>,Box<Interaction>),
-    Loop(ScheduleOperatorKind,Box<Interaction>)
+    Loop(LoopKind,Box<Interaction>)
 }
 
 

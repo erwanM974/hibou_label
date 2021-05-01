@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction};
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::Position;
 use crate::core::general_context::GeneralContext;
@@ -203,10 +203,10 @@ pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
                 }
             }
         },
-        &Interaction::Loop(ref sk1, ref i11) => {
+        &Interaction::Loop(ref lk1, ref i11) => {
             match i2 {
-                &Interaction::Loop(ref sk2, ref i21) => {
-                    if sk1.lower_than(sk2) {
+                &Interaction::Loop(ref lk2, ref i21) => {
+                    if lk1 < lk2 {
                         return true;
                     } else {
                         return interaction_lower_than(i11,i21);

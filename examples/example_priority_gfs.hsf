@@ -14,10 +14,10 @@
     c
 }
 par(
-    loop_seq(
+    loopH(
         a -- m -> b
     ),
-    loop_seq(
+    loopH(
         a -- m -> c
     )
 )

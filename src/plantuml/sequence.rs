@@ -17,7 +17,7 @@ limitations under the License.
 use std::fs::File;
 use std::io::{Read,BufReader,BufRead,BufWriter,Write};
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction,LoopKind};
 use crate::core::syntax::util::get_recursive_frag::*;
 use crate::core::syntax::action::*;
 
@@ -115,15 +115,18 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
         &Interaction::Loop(ref kind, ref i1) => {
             // ***
             match kind {
-                &ScheduleOperatorKind::Seq => {
-                    output_file.write( "group loop_seq\n".as_bytes() );
+                &LoopKind::XStrictSeq => {
+                    output_file.write( "group loopX\n".as_bytes() );
                 },
-                &ScheduleOperatorKind::Strict => {
-                    output_file.write( "group loop_strict\n".as_bytes() );
+                &LoopKind::HHeadFirstWS => {
+                    output_file.write( "group loopH\n".as_bytes() );
                 },
-                &ScheduleOperatorKind::Par => {
-                    output_file.write( "group loop_par\n".as_bytes() );
+                &LoopKind::SWeakSeq => {
+                    output_file.write( "group loopS\n".as_bytes() );
                 },
+                &LoopKind::PInterleaving => {
+                    output_file.write( "group loopP\n".as_bytes() );
+                }
             }
             to_plant_uml_sd_rec(output_file, i1, gen_ctx);
             output_file.write( "end\n".as_bytes() );

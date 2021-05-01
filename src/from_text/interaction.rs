@@ -21,7 +21,7 @@ use crate::from_text::parser::*;
 
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction,LoopKind};
 
 use crate::from_text::error::HibouParsingError;
 use crate::from_text::action::{parse_emission,parse_reception,parse_lifelines_list};
@@ -129,14 +129,17 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
                 },
                 Ok( sub_int ) => {
                     match loop_kind_pair.as_rule() {
-                        Rule::SD_STRICT => {
-                            return Ok( Interaction::Loop(ScheduleOperatorKind::Strict,Box::new(sub_int)) );
+                        Rule::SD_LOOP_KIND_X => {
+                            return Ok( Interaction::Loop(LoopKind::XStrictSeq,Box::new(sub_int)) );
                         },
-                        Rule::SD_SEQ => {
-                            return Ok( Interaction::Loop(ScheduleOperatorKind::Seq,Box::new(sub_int)) );
+                        Rule::SD_LOOP_KIND_H => {
+                            return Ok( Interaction::Loop(LoopKind::HHeadFirstWS,Box::new(sub_int)) );
                         },
-                        Rule::SD_PAR => {
-                            return Ok( Interaction::Loop(ScheduleOperatorKind::Par,Box::new(sub_int)) );
+                        Rule::SD_LOOP_KIND_S => {
+                            return Ok( Interaction::Loop(LoopKind::SWeakSeq,Box::new(sub_int)) );
+                        },
+                        Rule::SD_LOOP_KIND_P => {
+                            return Ok( Interaction::Loop(LoopKind::PInterleaving,Box::new(sub_int)) );
                         },
                         _ => {
                             unreachable!();

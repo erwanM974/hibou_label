@@ -8,7 +8,7 @@
     a;b
 }
 alt(
-    loop_seq(
+    loopH(
         strict(
             a -- m1 ->|,
             o
@@ -16,10 +16,10 @@ alt(
     ),
     alt(
         a -- m1 ->|,
-        loop_strict(
+        loopX(
             strict(
                 o,
-                loop_seq(
+                loopH(
                     a -- m1 ->|
                 )
             )

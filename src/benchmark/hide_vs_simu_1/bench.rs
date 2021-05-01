@@ -41,7 +41,7 @@ use crate::rendering::process::graphic_logger::GraphicProcessLogger;
 use crate::process::log::*;
 use crate::process::hibou_process::*;
 use crate::process::priorities::ProcessPriorities;
-use crate::process::semkind::SemanticKind;
+use crate::process::anakind::AnalysisKind;
 use crate::process::verdicts::GlobalVerdict;
 
 use crate::process::analysis::analyze;
@@ -87,7 +87,6 @@ pub fn hvs1_bench_analyze(hsf_file : &str, htf_file : &str, report_file : &str, 
             }
         }
     }
-
 }
 
 fn get_removal_distr( local_comp_sizes : &mut Vec<(usize,usize)> ) -> HashSet< BTreeMap<usize,usize> > {
@@ -125,8 +124,8 @@ fn bench_prefix(gen_ctx : &GeneralContext,
     }
     let new_multi_trace = AnalysableMultiTrace::new(new_canals,interaction.max_nested_loop_depth());
     // ***
-    let res_hide = bench_prefix_with_sem(gen_ctx,interaction,&new_multi_trace,compute_search_space,&SemanticKind::Hide);
-    let res_simu = bench_prefix_with_sem(gen_ctx,interaction,&new_multi_trace,compute_search_space,&SemanticKind::Simulate(false));
+    let res_hide = bench_prefix_with_sem(gen_ctx,interaction,&new_multi_trace,compute_search_space,&AnalysisKind::Hide);
+    let res_simu = bench_prefix_with_sem(gen_ctx,interaction,&new_multi_trace,compute_search_space,&AnalysisKind::Simulate(false));
 
     // ***
     let hvs_result = HVSBenchResult::new(to_remove.clone(),
@@ -140,7 +139,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                          interaction : &Interaction,
                          new_multi_trace : &AnalysableMultiTrace,
                          compute_search_space : bool,
-                         sem_kind : &SemanticKind) -> AnalysisBenchResult {
+                         ana_kind : &AnalysisKind) -> AnalysisBenchResult {
 
     if compute_search_space {
         let (verdict_none_goal,node_count_none_goal) = analyze(interaction.clone(),
@@ -150,7 +149,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                                HibouSearchStrategy::DFS,
                                                                ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                                Vec::new(),
-                                                               sem_kind.clone(),true,
+                                                               ana_kind.clone(),true,
                                                                None);
         // ***
         let (verdict_wp_goal,node_count_wp_goal) = analyze(interaction.clone(),
@@ -160,7 +159,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                            HibouSearchStrategy::DFS,
                                                            ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                            Vec::new(),
-                                                           sem_kind.clone(),true,
+                                                           ana_kind.clone(),true,
                                                            Some(GlobalVerdict::WeakPass));
         // ***
         assert!( verdict_none_goal == verdict_wp_goal );
@@ -178,7 +177,7 @@ fn bench_prefix_with_sem(gen_ctx : &GeneralContext,
                                                            HibouSearchStrategy::DFS,
                                                            ProcessPriorities::new(0,0,-1,None,-2,-2),
                                                            Vec::new(),
-                                                           sem_kind.clone(),true,
+                                                           ana_kind.clone(),true,
                                                            Some(GlobalVerdict::WeakPass));
         // ***
         return AnalysisBenchResult::new(

@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction};
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::Position;
 use crate::core::general_context::GeneralContext;

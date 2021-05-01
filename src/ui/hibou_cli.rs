@@ -46,8 +46,8 @@ use crate::plantuml::automata_product::to_plant_uml_ap;
 use crate::canonize::term_repr_out::to_term_repr;
 use crate::canonize::process::canon_process_interaction_term;
 
-use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
-use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
+//use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
+//use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
 
 use crate::canonize::precondition::InteractionPreconditionCheckForCanonization;
 
@@ -289,7 +289,7 @@ pub fn hibou_cli() -> i32 {
                                                            hoptions.strategy,
                                                            hoptions.frontier_priorities,
                                                            hoptions.loggers,
-                                                           hoptions.sem_kind.unwrap(),
+                                                           hoptions.ana_kind.unwrap(),
                                                            hoptions.use_locfront,
                                                            hoptions.goal);
 
@@ -299,7 +299,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("bench_hvs1") {
+    }/* else if let Some(matches) = matches.subcommand_matches("bench_hvs1") {
         let hsf_file = matches.value_of("hsf").unwrap();
         let htf_file = matches.value_of("htf").unwrap();
         let report_file = matches.value_of("out").unwrap();
@@ -323,7 +323,7 @@ pub fn hibou_cli() -> i32 {
         ret_print.push( format!("and trace from file '{}'",htf_file) );
         ret_print.push( format!("output in file '{}'",report_file) );
         ret_print.push( "".to_string());
-    } else {
+    }*/ else {
         ret_print.push( "".to_string() );
         ret_print.push( "TYPE help or -h to get a summary of the utilities".to_string() );
     }

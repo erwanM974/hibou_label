@@ -20,7 +20,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::core::syntax::interaction::Interaction;
 use crate::core::general_context::GeneralContext;
 use crate::core::trace::*;
-use crate::process::semkind::SemanticKind;
+use crate::process::anakind::AnalysisKind;
 use crate::process::verdicts::GlobalVerdict;
 
 

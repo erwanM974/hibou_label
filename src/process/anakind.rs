@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 #[derive(Clone, PartialEq, Debug)]
-pub enum SemanticKind {
+pub enum AnalysisKind {
     Accept,
     Prefix,
     Hide,
@@ -23,19 +23,19 @@ pub enum SemanticKind {
 }
 
 
-impl std::string::ToString for SemanticKind {
+impl std::string::ToString for AnalysisKind {
     fn to_string(&self) -> String {
         match self {
-            SemanticKind::Accept => {
+            AnalysisKind::Accept => {
                 return "accept".to_string();
             },
-            SemanticKind::Prefix => {
+            AnalysisKind::Prefix => {
                 return "prefix".to_string();
             },
-            SemanticKind::Hide => {
+            AnalysisKind::Hide => {
                 return "hide".to_string();
             },
-            SemanticKind::Simulate(sim_before) => {
+            AnalysisKind::Simulate(sim_before) => {
                 if *sim_before {
                     return "simulate multi-slices".to_string();
                 } else {

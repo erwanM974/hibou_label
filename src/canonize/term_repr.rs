@@ -19,13 +19,13 @@ use crate::rendering::graphviz::node_style::*;
 use crate::rendering::graphviz::edge_style::*;
 use crate::rendering::graphviz::common::*;
 
-use crate::core::syntax::interaction::{Interaction,ScheduleOperatorKind};
+use crate::core::syntax::interaction::{Interaction,LoopKind};
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::position::Position;
 
 use crate::core::semantics::execute::deploy_receptions;
-
+use crate::rendering::textual::convention::*;
 
 pub fn interaction_repr(interaction : &Interaction, gen_ctx : &GeneralContext, name : &String, as_subgraph : bool) -> String {
     let mut repr : String = String::new();
@@ -138,10 +138,10 @@ fn interaction_repr_rec(to_write : &mut String,
             action_repr(to_write,act,gen_ctx,interaction_name,current_pos);
         },
         &Interaction::Strict(ref i1, ref i2) => {
-            repr_binary_operator(to_write, i1, i2, "strict", gen_ctx, interaction_name, current_pos);
+            repr_binary_operator(to_write, i1, i2, SYNTAX_STRICT, gen_ctx, interaction_name, current_pos);
         },
         &Interaction::Seq(ref i1, ref i2) => {
-            repr_binary_operator(to_write, i1, i2, "seq", gen_ctx, interaction_name, current_pos);
+            repr_binary_operator(to_write, i1, i2, SYNTAX_SEQ, gen_ctx, interaction_name, current_pos);
         },
         &Interaction::CoReg(ref cr, ref i1, ref i2) => {
             let mut op_label = "coreg(".to_string();
@@ -158,10 +158,10 @@ fn interaction_repr_rec(to_write : &mut String,
             repr_binary_operator(to_write, i1, i2, &op_label, gen_ctx, interaction_name, current_pos);
         },
         &Interaction::Par(ref i1, ref i2) => {
-            repr_binary_operator(to_write, i1, i2, "par", gen_ctx, interaction_name, current_pos);
+            repr_binary_operator(to_write, i1, i2, SYNTAX_PAR, gen_ctx, interaction_name, current_pos);
         },
         &Interaction::Alt(ref i1, ref i2) => {
-            repr_binary_operator(to_write, i1, i2, "alt", gen_ctx, interaction_name, current_pos);
+            repr_binary_operator(to_write, i1, i2, SYNTAX_ALT, gen_ctx, interaction_name, current_pos);
         },
         &Interaction::Loop(ref lp_kind, ref i1) => {
             // the parent loop node
@@ -169,14 +169,17 @@ fn interaction_repr_rec(to_write : &mut String,
                 let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
                 strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
                 match lp_kind {
-                    &ScheduleOperatorKind::Strict => {
-                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "loop_strict".to_string() ) );
+                    &LoopKind::XStrictSeq => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_X.to_string() ) );
                     },
-                    &ScheduleOperatorKind::Seq => {
-                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "loop_seq".to_string() ) );
+                    &LoopKind::HHeadFirstWS => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_H.to_string() ) );
                     },
-                    &ScheduleOperatorKind::Par => {
-                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "loop_par".to_string() ) );
+                    &LoopKind::SWeakSeq => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_S.to_string() ) );
+                    },
+                    &LoopKind::PInterleaving => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_P.to_string() ) );
                     }
                 }
                 let strict_gv_node = GraphVizNode{id : node_name.clone(), style : strict_node_gv_options};

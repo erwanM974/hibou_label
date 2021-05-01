@@ -17,7 +17,7 @@
     c
 }
 seq(
-    loop_seq(
+    loopH(
         seq(
             a -- m1 -> b,
             alt(

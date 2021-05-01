@@ -15,7 +15,22 @@ limitations under the License.
 */
 
 
-pub mod frontier;
-pub mod locfront;
-pub mod prune;
-pub mod execute;
+#[derive(Clone, PartialEq, Debug)]
+pub enum SemanticKind {
+    HeadFirstLoop,
+    Kleene
+}
+
+impl std::string::ToString for SemanticKind {
+    fn to_string(&self) -> String {
+        match self {
+            SemanticKind::HeadFirstLoop => {
+                return "Head First Loop".to_string();
+            },
+            SemanticKind::Kleene => {
+                return "Kleene Closure".to_string();
+            }
+        }
+    }
+}
+
