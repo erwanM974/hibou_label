@@ -43,8 +43,6 @@ pub mod ui;
 pub mod plantuml;
 pub mod canonize;
 
-pub mod benchmark;
-
 // **********
 
 use crate::ui::hibou_cli::hibou_cli;

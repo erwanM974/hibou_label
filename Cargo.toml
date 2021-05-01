@@ -1,6 +1,6 @@
 [package]
 name = "hibou_label"
-version = "0.5.0"
+version = "0.5.5"
 authors = ["Erwan Mahe"]
 edition = "2018"
 

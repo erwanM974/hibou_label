@@ -46,9 +46,6 @@ use crate::plantuml::automata_product::to_plant_uml_ap;
 use crate::canonize::term_repr_out::to_term_repr;
 use crate::canonize::process::canon_process_interaction_term;
 
-//use crate::benchmark::hide_vs_simu_1::bench::hvs1_bench_analyze;
-//use crate::benchmark::hide_vs_simu_2::bench::hvs2_bench_analyze;
-
 use crate::canonize::precondition::InteractionPreconditionCheckForCanonization;
 
 fn get_ascii_border() -> &'static str {
@@ -63,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-2021-04 "#);
+    my_vec.push(r#"  V-label-2021-05 "#);
     return my_vec;
 }
 
