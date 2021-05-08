@@ -45,6 +45,8 @@ impl InteractionTermTransformation {
 
 pub fn transfos_phase1<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn Fn(&Interaction) -> Option<Interaction>)> {
     return vec![
+        (TransformationKind::Deduplicate,&deduplicate),
+        (TransformationKind::TriDeduplicateRF,&tri_deduplicate_right_flushed),
         (TransformationKind::SimplLeft,&simpl_left),
         (TransformationKind::SimplRight,&simpl_right),
         (TransformationKind::FlushRight,&flush_right),
@@ -62,13 +64,8 @@ pub fn transfos_phase1<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn F
 pub fn transfos_phase2<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn Fn(&Interaction) -> Option<Interaction>)> {
     return vec![
         (TransformationKind::Deduplicate,&deduplicate),
-        (TransformationKind::TriDeduplicateRF,&tri_deduplicate_right_flushed)
-    ];
-}
-
-pub fn transfos_phase3<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn Fn(&Interaction) -> Option<Interaction>)> {
-    return vec![
-        (TransformationKind::SimplLeft,&loop_simpl),
+        (TransformationKind::TriDeduplicateRF,&tri_deduplicate_right_flushed),
+        (TransformationKind::SimplLeft,&simpl_left),
         (TransformationKind::SimplRight,&simpl_right),
         (TransformationKind::FlushRight,&flush_right),
         (TransformationKind::InvertPar,&invert_par_conditional),

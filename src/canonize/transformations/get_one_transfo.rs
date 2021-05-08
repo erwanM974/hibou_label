@@ -52,17 +52,6 @@ pub fn phase_2_one_transfo(interaction : &Interaction) -> Vec<InteractionTermTra
     }
 }
 
-pub fn phase_3_one_transfo(interaction : &Interaction) -> Vec<InteractionTermTransformation> {
-    match get_one_transformation_rec(&transfos_phase3(),interaction) {
-        Some( got_transfo ) => {
-            return vec![got_transfo];
-        },
-        None => {
-            return Vec::new();
-        }
-    }
-}
-
 fn get_one_transformation_inner(transfos : &Vec<(TransformationKind, &dyn Fn(&Interaction) -> Option<Interaction>)>,
                                  interaction : &Interaction) -> Option<InteractionTermTransformation> {
     for (transfo_kind, transfo_func) in transfos {

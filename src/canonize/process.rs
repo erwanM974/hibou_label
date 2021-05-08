@@ -84,21 +84,28 @@ pub fn canon_process_interaction_term(interaction : &Interaction,
 fn canonize_process_one_transfo(file : &mut File,
                                   init_interaction : &Interaction,
                                   gen_ctx : &GeneralContext) {
-    canonize_process(file,init_interaction,gen_ctx,&phase_1_one_transfo, &phase_2_one_transfo, &phase_3_one_transfo);
+    canonize_process(file,
+                     init_interaction,
+                     gen_ctx,
+                     &phase_1_one_transfo,
+                     &phase_2_one_transfo);
 }
 
 fn canonize_process_all_transfos(file : &mut File,
                                  init_interaction : &Interaction,
                                  gen_ctx : &GeneralContext) {
-    canonize_process(file,init_interaction,gen_ctx,&phase_1_all_transfos, &phase_2_all_transfos, &phase_3_all_transfos);
+    canonize_process(file,
+                     init_interaction,
+                     gen_ctx,
+                     &phase_1_all_transfos,
+                     &phase_2_all_transfos);
 }
 
 fn canonize_process(file : &mut File,
                     init_interaction : &Interaction,
                     gen_ctx : &GeneralContext,
                     phase_1 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>,
-                    phase_2 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>,
-                    phase_3 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>) {
+                    phase_2 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>) {
     // ***
     // source node
     {
@@ -127,7 +134,7 @@ fn canonize_process(file : &mut File,
     let mut known : HashMap<Interaction,u32> = HashMap::new();
     known.insert( init_interaction.clone(), 1 );
     file.write("subgraph cluster_phase1 {\n".as_bytes() );
-    file.write("style=filled;color=lightyellow1;label=\"phase 1\";\n".as_bytes() );
+    file.write("style=filled;color=lightblue1;label=\"phase 1\";\n".as_bytes() );
     // ***
     // first node
     {
@@ -230,7 +237,7 @@ fn canonize_process(file : &mut File,
             next_index = next_index + 1;
         }
         file.write("subgraph cluster_phase2 {\n".as_bytes() );
-        file.write("style=filled;color=lightblue1;label=\"phase 2\";\n".as_bytes() );
+        file.write("style=filled;color=palegreen;label=\"phase 2\";\n".as_bytes() );
         file.write( temp_string.as_bytes() );
     }
     // ***
@@ -290,96 +297,6 @@ fn canonize_process(file : &mut File,
     file.write("}\n".as_bytes() );
     // ***
     // =====================================================================================================
-    // PHASE 3
-    known = HashMap::new();
-    {
-        let mut temp_string : String = String::new();
-        for (iid,iterm) in finals.drain() {
-            let old_id_str = format!("i{}", iid);
-            let new_id_str = format!("i{}", next_index);
-            // new interaction node
-            {
-                let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-                node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-                node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",old_id_str) ) );
-                node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
-                let gv_node = GraphVizNode{id : new_id_str.clone(), style : node_gv_options};
-                temp_string.push_str( &gv_node.to_dot_string() );
-                temp_string.push_str( "\n" );
-            }
-            // new transition
-            {
-                let tran_gv_options : GraphvizEdgeStyle = Vec::new();
-                let gv_edge = GraphVizEdge{origin_id : old_id_str,
-                    target_id : new_id_str,
-                    style : tran_gv_options};
-                file.write( gv_edge.to_dot_string().as_bytes() );
-                file.write( "\n".as_bytes() );
-            }
-            // save the old final
-            known.insert( iterm.clone(), next_index );
-            queue.push( (next_index,iterm) );
-            next_index = next_index + 1;
-        }
-        file.write("subgraph cluster_phase3 {\n".as_bytes() );
-        file.write("style=filled;color=palegreen;label=\"phase 3\";\n".as_bytes() );
-        file.write( temp_string.as_bytes() );
-    }
-    // ***
-    while queue.len() > 0 {
-        let (parent_id,parent_interaction) = queue.pop().unwrap();
-        let parent_id_str = format!("i{}", parent_id);
-        // ***
-        let mut available_transfos = phase_3(&parent_interaction);
-        // ***
-        if available_transfos.len() > 0 {
-            for transformed in available_transfos {
-                if known.contains_key(&transformed.result) {
-                    let target_id = known.get(&transformed.result).unwrap();
-                    // new transition
-                    let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-                    tran_gv_options.push( GraphvizEdgeStyleItem::Label( transformed.transformation_str_description() ));
-                    let gv_edge = GraphVizEdge{origin_id : parent_id_str.clone(),
-                        target_id : format!("i{}",&target_id),
-                        style : tran_gv_options};
-                    file.write( gv_edge.to_dot_string().as_bytes() );
-                    file.write("\n".as_bytes() );
-                    // then discard the new interaction
-                } else {
-                    // ***
-                    let new_id_str = format!("i{}", next_index);
-                    // new interaction node
-                    {
-                        to_term_repr_temp(&new_id_str,&transformed.result, gen_ctx);
-                        let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-                        node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-                        node_gv_options.push( GraphvizNodeStyleItem::Image( format!("temp/{}.png",new_id_str) ) );
-                        node_gv_options.push( GraphvizNodeStyleItem::Label( "".to_string() ) );
-                        let gv_node = GraphVizNode{id : new_id_str.clone(), style : node_gv_options};
-                        file.write( gv_node.to_dot_string().as_bytes() );
-                        file.write("\n".as_bytes() );
-                    }
-                    // new transition
-                    {
-                        let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-                        tran_gv_options.push( GraphvizEdgeStyleItem::Label( transformed.transformation_str_description() ));
-                        let gv_edge = GraphVizEdge{origin_id : parent_id_str.clone(),
-                            target_id : new_id_str,
-                            style : tran_gv_options};
-                        file.write( gv_edge.to_dot_string().as_bytes() );
-                        file.write("\n".as_bytes() );
-                    }
-                    // save the new interaction
-                    known.insert( transformed.result.clone(), next_index );
-                    queue.push((next_index,transformed.result) );
-                    next_index = next_index + 1;
-                }
-            }
-        } else {
-            finals.insert( (parent_id,parent_interaction) );
-        }
-    }
-    file.write("}\n".as_bytes() );
 }
 
 

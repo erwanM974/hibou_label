@@ -35,10 +35,6 @@ pub fn phase_2_all_transfos(interaction : &Interaction) -> Vec<InteractionTermTr
     return get_all_transformations_rec(&transfos_phase2(),interaction);
 }
 
-pub fn phase_3_all_transfos(interaction : &Interaction) -> Vec<InteractionTermTransformation> {
-    return get_all_transformations_rec(&transfos_phase3(),interaction);
-}
-
 fn get_all_transformations_inner(transfos : &Vec<(TransformationKind, &dyn Fn(&Interaction) -> Option<Interaction>)>,
                                  interaction : &Interaction) -> Vec<InteractionTermTransformation> {
 

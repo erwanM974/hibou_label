@@ -273,10 +273,12 @@ pub(in crate::canonize) fn factorize_prefix_strict(interaction : &Interaction) -
             if left_strict_frags[0] == right_strict_frags[0] {
                 let first_frag = left_strict_frags.remove(0);
                 right_strict_frags.remove(0);
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_strict_frags(&mut left_strict_frags)),
-                                               Box::new(fold_recursive_strict_frags(&mut right_strict_frags))
-                );
-                return Some( Interaction::Strict( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                if first_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_strict_frags(&mut left_strict_frags)),
+                                                   Box::new(fold_recursive_strict_frags(&mut right_strict_frags))
+                    );
+                    return Some( Interaction::Strict( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                }
             }
         },
         _ => {}
@@ -292,10 +294,12 @@ pub(in crate::canonize) fn factorize_prefix_seq(interaction : &Interaction) -> O
             if left_seq_frags[0] == right_seq_frags[0] {
                 let first_frag = left_seq_frags.remove(0);
                 right_seq_frags.remove(0);
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_seq_frags(&mut left_seq_frags)),
-                                               Box::new(fold_recursive_seq_frags(&mut right_seq_frags))
-                );
-                return Some( Interaction::Seq( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                if first_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_seq_frags(&mut left_seq_frags)),
+                                                   Box::new(fold_recursive_seq_frags(&mut right_seq_frags))
+                    );
+                    return Some( Interaction::Seq( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                }
             }
         },
         _ => {}
@@ -311,10 +315,12 @@ pub(in crate::canonize) fn factorize_prefix_par(interaction : &Interaction) -> O
             if left_par_frags[0] == right_par_frags[0] {
                 let first_frag = left_par_frags.remove(0);
                 right_par_frags.remove(0);
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_par_frags(&mut left_par_frags)),
-                                               Box::new(fold_recursive_par_frags(&mut right_par_frags))
-                );
-                return Some( Interaction::Par( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                if first_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_par_frags(&mut left_par_frags)),
+                                                   Box::new(fold_recursive_par_frags(&mut right_par_frags))
+                    );
+                    return Some( Interaction::Par( Box::new(first_frag.clone()), Box::new(new_alt)) );
+                }
             }
         },
         _ => {}
@@ -328,12 +334,14 @@ pub(in crate::canonize) fn factorize_suffix_strict(interaction : &Interaction) -
             let mut left_strict_frags = get_recursive_strict_frags(i1);
             let mut right_strict_frags = get_recursive_strict_frags(i2);
             if left_strict_frags.last() == right_strict_frags.last() {
-                let last_frag : Interaction = left_strict_frags.pop().unwrap().clone();
+                let last_frag : &Interaction = left_strict_frags.pop().unwrap();
                 right_strict_frags.pop();
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_strict_frags(&mut left_strict_frags)),
-                                               Box::new(fold_recursive_strict_frags(&mut right_strict_frags))
-                );
-                return Some( Interaction::Strict( Box::new(new_alt), Box::new(last_frag) ) );
+                if last_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_strict_frags(&mut left_strict_frags)),
+                                                   Box::new(fold_recursive_strict_frags(&mut right_strict_frags))
+                    );
+                    return Some( Interaction::Strict( Box::new(new_alt), Box::new(last_frag.clone()) ) );
+                }
             }
         },
         _ => {}
@@ -347,12 +355,14 @@ pub(in crate::canonize) fn factorize_suffix_seq(interaction : &Interaction) -> O
             let mut left_seq_frags = get_recursive_seq_frags(i1);
             let mut right_seq_frags = get_recursive_seq_frags(i2);
             if left_seq_frags.last() == right_seq_frags.last() {
-                let last_frag : Interaction = left_seq_frags.pop().unwrap().clone();
+                let last_frag : &Interaction = left_seq_frags.pop().unwrap();
                 right_seq_frags.pop();
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_seq_frags(&mut left_seq_frags)),
-                                               Box::new(fold_recursive_seq_frags(&mut right_seq_frags))
-                );
-                return Some( Interaction::Seq( Box::new(new_alt), Box::new(last_frag) ) );
+                if last_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_seq_frags(&mut left_seq_frags)),
+                                                   Box::new(fold_recursive_seq_frags(&mut right_seq_frags))
+                    );
+                    return Some( Interaction::Seq( Box::new(new_alt), Box::new(last_frag.clone()) ) );
+                }
             }
         },
         _ => {}
@@ -366,12 +376,14 @@ pub(in crate::canonize) fn factorize_suffix_par(interaction : &Interaction) -> O
             let mut left_par_frags = get_recursive_par_frags(i1);
             let mut right_par_frags = get_recursive_par_frags(i2);
             if left_par_frags.last() == right_par_frags.last() {
-                let last_frag : Interaction = left_par_frags.pop().unwrap().clone();
+                let last_frag : &Interaction = left_par_frags.pop().unwrap();
                 right_par_frags.pop();
-                let new_alt = Interaction::Alt(Box::new(fold_recursive_seq_frags(&mut left_par_frags)),
-                                               Box::new(fold_recursive_seq_frags(&mut right_par_frags))
-                );
-                return Some( Interaction::Par( Box::new(new_alt), Box::new(last_frag) ) );
+                if last_frag != &Interaction::Empty {
+                    let new_alt = Interaction::Alt(Box::new(fold_recursive_par_frags(&mut left_par_frags)),
+                                                   Box::new(fold_recursive_par_frags(&mut right_par_frags))
+                    );
+                    return Some( Interaction::Par( Box::new(new_alt), Box::new(last_frag.clone()) ) );
+                }
             }
         },
         _ => {}
