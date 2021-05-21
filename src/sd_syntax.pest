@@ -100,7 +100,7 @@ OPTION_PREFILTER_MAX_DEPTH = { "max_depth" ~ "=" ~ ARITH_INTEGER }
 OPTION_PREFILTER_MAX_LOOP_DEPTH = { "max_loop_depth" ~ "=" ~ ARITH_INTEGER }
 OPTION_PREFILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
 OPTION_PREFILTER = _{ OPTION_PREFILTER_MAX_DEPTH | OPTION_PREFILTER_MAX_LOOP_DEPTH | OPTION_PREFILTER_MAX_NODE_NUMBER }
-OPTION_PREFILTERS_DECL = { "pre_filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
+OPTION_PREFILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
 // ***********************************************
 OPTION_FRONTIER_PRIORITIES_DECL = { "frontier_priorities" ~ "=" ~ "[" ~ OPTION_PRIORITY ~ ("," ~ OPTION_PRIORITY)* ~ "]" }
 // ***********************************************
@@ -124,7 +124,7 @@ OPTION_ANALYSIS_KIND = _{ OPTION_ANA_KIND_accept
                           | OPTION_ANA_KIND_hide
                           | OPTION_ANA_KIND_simulate_prefix
                           | OPTION_ANA_KIND_simulate_slice }
-OPTION_ANALYSIS_KIND_DECL = { "ana_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
+OPTION_ANALYSIS_KIND_DECL = { "analysis_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
 // ***********************************************
 OPTION_GOAL_pass = { "Pass" }
 OPTION_GOAL_weakpass = { "WeakPass" }

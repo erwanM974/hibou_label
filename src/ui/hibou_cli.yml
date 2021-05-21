@@ -16,13 +16,13 @@
 
 
 name: hibou_label
-version: "0.5.5"
+version: "0.5.6"
 author: Erwan Mahe <github.com/erwanM974>
-about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for the analysis of traces and multi-traces of interaction models (sequence diagrams/sequence charts)
+about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for manipulating interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
-        about: utility to draw as a sequence diagram an input hibou specification file (.hsf)
-        version: "0.5.5"
+        about: utility to draw as a sequence diagram an interaction encoded in a hibou specification file (.hsf)
+        version: "0.5.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -35,8 +35,8 @@ subcommands:
                 takes_value: true
                 help: target file for drawing (default is 'the name of the hsf'.png)
     - explore:
-        about: utility to explore the semantics of an input hibou specification file (.hsf)
-        version: "0.5.5"
+        about: utility to explore the semantics of an interaction encoded in a hibou specification file (.hsf)
+        version: "0.5.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -44,8 +44,8 @@ subcommands:
                 index: 1
                 help: input hibou specification file
     - analyze:
-        about: utility to analyze an input (multi-)trace from a hibou trace file (.htf) w.r.t. an input hibou specification file (.hsf)
-        version: "0.5.5"
+        about: utility to analyze an input (multi-)trace encoded in a hibou trace file (.htf) w.r.t. an interaction encoded in a hibou specification file (.hsf)
+        version: "0.5.6"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -57,8 +57,8 @@ subcommands:
                 index: 2
                 help: input hibou trace file
     - puml_sd:
-            about: utility to translate an input hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
-            version: "0.5.5"
+            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
+            version: "0.5.6"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -66,17 +66,8 @@ subcommands:
                     index: 1
                     help: input hibou specification file
     - puml_ap:
-            about: utility to translate an input hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
-            version: "0.5.5"
-            author: Erwan Mahe <github.com/erwanM974>
-            args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
-    - term_repr:
-            about: utility to draw an input hibou specification file (.hsf) as a binary syntax tree
-            version: "0.5.5"
+            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
+            version: "0.5.6"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -84,8 +75,8 @@ subcommands:
                     index: 1
                     help: input hibou specification file
     - canonize:
-            about: experimental utility to draw possible transformations of an interaction term that preserve semantics and lead towards a canonic form
-            version: "0.5.5"
+            about: utility to compute the normal form of an interaction encoded in a hibou specification file (.hsf) and to draw possible sequences of transformations leading to that normal form
+            version: "0.5.6"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -96,4 +87,4 @@ subcommands:
                     required: false
                     short: s
                     takes_value: false
-                    help: computes all possible sequences of transformations in the TRSs
+                    help: computes all possible sequences of transformations (by default only one is)

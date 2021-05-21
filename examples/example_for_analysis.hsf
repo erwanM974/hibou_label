@@ -1,6 +1,6 @@
 @analyze_option{
     loggers = [graphic[svg,vertical]];
-    semantics = prefix;
+    analysis_kind = prefix;
     strategy = DepthFS;
     use_locfront = false;
     goal = Pass

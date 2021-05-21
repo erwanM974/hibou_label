@@ -1,9 +1,9 @@
 @explore_option{
     strategy = DepthFS;
     loggers = [graphic[svg]];
-    pre_filters = [ max_depth = 3, 
-                    max_loop_depth = 1, 
-                    max_node_number = 7 ]
+    filters = [ max_depth = 3,
+                max_loop_depth = 1,
+                max_node_number = 7 ]
 }
 @message{
     m1;

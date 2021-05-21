@@ -60,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-2021-05 "#);
+    my_vec.push(r#"  V-label-0.5.6   "#);
     return my_vec;
 }
 
@@ -211,7 +211,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("term_repr") {
+    }/* else if let Some(matches) = matches.subcommand_matches("term_repr") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
@@ -231,7 +231,7 @@ pub fn hibou_cli() -> i32 {
                 to_term_repr(&output_name, &my_int, &gen_ctx);
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("explore") {
+    }*/ else if let Some(matches) = matches.subcommand_matches("explore") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::Explore) {
             Err(e) => {

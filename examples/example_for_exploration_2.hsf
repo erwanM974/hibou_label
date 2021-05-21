@@ -1,9 +1,9 @@
 @explore_option{
     strategy = BreadthFS;
     loggers = [graphic[svg]];
-    pre_filters = [ max_depth = 4, 
-                    max_loop_depth = 2, 
-                    max_node_number = 8 ]
+    filters = [ max_depth = 4,
+                max_loop_depth = 2,
+                max_node_number = 8 ]
 }
 @message{
     m1;
