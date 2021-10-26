@@ -23,9 +23,9 @@ use pest::iterators::{Pair,Pairs};
 use crate::core::trace::*;
 use crate::core::general_context::GeneralContext;
 
-use crate::from_text::error::HibouParsingError;
+use crate::from_hfiles::error::HibouParsingError;
 
-use crate::from_text::parser::*;
+use crate::from_hfiles::parser::*;
 
 pub static HIBOU_TRACE_FILE_EXTENSION : &'static str = "htf";
 
@@ -146,7 +146,7 @@ pub fn trace_canal_from_pair(trace_pair : Pair<Rule>,
                         let lf_name : String  = trace_lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                         match gen_ctx.get_lf_id(&lf_name) {
                             None => {
-                                return Err( HibouParsingError::MissingLifelineDeclarationError(lf_name));
+                                return Err( HibouParsingError::MissingLifelineOrGateDeclarationError(lf_name));
                             },
                             Some( lf_id ) => {
                                 lifelines.insert(lf_id);
@@ -204,7 +204,7 @@ fn trace_action_from_text(action_pair : Pair<Rule>, gen_ctx : &GeneralContext) -
     let lf_name : String  = lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
     match gen_ctx.get_lf_id(&lf_name) {
         None => {
-            return Err( HibouParsingError::MissingLifelineDeclarationError(lf_name) );
+            return Err( HibouParsingError::MissingLifelineOrGateDeclarationError(lf_name) );
         },
         Some( lf_id ) => {
             let act_kind_pair : Pair<Rule> = contents.next().unwrap();

@@ -23,7 +23,8 @@ use crate::core::error::HibouCoreError;
 #[derive(Clone, PartialEq, Debug)]
 pub struct GeneralContext {
     lf_names : Vec<String>,
-    ms_names : Vec<String>
+    ms_names : Vec<String>,
+    gt_names : Vec<String>
 }
 
 
@@ -33,7 +34,8 @@ impl GeneralContext {
     pub fn new() -> GeneralContext {
         return GeneralContext {
             lf_names: Vec::new(),
-            ms_names: Vec::new()
+            ms_names: Vec::new(),
+            gt_names: Vec::new()
         }
     }
 
@@ -65,6 +67,18 @@ impl GeneralContext {
         }
     }
 
+    pub fn add_gt(&mut self, gt_name : String) -> usize {
+        match self.get_gt_id(&gt_name) {
+            None => {
+                self.gt_names.push(gt_name);
+                return self.gt_names.len() - 1;
+            },
+            Some(gt_id) => {
+                return gt_id;
+            }
+        }
+    }
+
     // ********** ********** ********** ********** ********** ********** **********
     // ********** ********** ********** ********** ********** ********** **********
     // ********** ********** ********** ********** ********** ********** **********
@@ -75,6 +89,10 @@ impl GeneralContext {
 
     pub fn get_ms_id(&self, ms_name : &str) -> Option<usize> {
         return self.ms_names.iter().position(|n| n == ms_name);
+    }
+
+    pub fn get_gt_id(&self, gt_name : &str) -> Option<usize> {
+        return self.gt_names.iter().position(|n| n == gt_name);
     }
 
     // ********** ********** ********** ********** ********** ********** **********
@@ -111,6 +129,17 @@ impl GeneralContext {
             },
             Some( ms_name ) => {
                 return Ok( ms_name.to_string() );
+            }
+        }
+    }
+
+    pub fn get_gt_name(&self, gt_id : usize) -> Result<String,HibouCoreError> {
+        match self.gt_names.get(gt_id) {
+            None => {
+                return Err( HibouCoreError::UnknownMessage(gt_id) );
+            },
+            Some( gt_name ) => {
+                return Ok( gt_name.to_string() );
             }
         }
     }

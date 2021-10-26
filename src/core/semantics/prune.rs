@@ -105,12 +105,6 @@ pub fn prune(my_int : Interaction, lf_id : usize) -> Interaction {
             }
         },
         Interaction::Loop(lkind, i1) => {
-            /* // prune without on-the-fly simplification
-            if i1.avoids(lf_id) {
-                return Interaction::Loop(lkind, Box::new(prune(*i1,lf_id)));
-            } else {
-                return Interaction::Empty;
-            }*/
             if i1.avoids(lf_id) {
                 let pruned_i1 = prune(*i1,lf_id);
                 if pruned_i1 != Interaction::Empty {
@@ -118,6 +112,9 @@ pub fn prune(my_int : Interaction, lf_id : usize) -> Interaction {
                 }
             }
             return Interaction::Empty;
+        },
+        _ => {
+            panic!("non-conform interaction");
         }
     }
 }

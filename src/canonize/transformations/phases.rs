@@ -57,7 +57,10 @@ pub fn transfos_phase1<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn F
         (TransformationKind::LoopSimpl,&loop_simpl),
         (TransformationKind::LoopUnNest,&loop_unnest),
         (TransformationKind::DeFactorizeL,&defactorize_left),
-        (TransformationKind::DeFactorizeR,&defactorize_right)
+        (TransformationKind::DeFactorizeR,&defactorize_right),
+        // ***
+        (TransformationKind::StrictToPassing,&strict_to_passing),
+        (TransformationKind::SortEmissionTargets,&sort_emission_targets)
     ];
 }
 
@@ -79,7 +82,10 @@ pub fn transfos_phase2<'lifetime>() -> Vec<(TransformationKind, &'lifetime dyn F
         (TransformationKind::FactorizePrefixP,&factorize_prefix_par),
         (TransformationKind::FactorizeSuffixX,&factorize_suffix_strict),
         (TransformationKind::FactorizeSuffixS,&factorize_suffix_seq),
-        (TransformationKind::FactorizeSuffixP,&factorize_suffix_par)
+        (TransformationKind::FactorizeSuffixP,&factorize_suffix_par),
+        // ***
+        (TransformationKind::StrictToPassing,&strict_to_passing),
+        (TransformationKind::SortEmissionTargets,&sort_emission_targets)
     ];
 }
 

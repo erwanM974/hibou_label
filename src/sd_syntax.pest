@@ -19,16 +19,13 @@ limitations under the License.
 WHITESPACE = _{ " " | "\r\n" | "\n" | "\t" | "\r" }
 HIBOU_LABEL = @{ LETTER ~ (LETTER | ASCII_DIGIT | "_")* }
 // ***********************************************
-SD_LIFELINE = { HIBOU_LABEL }
-MESSAGE_LABEL = { HIBOU_LABEL }
-// ***********************************************
 // ***********************************************
 // ***** interactions / sequence diagrams
-TARGET_LF_LIST = { "(" ~ SD_LIFELINE ~ ("," ~ SD_LIFELINE)* ~ ")" }
+HIBOU_LABEL_LIST = { "(" ~ HIBOU_LABEL ~ ("," ~ HIBOU_LABEL)* ~ ")" }
 ENVIRONMENT_TARGET = { "|" }
 
-SD_ACTION_EMISSION = { SD_LIFELINE ~ "--" ~ MESSAGE_LABEL ~ "->" ~ (SD_LIFELINE | TARGET_LF_LIST | ENVIRONMENT_TARGET)}
-SD_ACTION_RECEPTION = { MESSAGE_LABEL ~ "->" ~ SD_LIFELINE}
+SD_ACTION_EMISSION = { HIBOU_LABEL ~ "--" ~ HIBOU_LABEL ~ "->" ~ (HIBOU_LABEL | HIBOU_LABEL_LIST | ENVIRONMENT_TARGET)}
+SD_ACTION_RECEPTION = { HIBOU_LABEL ~ "->" ~ HIBOU_LABEL}
 
 SD_EMPTY_INTERACTION = {"o" | "∅"}
 
@@ -39,13 +36,16 @@ SD_SEQ = {"seq"}
 SD_SEQ_INT = { SD_SEQ ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
 SD_COREG = {"coreg"}
-SD_COREG_INT = { SD_COREG ~ TARGET_LF_LIST ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+SD_COREG_INT = { SD_COREG ~ HIBOU_LABEL_LIST ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
 SD_ALT = {"alt"}
 SD_ALT_INT = { SD_ALT ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
 SD_PAR = {"par"}
 SD_PAR_INT = { SD_PAR ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
+
+SD_AND = {"and"}
+SD_AND_INT = { SD_AND ~ "(" ~ SD_INTERACTION ~ ( "," ~ SD_INTERACTION)+ ~ ")" }
 
 SD_LOOP_KIND_S = { "S" }
 SD_LOOP_KIND_H = { "H" }
@@ -63,6 +63,7 @@ SD_INTERACTION = { SD_EMPTY_INTERACTION
         | SD_ALT_INT
         | SD_PAR_INT
         | SD_LOOP_INT
+        | SD_AND_INT
         }
 // ***********************************************
 // ***********************************************
@@ -144,16 +145,19 @@ ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
 // ***********************************************
 // declarations
 HIBOU_MODEL_MS_DECL = { "@message" ~ "{" ~
-	MESSAGE_LABEL ~ (";" ~ MESSAGE_LABEL)*
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)*
     ~ "}"}
 
 HIBOU_MODEL_LF_DECL = { "@lifeline" ~ "{" ~
-	SD_LIFELINE ~ (";" ~ SD_LIFELINE)* ~ "}"}
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ "}"}
+
+HIBOU_MODEL_GT_DECL = { "@gate" ~ "{" ~
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ "}"}
 // ***********************************************
 // ***********************************************
 // setup & .hsf file
 
-SETUP_SECTION = _{ EXPLORE_OPTION_SECTION | ANALYZE_OPTION_SECTION | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL }
+SETUP_SECTION = _{ EXPLORE_OPTION_SECTION | ANALYZE_OPTION_SECTION | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL | HIBOU_MODEL_GT_DECL }
 HIBOU_MODEL_SETUP = { SETUP_SECTION* }
 HSF_PEST_FILE = { SOI ~
 		HIBOU_MODEL_SETUP ~ SD_INTERACTION ~

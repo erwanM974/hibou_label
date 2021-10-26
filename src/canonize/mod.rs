@@ -18,6 +18,5 @@ pub mod term_repr;
 pub mod term_repr_out;
 pub mod transformations;
 pub mod process;
-pub mod precondition;
 pub mod total_order;
 

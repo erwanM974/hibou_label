@@ -29,7 +29,8 @@ use crate::core::syntax::action::ObservableAction;
 #[derive(Debug)]
 pub enum HibouCoreError {
     UnknownLifeline(usize),
-    UnknownMessage(usize)
+    UnknownMessage(usize),
+    UnknownGate(usize)
 }
 
 impl fmt::Display for HibouCoreError {
@@ -40,6 +41,9 @@ impl fmt::Display for HibouCoreError {
             },
             HibouCoreError::UnknownMessage( ms_id ) => {
                 return write!(f, "{}", format!("context error ; unknown message : {:}", ms_id));
+            },
+            HibouCoreError::UnknownGate( gt_id ) => {
+                return write!(f, "{}", format!("context error ; unknown gate : {:}", gt_id));
             }
         }
     }

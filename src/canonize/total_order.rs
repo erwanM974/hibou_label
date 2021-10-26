@@ -28,40 +28,61 @@ use crate::core::semantics::execute::deploy_receptions;
 
 
 fn action_lower_than(act1 : &ObservableAction, act2 : &ObservableAction) -> bool {
-    if &act1.lf_id < &act2.lf_id {
-        return true;
-    } else {
-        if &act1.lf_id > &act2.lf_id {
+    match (&act1.act_kind,&act2.act_kind) {
+        (&ObservableActionKind::Emission(_),&ObservableActionKind::Reception(_)) => {
+            return true;
+        },
+        (&ObservableActionKind::Reception(_),&ObservableActionKind::Emission(_)) => {
             return false;
-        } else {
-            match (&act1.act_kind,&act2.act_kind) {
-                (&ObservableActionKind::Emission(ref targs),&ObservableActionKind::Reception) => {
-                    assert!(targs.len() == 0); // interactions without syntactic sugar of emissions with targets
-                    return true;
+        },
+        (&ObservableActionKind::Reception(orig1),&ObservableActionKind::Reception(orig2)) => {
+            match (orig1,orig2) {
+                (None,None) => {
+                    // nothing
                 },
-                (&ObservableActionKind::Reception,&ObservableActionKind::Emission(ref targs)) => {
-                    assert!(targs.len() == 0); // interactions without syntactic sugar of emissions with targets
+                (gt_id1,None) => {
                     return false;
                 },
-                (&ObservableActionKind::Reception,&ObservableActionKind::Reception) => {
-                    if &act1.ms_id < &act2.ms_id {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                (None,gt_id2) => {
+                    return true;
                 },
-                (&ObservableActionKind::Emission(ref t1),&ObservableActionKind::Emission(ref t2)) => {
-                    assert!(t1.len() == 0); // interactions without syntactic sugar of emissions with targets
-                    assert!(t2.len() == 0);
-                    if &act1.ms_id < &act2.ms_id {
+                (gt_id1,gt_id2) => {
+                    if gt_id1 < gt_id2 {
                         return true;
-                    } else {
+                    } else if gt_id1 > gt_id2 {
                         return false;
                     }
                 }
             }
+            if &act1.ms_id < &act2.ms_id {
+                return true;
+            } else if &act1.ms_id > &act2.ms_id{
+                return false;
+            }
+            if &act1.lf_id < &act2.lf_id {
+                return true;
+            } else if &act1.lf_id > &act2.lf_id {
+                return false;
+            }
+        },
+        (&ObservableActionKind::Emission(ref targets_refs1),&ObservableActionKind::Emission(ref targets_refs2)) => {
+            if &act1.ms_id < &act2.ms_id {
+                return true;
+            } else if &act1.ms_id > &act2.ms_id{
+                return false;
+            }
+            if &act1.lf_id < &act2.lf_id {
+                return true;
+            } else if &act1.lf_id > &act2.lf_id {
+                return false;
+            }
+            let max_tar_len = targets_refs1.len().max(targets_refs2.len());
+            for i in 0..max_tar_len {
+                // todo complete
+            }
         }
     }
+    panic!("cannot compare actions");
 }
 
 pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {

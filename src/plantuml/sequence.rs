@@ -46,7 +46,7 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
             let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
             let lf_name = gen_ctx.get_lf_name(act.lf_id).unwrap();
             match act.act_kind {
-                ObservableActionKind::Reception => {
+                ObservableActionKind::Reception(_) => {
                     output_file.write( format!("->{} : {}\n", &lf_name, &ms_name).as_bytes() );
                 },
                 ObservableActionKind::Emission(ref targets) => {
@@ -54,9 +54,16 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
                     if tars_len == 0 {
                         output_file.write( format!("{}-> : {}\n", &lf_name, &ms_name).as_bytes() );
                     } else if tars_len == 1 {
-                        let tar_lf_id = targets.get(0).unwrap();
-                        let tar_lf_name = gen_ctx.get_lf_name(*tar_lf_id).unwrap();
-                        output_file.write( format!("{}->{} : {}\n", &lf_name, &tar_lf_name, &ms_name).as_bytes() );
+                        let target_ref = targets.get(0).unwrap();
+                        match target_ref {
+                            EmissionTargetRef::Gate(_) => {
+                                output_file.write( format!("{}->] : {}\n", &lf_name, &ms_name).as_bytes() );
+                            },
+                            EmissionTargetRef::Lifeline(tar_lf_id) => {
+                                let tar_lf_name = gen_ctx.get_lf_name(*tar_lf_id).unwrap();
+                                output_file.write( format!("{}->{} : {}\n", &lf_name, &tar_lf_name, &ms_name).as_bytes() );
+                            }
+                        }
                     } else {
                         panic!("translation towards puml-sd does not implement broadcasts");
                     }
@@ -133,6 +140,9 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
         },
         &Interaction::CoReg(_,_,_) => {
             panic!("translation towards puml-sd does not implement co-regions");
+        },
+        &Interaction::And(_,_) => {
+            panic!("translation towards puml-sd does not implement ands");
         }
     }
 }

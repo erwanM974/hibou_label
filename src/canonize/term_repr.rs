@@ -53,70 +53,44 @@ fn action_repr(to_write : &mut String,
                current_pos : Position) {
     let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
     let lf_name = gen_ctx.get_lf_name(act.lf_id).unwrap();
+    // ***
+    let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+    node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
+    // ***
+    let node_name = format!("{}p{}",interaction_name,position_to_id(&current_pos));
+    // ***
     match &act.act_kind {
-        &ObservableActionKind::Reception => {
-            let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
-            node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}?{}", &lf_name, &ms_name) ) );
-            let gv_node = GraphVizNode{id : format!("{}p{}",interaction_name,position_to_id(&current_pos)), style : node_gv_options};
-            to_write.push_str( &gv_node.to_dot_string() );
-            to_write.push_str("\n");
+        &ObservableActionKind::Reception(orig) => {
+            match orig {
+                None => {
+                    node_gv_options.push( GraphvizNodeStyleItem::Label( format!("|-{}>{}", &ms_name, &lf_name) ) );
+                },
+                Some(gt_id) => {
+                    let gt_name = gen_ctx.get_gt_name(gt_id).unwrap();
+                    node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}-{}>{}", &gt_name, &ms_name, &lf_name) ) );
+                }
+            }
         },
-        &ObservableActionKind::Emission(ref targets) => {
-            // ***
-            let node_name = format!("{}p{}",interaction_name,position_to_id(&current_pos));
-            // ***
-            let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-            node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
-            node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}!{}", &lf_name, &ms_name) ) );
-            // ***
-            assert!(targets.len() == 0);
-            let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
-            to_write.push_str( &gv_node.to_dot_string() );
-            to_write.push_str("\n");
-            /*
-            let tars_len = targets.len();
-            if tars_len == 0 {
-                let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
-                to_write.push_str( &gv_node.to_dot_string() );
-                to_write.push_str("\n");
-            } else {
-                let deployed_recs = deploy_receptions(act.ms_id, &mut targets.clone());
-                // the parent strict node
-                {
-                    let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
-                    strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
-                    strict_node_gv_options.push( GraphvizNodeStyleItem::Label( "strict".to_string() ) );
-                    let strict_gv_node = GraphVizNode{id : node_name.clone(), style : strict_node_gv_options};
-                    to_write.push_str( &strict_gv_node.to_dot_string() );
-                    to_write.push_str("\n");
+        &ObservableActionKind::Emission(ref targets_refs) => {
+            let mut targ_names : Vec<String> = Vec::new();
+            for targ_ref in targets_refs {
+                match targ_ref {
+                    EmissionTargetRef::Lifeline(tar_lf_id) => {
+                        targ_names.push( gen_ctx.get_lf_name(*tar_lf_id).unwrap() );
+                    },
+                    EmissionTargetRef::Gate(tar_gt_id) => {
+                        targ_names.push( gen_ctx.get_gt_name(*tar_gt_id).unwrap() );
+                    }
                 }
-                // then the emission node
-                {
-                    let new_position = Position::Left(Box::new(current_pos.clone()));
-                    let child_node_name = format!("{}p{}",interaction_name,position_to_id(&new_position));
-                    let gv_node = GraphVizNode{id : child_node_name.clone(), style : node_gv_options};
-                    to_write.push_str( &gv_node.to_dot_string() );
-                    to_write.push_str("\n");
-                    let gv_edge = GraphVizEdge{origin_id : node_name.clone(),
-                        target_id : child_node_name,
-                        style :  vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::NoArrow )]};
-                    to_write.push_str(&gv_edge.to_dot_string());
-                    to_write.push_str("\n");
-                }
-                // then the sub-interaction for the reception actions
-                {
-                    let new_position = Position::Right(Box::new(current_pos.clone()));
-                    let child_node_name = interaction_repr_rec(to_write,&deployed_recs,gen_ctx,interaction_name,new_position);
-                    let gv_edge = GraphVizEdge{origin_id : node_name,
-                        target_id : child_node_name,
-                        style :  vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::NoArrow )]};
-                    to_write.push_str(&gv_edge.to_dot_string());
-                    to_write.push_str("\n");
-                }
-            }*/
+            }
+            // ***
+            let targets_str = targ_names.join(",");
+            node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}-{}>({})", &lf_name, &ms_name, &targ_names.join(",")) ) );
         }
     }
+    let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
+    to_write.push_str( &gv_node.to_dot_string() );
+    to_write.push_str("\n");
 }
 
 fn interaction_repr_rec(to_write : &mut String,
@@ -196,6 +170,9 @@ fn interaction_repr_rec(to_write : &mut String,
                 to_write.push_str(&gv_edge.to_dot_string());
                 to_write.push_str("\n");
             }
+        },
+        &Interaction::And(ref i1, ref i2) => {
+            repr_binary_operator(to_write, i1, i2, "and", gen_ctx, interaction_name, current_pos);
         }
     }
     return node_name;

@@ -37,48 +37,39 @@ use crate::canonize::term_repr_out::to_term_repr_temp;
 use crate::canonize::transformations::get_all_transfos::*;
 use crate::canonize::transformations::get_one_transfo::*;
 
-use crate::canonize::precondition::*;
 use crate::canonize::transformations::phases::InteractionTermTransformation;
 
 pub fn canon_process_interaction_term(interaction : &Interaction,
                                       gen_ctx : &GeneralContext,
                                       name : &String,
-                                      search_all : bool) -> InteractionPreconditionCheckForCanonization {
-    // ***
-    let (new_int,precond_check) = check_and_make_interaction_preconditions(interaction);
-    match &precond_check {
-        InteractionPreconditionCheckForCanonization::HasCoReg => {},
-        _ => {
-            // empties temp directory if exists
-            match fs::remove_dir_all("./temp") {
-                Ok(_) => {
-                    // do nothing
-                },
-                Err(e) => {
-                    // do nothing
-                }
-            }
-            // creates temp directory
-            fs::create_dir_all("./temp").unwrap();
-            // ***
-            let mut file = File::create(&format!("{:}.dot", name)).unwrap();
-            file.write(format!("digraph {} {{\n", name).as_bytes());
-            file.write("overlap=false;\n".as_bytes());
-            if search_all {
-                canonize_process_all_transfos(&mut file, &new_int, gen_ctx);
-            } else {
-                canonize_process_one_transfo(&mut file, &new_int, gen_ctx);
-            }
-            file.write("}\n".as_bytes());
-            let status = Command::new("dot")
-                .arg("-Tsvg:cairo")
-                .arg(&format!("{:}.dot", name))
-                .arg("-o")
-                .arg(&format!("{:}.svg", name))
-                .output();
+                                      search_all : bool) {
+    // empties temp directory if exists
+    match fs::remove_dir_all("./temp") {
+        Ok(_) => {
+            // do nothing
+        },
+        Err(e) => {
+            // do nothing
         }
     }
-    return precond_check;
+    // creates temp directory
+    fs::create_dir_all("./temp").unwrap();
+    // ***
+    let mut file = File::create(&format!("{:}.dot", name)).unwrap();
+    file.write(format!("digraph {} {{\n", name).as_bytes());
+    file.write("overlap=false;\n".as_bytes());
+    if search_all {
+        canonize_process_all_transfos(&mut file, &interaction, gen_ctx);
+    } else {
+        canonize_process_one_transfo(&mut file, &interaction, gen_ctx);
+    }
+    file.write("}\n".as_bytes());
+    let status = Command::new("dot")
+        .arg("-Tsvg:cairo")
+        .arg(&format!("{:}.dot", name))
+        .arg("-o")
+        .arg(&format!("{:}.svg", name))
+        .output();
 }
 
 fn canonize_process_one_transfo(file : &mut File,
@@ -105,7 +96,7 @@ fn canonize_process(file : &mut File,
                     init_interaction : &Interaction,
                     gen_ctx : &GeneralContext,
                     phase_1 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>,
-                    phase_2 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>) {
+                    phase_2 : &dyn Fn(&Interaction) -> Vec<InteractionTermTransformation>) -> Interaction {
     // ***
     // source node
     {
@@ -297,6 +288,10 @@ fn canonize_process(file : &mut File,
     file.write("}\n".as_bytes() );
     // ***
     // =====================================================================================================
+    assert!(finals.len() == 1);
+    let elt = finals.iter().next().cloned().unwrap();
+    let (_,canonical_interaction) = finals.take(&elt).unwrap();
+    return canonical_interaction;
 }
 
 

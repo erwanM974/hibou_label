@@ -61,7 +61,7 @@ fn to_plant_uml_ap_rec(output_file : &mut File,
             let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
             let transition_label : String;
             match act.act_kind {
-                ObservableActionKind::Reception => {
+                ObservableActionKind::Reception(_) => {
                     transition_label = format!("?{}",ms_name);
                 },
                 ObservableActionKind::Emission(ref targets) => {
@@ -165,6 +165,9 @@ fn to_plant_uml_ap_rec(output_file : &mut File,
         },
         &Interaction::CoReg(_,_,_) => {
             panic!("translation towards puml-ap does not implement co-regions");
+        },
+        &Interaction::And(_,_) => {
+            panic!("translation towards puml-ap does not implement ands");
         }
     }
 }

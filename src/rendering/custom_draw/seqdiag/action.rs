@@ -22,17 +22,14 @@ use std::collections::{HashMap,HashSet};
 use image::{Rgb, RgbImage};
 use imageproc::rect::Rect;
 use imageproc::drawing::{
-    Point,
     draw_cross_mut,
     draw_line_segment_mut,
     draw_hollow_rect_mut,
     draw_filled_rect_mut,
     draw_hollow_circle_mut,
     draw_filled_circle_mut,
-    draw_convex_polygon_mut,
     draw_text_mut
 };
-use rusttype::{FontCollection, Scale};
 
 // **********
 
@@ -73,9 +70,11 @@ pub fn draw_action( image : &mut RgbImage,
     let arrow_y_pos = get_y_pos_from_yshift(yshift+2);
     let msg_to_print_width : f32 = (TextToPrint::char_count(&msg_to_print) as f32)*FONT_WIDTH/2.0;
     // ***
+    let (img_width,_) = image.dimensions();
+    // ***
     match action.act_kind {
-        ObservableActionKind::Emission(ref tar_lfs) => {
-            if tar_lfs.len() == 0 {
+        ObservableActionKind::Emission(ref tar_refs) => {
+            if tar_refs.len() == 0 {
                 let main_lf_coords = lf_x_widths.get(&action.lf_id).unwrap();
                 // ***
                 let msg_x_left = main_lf_coords.x_middle;
@@ -88,45 +87,65 @@ pub fn draw_action( image : &mut RgbImage,
                 let msg_x_middle = (msg_x_left + msg_x_right)/2.0;
                 draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
                 // ***
-            } else if tar_lfs.len() == 1 {
+            } else if tar_refs.len() == 1 {
                 let origin_lf_id = *(&action.lf_id);
                 let origin_lf_coords = lf_x_widths.get(&origin_lf_id).unwrap();
-                let target_lf_id = *(tar_lfs.get(0).unwrap());
-                {
-                    min_lf_id = min_lf_id.min(target_lf_id);
-                    max_lf_id = max_lf_id.max(target_lf_id);
-                }
-                let target_lf_coords = lf_x_widths.get(&target_lf_id).unwrap();
-                // ***
-                if origin_lf_id < target_lf_id {
-                    draw_arrowhead_rightward(image,target_lf_coords.x_middle, arrow_y_pos,Rgb(HCP_Black));
-                } else {
-                    draw_arrowhead_leftward(image,target_lf_coords.x_middle, arrow_y_pos,Rgb(HCP_Black));
-                }
-                draw_line_segment_mut(image,
-                                      (target_lf_coords.x_middle, arrow_y_pos),
-                                      (origin_lf_coords.x_middle, arrow_y_pos),
-                                      Rgb(HCP_Black));
-                // ***
-                let mut anchor_lf_id : usize = target_lf_id;
-                if target_lf_id == origin_lf_id {
-                    panic!("cannot draw emission then reception on the same lifeline");
-                } else if target_lf_id < origin_lf_id {
-                    let mut lf_id_shift : usize = 1;
-                    while !lf_x_widths.contains_key(&(origin_lf_id - lf_id_shift)) {
-                        lf_id_shift = lf_id_shift + 1 ;
+                match tar_refs.get(0).unwrap() {
+                    EmissionTargetRef::Lifeline(target_lf_id) => {
+                        {
+                            min_lf_id = min_lf_id.min(*target_lf_id);
+                            max_lf_id = max_lf_id.max(*target_lf_id);
+                        }
+                        let target_lf_coords = lf_x_widths.get(&target_lf_id).unwrap();
+                        // ***
+                        if origin_lf_id < *target_lf_id {
+                            draw_arrowhead_rightward(image,target_lf_coords.x_middle, arrow_y_pos,Rgb(HCP_Black));
+                        } else {
+                            draw_arrowhead_leftward(image,target_lf_coords.x_middle, arrow_y_pos,Rgb(HCP_Black));
+                        }
+                        draw_line_segment_mut(image,
+                                              (target_lf_coords.x_middle, arrow_y_pos),
+                                              (origin_lf_coords.x_middle, arrow_y_pos),
+                                              Rgb(HCP_Black));
+                        // ***
+                        let mut anchor_lf_id : usize = *target_lf_id;
+                        if target_lf_id == &origin_lf_id {
+                            panic!("cannot draw emission then reception on the same lifeline");
+                        } else if target_lf_id < &origin_lf_id {
+                            let mut lf_id_shift : usize = 1;
+                            while !lf_x_widths.contains_key(&(origin_lf_id - lf_id_shift)) {
+                                lf_id_shift = lf_id_shift + 1 ;
+                            }
+                            anchor_lf_id = (origin_lf_id - lf_id_shift);
+                        } else if target_lf_id > &origin_lf_id {
+                            let mut lf_id_shift : usize = 1;
+                            while !lf_x_widths.contains_key(&(origin_lf_id + lf_id_shift)) {
+                                lf_id_shift = lf_id_shift + 1 ;
+                            }
+                            anchor_lf_id = (origin_lf_id + lf_id_shift);
+                        }
+                        let anchor_lf_coords = lf_x_widths.get(&anchor_lf_id).unwrap();
+                        let msg_x_middle = (origin_lf_coords.x_middle + anchor_lf_coords.x_middle)/2.0;
+                        draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
+                    },
+                    EmissionTargetRef::Gate(target_gt_id) => {
+                        draw_filled_rect_mut(image,
+                                             Rect::at((img_width as f32 - GATE_SIZE) as i32,
+                                                      (arrow_y_pos - GATE_SIZE/2.0) as i32).of_size(GATE_SIZE as u32, GATE_SIZE as u32),
+                                             Rgb(HCP_Black));
+                        // ***
+                        let msg_x_left = origin_lf_coords.x_middle;
+                        let msg_x_right= img_width as f32;
+                        draw_arrowhead_rightward(image,msg_x_right,arrow_y_pos,Rgb(HCP_Black));
+                        draw_line_segment_mut(image,
+                                              (msg_x_left, arrow_y_pos),
+                                              (msg_x_right, arrow_y_pos),
+                                              Rgb(HCP_Black));
+                        let msg_x_middle = (msg_x_left + msg_x_right)/2.0;
+                        draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
+                        // ***
                     }
-                    anchor_lf_id = (origin_lf_id - lf_id_shift);
-                } else if target_lf_id > origin_lf_id {
-                    let mut lf_id_shift : usize = 1;
-                    while !lf_x_widths.contains_key(&(origin_lf_id + lf_id_shift)) {
-                        lf_id_shift = lf_id_shift + 1 ;
-                    }
-                    anchor_lf_id = (origin_lf_id + lf_id_shift);
                 }
-                let anchor_lf_coords = lf_x_widths.get(&anchor_lf_id).unwrap();
-                let msg_x_middle = (origin_lf_coords.x_middle + anchor_lf_coords.x_middle)/2.0;
-                draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
             } else {
                 {
                     let main_lf_coords = lf_x_widths.get(&action.lf_id).unwrap();
@@ -142,32 +161,62 @@ pub fn draw_action( image : &mut RgbImage,
                     draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
                     // ***
                 }
-                for tar_lf_if in tar_lfs {
-                    {
-                        min_lf_id = min_lf_id.min(*tar_lf_if);
-                        max_lf_id = max_lf_id.max(*tar_lf_if);
-                    }
-                    let tar_lf_coords = lf_x_widths.get(tar_lf_if).unwrap();
-                    // ***
-                    let tar_x_right = tar_lf_coords.x_middle;
-                    let tar_x_left= tar_x_right - (tar_lf_coords.x_span_inner/2.0);
+                for target_ref in tar_refs {
+                    match target_ref {
+                        EmissionTargetRef::Lifeline(tar_lf_id) => {
+                            {
+                                min_lf_id = min_lf_id.min(*tar_lf_id);
+                                max_lf_id = max_lf_id.max(*tar_lf_id);
+                            }
+                            let tar_lf_coords = lf_x_widths.get(tar_lf_id).unwrap();
+                            // ***
+                            let tar_x_right = tar_lf_coords.x_middle;
+                            let tar_x_left= tar_x_right - (tar_lf_coords.x_span_inner/2.0);
 
-                    //draw_filled_circle_mut(image, (tar_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
-                    draw_double_half_ellipsis_rightward(image, tar_x_left, arrow_y_pos,Rgb(HCP_Black));
-                    draw_line_segment_mut(image,
-                                          (tar_x_left, arrow_y_pos),
-                                          (tar_x_right, arrow_y_pos),
-                                          Rgb(HCP_Black));
+                            //draw_filled_circle_mut(image, (tar_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
+                            draw_double_half_ellipsis_rightward(image, tar_x_left, arrow_y_pos,Rgb(HCP_Black));
+                            draw_line_segment_mut(image,
+                                                  (tar_x_left, arrow_y_pos),
+                                                  (tar_x_right, arrow_y_pos),
+                                                  Rgb(HCP_Black));
+                        },
+                        EmissionTargetRef::Gate(tar_gt_id) => {
+                            draw_filled_rect_mut(image,
+                                                 Rect::at((img_width as f32 - GATE_SIZE) as i32,
+                                                          (arrow_y_pos - GATE_SIZE/2.0) as i32).of_size(GATE_SIZE as u32, GATE_SIZE as u32),
+                                                 Rgb(HCP_Black));
+                            let tar_x_right = img_width as f32;
+                            let tar_x_left = tar_x_right - ((HORIZONTAL_SIZE - 2.0*MARGIN)/3.0);
+
+                            //draw_filled_circle_mut(image, (tar_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
+                            draw_double_half_ellipsis_rightward(image, tar_x_left, arrow_y_pos,Rgb(HCP_Black));
+                            draw_line_segment_mut(image,
+                                                  (tar_x_left, arrow_y_pos),
+                                                  (tar_x_right, arrow_y_pos),
+                                                  Rgb(HCP_Black));
+                        }
+                    }
                 }
             }
         },
-        ObservableActionKind::Reception => {
+        ObservableActionKind::Reception(ref orig) => {
             let main_lf_coords = lf_x_widths.get(&action.lf_id).unwrap();
             // ***
             let msg_x_right = main_lf_coords.x_middle;
-            let msg_x_left= msg_x_right - (main_lf_coords.x_span_inner/2.0);
-
-            draw_filled_circle_mut(image, (msg_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
+            let msg_x_left;
+            match orig {
+                None => {
+                    msg_x_left = msg_x_right - (main_lf_coords.x_span_inner/2.0);
+                    draw_filled_circle_mut(image, (msg_x_left as i32, arrow_y_pos as i32), 3, Rgb(HCP_Black));
+                },
+                Some(_) => {
+                    msg_x_left = 0.0;
+                    draw_filled_rect_mut(image,
+                                         Rect::at(msg_x_left as i32,
+                                                  (arrow_y_pos - GATE_SIZE/2.0) as i32).of_size(GATE_SIZE as u32, GATE_SIZE as u32),
+                                         Rgb(HCP_Black));
+                }
+            }
             draw_arrowhead_rightward(image,msg_x_right,arrow_y_pos,Rgb(HCP_Black));
             draw_line_segment_mut(image,
                                   (msg_x_left, arrow_y_pos),

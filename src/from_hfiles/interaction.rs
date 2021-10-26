@@ -16,15 +16,15 @@ limitations under the License.
 use pest::iterators::{Pair,Pairs};
 
 
-use crate::from_text::parser::*;
+use crate::from_hfiles::parser::*;
 
 
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::{Interaction,LoopKind};
 
-use crate::from_text::error::HibouParsingError;
-use crate::from_text::action::{parse_emission,parse_reception,parse_lifelines_list};
+use crate::from_hfiles::error::HibouParsingError;
+use crate::from_hfiles::action::{parse_emission,parse_reception};
 
 
 pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pair<Rule>) -> Result<Interaction,HibouParsingError> {
@@ -48,8 +48,8 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
                 Err(e) => {
                     return Err(e);
                 },
-                Ok( observable_action ) => {
-                    return Ok( Interaction::Action(observable_action) );
+                Ok( got_interaction ) => {
+                    return Ok( got_interaction );
                 }
             }
         },
@@ -78,20 +78,31 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
             content.next(); // get rid of the operator name
             let coreg_lfs_pair = content.next().unwrap();
             match coreg_lfs_pair.as_rule() {
-                Rule::TARGET_LF_LIST => {
-                    match parse_lifelines_list(gen_ctx, coreg_lfs_pair) {
+                Rule::HIBOU_LABEL_LIST => {
+                    let mut target_lfs : Vec<usize> = Vec::new();
+                    let mut inner_contents = coreg_lfs_pair.into_inner();
+                    for tar_lf_pair in inner_contents {
+                        let target_lf_name : String = tar_lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                        // ***
+                        match gen_ctx.get_lf_id( &target_lf_name ) {
+                            None => {
+                                return Err( HibouParsingError::MissingLifelineOrGateDeclarationError( target_lf_name ) );
+                            },
+                            Some( tar_lf_id ) => {
+                                if target_lfs.contains(&tar_lf_id) {
+                                    return Err( HibouParsingError::OtherDefinitionError( "duplicate lifeline in co-region".to_string() ) );
+                                } else {
+                                    target_lfs.push(tar_lf_id);
+                                }
+                            }
+                        }
+                    }
+                    match get_nary_sub_interactions(gen_ctx, content) {
                         Err(e) => {
                             return Err(e);
                         },
-                        Ok( coreg_lfs ) => {
-                            match get_nary_sub_interactions(gen_ctx, content) {
-                                Err(e) => {
-                                    return Err(e);
-                                },
-                                Ok( mut sub_ints ) => {
-                                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::CoReg(coreg_lfs),&mut sub_ints) );
-                                }
-                            }
+                        Ok( mut sub_ints ) => {
+                            return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::CoReg(target_lfs),&mut sub_ints) );
                         }
                     }
                 },
@@ -148,6 +159,16 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
                 }
             }
         },
+        Rule::SD_AND_INT => {
+            match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {
+                Err(e) => {
+                    return Err(e);
+                },
+                Ok( mut sub_ints ) => {
+                    return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::And,&mut sub_ints) );
+                }
+            }
+        },
         _ => {
             panic!("what rule then ? : {:?}", sd_content_pair.as_rule());
         }
@@ -180,7 +201,8 @@ enum BinaryOperatorKind {
     Strict,
     Seq,
     Par,
-    Alt
+    Alt,
+    And
 }
 
 fn fold_interactions_in_binary_operator(op_kind : &BinaryOperatorKind, sub_ints : &mut Vec<Interaction>) -> Interaction {
@@ -204,6 +226,9 @@ fn fold_interactions_in_binary_operator(op_kind : &BinaryOperatorKind, sub_ints 
             },
             BinaryOperatorKind::Par => {
                 return Interaction::Par( Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
+            },
+            BinaryOperatorKind::And => {
+                return Interaction::And( Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
             }
         }
     }

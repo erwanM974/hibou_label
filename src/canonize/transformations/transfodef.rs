@@ -521,11 +521,90 @@ pub(in crate::canonize) fn loop_unnest(interaction : &Interaction) -> Option<Int
 }
 
 
+pub(in crate::canonize) fn strict_to_passing(interaction : &Interaction) -> Option<Interaction> {
+    match interaction {
+        &Interaction::Strict(ref i1, ref i2) => {
+            let mut frags : Vec<&Interaction> = Vec::new();
+            frags.extend(get_recursive_strict_frags(i1));
+            frags.extend(get_recursive_strict_frags(i2));
+            let mut flag_changed = false;
+            match frags.remove(0) {
+                Interaction::Action(ref act1) => {
+                    match &act1.act_kind {
+                        ObservableActionKind::Emission(ref target_refs) => {
+                            let mut new_targets : Vec<EmissionTargetRef> = target_refs.clone();
+                            let mut continue_bool = true;
+                            while continue_bool {
+                                match frags.get(0).unwrap() {
+                                    Interaction::Action(ref act2) => {
+                                        match act2.act_kind {
+                                            ObservableActionKind::Reception(ref orig2) => {
+                                                match orig2 {
+                                                    None => {
+                                                        if &act2.ms_id == &act1.ms_id {
+                                                            frags.remove(0);
+                                                            new_targets.push(EmissionTargetRef::Lifeline(act2.lf_id));
+                                                            flag_changed = true;
+                                                        } else {
+                                                            continue_bool = false;
+                                                        }
+                                                    },
+                                                    _ => {
+                                                        continue_bool = false;
+                                                    }
+                                                }
+                                            },
+                                            _ => {
+                                                continue_bool = false;
+                                            }
+                                        }
+                                    },
+                                    _ => {
+                                        continue_bool = false;
+                                    }
+                                }
+                                if frags.len() == 0 {
+                                    continue_bool = false;
+                                }
+                            }
+                            if flag_changed {
+                                new_targets.sort();
+                                let new_action = ObservableAction{lf_id:act1.lf_id,act_kind:ObservableActionKind::Emission(new_targets),ms_id:act1.ms_id};
+                                let new_interaction = Interaction::Action(new_action);
+                                frags.insert(0, &new_interaction);
+                                return Some( fold_recursive_strict_frags(&mut frags) );
+                            }
+                        },
+                        _ => {}
+                    }
+                },
+                _ => {}
+            }
+        },
+        _ => {}
+    }
+    return None;
+}
 
-
-
-
-
+pub(in crate::canonize) fn sort_emission_targets(interaction : &Interaction) -> Option<Interaction> {
+    match interaction {
+        &Interaction::Action(ref act) => {
+            match &act.act_kind {
+                ObservableActionKind::Emission(ref targets) => {
+                    let mut new_targets = targets.clone();
+                    new_targets.sort();
+                    if &new_targets != targets {
+                        return Some( Interaction::Action(ObservableAction{lf_id:act.lf_id,
+                            act_kind:ObservableActionKind::Emission(new_targets),ms_id:act.ms_id}) );
+                    }
+                },
+                _ => {}
+            }
+        },
+        _ => {}
+    }
+    return None;
+}
 
 
 

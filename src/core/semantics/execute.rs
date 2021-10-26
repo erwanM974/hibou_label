@@ -36,18 +36,18 @@ pub fn deploy_receptions(ms_id : usize, rem_targets : &mut Vec<usize>) -> Intera
         return Interaction::Empty;
     } else if rem_tlen == 1 {
         let lf_id : usize = rem_targets.remove(0);
-        return Interaction::Action( ObservableAction{lf_id,act_kind:ObservableActionKind::Reception,ms_id} );
+        return Interaction::Action( ObservableAction{lf_id,act_kind:ObservableActionKind::Reception(None),ms_id} );
     } else if rem_tlen == 2 {
         let lf_id_1 : usize = rem_targets.remove(0);
-        let act_1 = ObservableAction{lf_id:lf_id_1,act_kind:ObservableActionKind::Reception,ms_id};
+        let act_1 = ObservableAction{lf_id:lf_id_1,act_kind:ObservableActionKind::Reception(None),ms_id};
         let i1 = Interaction::Action( act_1 );
         let lf_id_2 : usize = rem_targets.remove(0);
-        let act_2 = ObservableAction{lf_id:lf_id_2,act_kind:ObservableActionKind::Reception,ms_id};
+        let act_2 = ObservableAction{lf_id:lf_id_2,act_kind:ObservableActionKind::Reception(None),ms_id};
         let i2 = Interaction::Action( act_2 );
         return Interaction::Seq( Box::new(i1), Box::new(i2) );
     } else {
         let lf_id_1: usize = rem_targets.remove(0);
-        let act_1 = ObservableAction { lf_id: lf_id_1, act_kind: ObservableActionKind::Reception, ms_id };
+        let act_1 = ObservableAction { lf_id: lf_id_1, act_kind: ObservableActionKind::Reception(None), ms_id };
         let i1 = Interaction::Action(act_1);
         return Interaction::Seq(Box::new(i1), Box::new(deploy_receptions(ms_id, rem_targets)));
     }
@@ -62,11 +62,18 @@ pub fn execute(my_int : Interaction,
             match my_int {
                 Interaction::Action(model_action) => {
                     match model_action.act_kind {
-                        ObservableActionKind::Reception => {
+                        ObservableActionKind::Reception(_) => {
                             return Interaction::Empty;
                         },
-                        ObservableActionKind::Emission(got_trg) => {
-                            let mut targets = got_trg;
+                        ObservableActionKind::Emission(target_refs) => {
+                            let mut targets : Vec<usize> = Vec::new();
+                            for targ_ref in target_refs {
+                                match targ_ref {
+                                    EmissionTargetRef::Lifeline(tar_lf_id) => {
+                                        targets.push(tar_lf_id);
+                                    }, _ => {}
+                                }
+                            }
                             return deploy_receptions(model_action.ms_id,&mut targets);
                         }
                     }

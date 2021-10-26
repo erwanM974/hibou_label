@@ -21,8 +21,10 @@ pub enum HibouParsingError {
     FileError(String),
     MatchError(String),
     MissingMessageDeclarationError(String),
-    MissingLifelineDeclarationError(String),
+    MissingLifelineOrGateDeclarationError(String),
+    WrongGateUsage(String),
     EmissionDefinitionError(String),
+    OtherDefinitionError(String),
     NonDisjointTraceComponents,
     HsfSetupError(String),
     ProcessPriorityError(String)
@@ -43,11 +45,17 @@ impl fmt::Display for HibouParsingError {
             HibouParsingError::MissingMessageDeclarationError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing ; missing message declaration : {:}", sub_e));
             },
-            HibouParsingError::MissingLifelineDeclarationError(sub_e) => {
-                return write!(f, "{}", format!("error while parsing ; missing lifeline declaration : {:}", sub_e));
+            HibouParsingError::MissingLifelineOrGateDeclarationError(sub_e) => {
+                return write!(f, "{}", format!("error while parsing ; missing lifeline or gate declaration : {:}", sub_e));
+            },
+            HibouParsingError::WrongGateUsage(sub_e) => {
+                return write!(f, "{}", format!("error while parsing ; wrong gate usage : {:}", sub_e));
             },
             HibouParsingError::EmissionDefinitionError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing ; emission definition error : {:}", sub_e));
+            },
+            HibouParsingError::OtherDefinitionError(sub_e) => {
+                return write!(f, "{}", format!("error while parsing ; other definition error : {:}", sub_e));
             },
             HibouParsingError::NonDisjointTraceComponents => {
                 return write!(f, "{}", format!("error while parsing ; non disjoint trace canals"));

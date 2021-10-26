@@ -20,9 +20,9 @@ pub static SYNTAX_STRICT: &'static str = "strict";
 pub static SYNTAX_SEQ: &'static str = "seq";
 pub static SYNTAX_PAR: &'static str = "par";
 pub static SYNTAX_ALT: &'static str = "alt";
-pub static SYNTAX_LOOP_S: &'static str = "loopS";
+pub static SYNTAX_LOOP_S: &'static str = "loopX";
 pub static SYNTAX_LOOP_H: &'static str = "loopH";
-pub static SYNTAX_LOOP_W: &'static str = "loopW";
+pub static SYNTAX_LOOP_W: &'static str = "loopS";
 pub static SYNTAX_LOOP_P: &'static str = "loopP";
 
 pub static SYNTAX_EMISSION: &'static str = "!";

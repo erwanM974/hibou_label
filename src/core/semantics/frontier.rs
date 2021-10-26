@@ -67,6 +67,9 @@ pub fn global_frontier(interaction : &Interaction) -> Vec<Position> {
         },
         &Interaction::Loop(_, ref i1) => {
             return push_frontier(&PositionKind::Left, global_frontier(i1));
+        },
+        _ => {
+            panic!("non-conform interaction");
         }
     }
 }

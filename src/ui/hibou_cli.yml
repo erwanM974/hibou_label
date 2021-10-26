@@ -16,13 +16,13 @@
 
 
 name: hibou_label
-version: "0.5.7"
+version: "0.6.0"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for manipulating interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw as a sequence diagram an interaction encoded in a hibou specification file (.hsf)
-        version: "0.5.7"
+        version: "0.6.0"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -36,7 +36,7 @@ subcommands:
                 help: target file for drawing (default is 'the name of the hsf'.png)
     - explore:
         about: utility to explore the semantics of an interaction encoded in a hibou specification file (.hsf)
-        version: "0.5.7"
+        version: "0.6.0"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -45,7 +45,7 @@ subcommands:
                 help: input hibou specification file
     - analyze:
         about: utility to analyze an input (multi-)trace encoded in a hibou trace file (.htf) w.r.t. an interaction encoded in a hibou specification file (.hsf)
-        version: "0.5.7"
+        version: "0.6.0"
         author: Erwan Mahe <github.com/erwanM974>
         args:
             - hsf:
@@ -58,7 +58,7 @@ subcommands:
                 help: input hibou trace file
     - puml_sd:
             about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
-            version: "0.5.7"
+            version: "0.6.0"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -67,7 +67,16 @@ subcommands:
                     help: input hibou specification file
     - puml_ap:
             about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
-            version: "0.5.7"
+            version: "0.6.0"
+            author: Erwan Mahe <github.com/erwanM974>
+            args:
+                - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou specification file
+    - term_repr:
+            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
+            version: "0.6.0"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -76,7 +85,7 @@ subcommands:
                     help: input hibou specification file
     - canonize:
             about: utility to compute the normal form of an interaction encoded in a hibou specification file (.hsf) and to draw possible sequences of transformations leading to that normal form
-            version: "0.5.7"
+            version: "0.6.0"
             author: Erwan Mahe <github.com/erwanM974>
             args:
                 - hsf:
@@ -88,3 +97,28 @@ subcommands:
                     short: s
                     takes_value: false
                     help: computes all possible sequences of transformations (by default only one is)
+    - merge:
+            about: utility to merge interaction with gates
+            version: "0.6.0"
+            author: Erwan Mahe <github.com/erwanM974>
+            args:
+                - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou specification file
+                - returns:
+                    required: false
+                    short: r
+                    takes_value: false
+                    help: returns first successful merge and write it on file
+                - complete:
+                    required: false
+                    short: c
+                    takes_value: false
+                    help: if returns then only a merge without remaining gates
+                - graphic:
+                    required: false
+                    short: g
+                    takes_value: false
+                    help: draw search with graphviz
+

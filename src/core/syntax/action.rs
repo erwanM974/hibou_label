@@ -19,10 +19,16 @@ use std::collections::HashSet;
 
 use crate::core::trace::{TraceActionKind,TraceAction};
 
+#[derive(PartialOrd, Ord, Clone, PartialEq, Debug, Eq, Hash)]
+pub enum EmissionTargetRef {
+    Lifeline(usize),
+    Gate(usize)
+}
+
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum ObservableActionKind {
-    Reception,
-    Emission(Vec<usize>)
+    Reception(Option<usize>),
+    Emission(Vec<EmissionTargetRef>)
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
@@ -38,13 +44,18 @@ impl ObservableAction {
     pub fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
         let mut contents : HashSet<TraceAction> = HashSet::new();
         match &self.act_kind {
-            ObservableActionKind::Reception => {
+            ObservableActionKind::Reception(_) => {
                 contents.insert( TraceAction::new(self.lf_id,TraceActionKind::Reception,self.ms_id) );
             },
-            ObservableActionKind::Emission( targets ) => {
+            ObservableActionKind::Emission( ref targets ) => {
                 contents.insert( TraceAction::new(self.lf_id,TraceActionKind::Emission,self.ms_id) );
-                for tar_lf_id in targets {
-                    contents.insert( TraceAction::new(*tar_lf_id,TraceActionKind::Reception, self.ms_id) );
+                for target_ref in targets {
+                    match target_ref {
+                        &EmissionTargetRef::Lifeline(tar_lf_id) => {
+                            contents.insert( TraceAction::new(tar_lf_id,TraceActionKind::Reception, self.ms_id) );
+                        },
+                        _ => {}
+                    }
                 }
             }
         }
@@ -53,7 +64,7 @@ impl ObservableAction {
 
     pub fn to_trace_action(&self) -> TraceAction {
         match self.act_kind {
-            ObservableActionKind::Reception => {
+            ObservableActionKind::Reception(_) => {
                 return TraceAction::new(self.lf_id,TraceActionKind::Reception,self.ms_id);
             },
             ObservableActionKind::Emission(_) => {
@@ -64,7 +75,7 @@ impl ObservableAction {
 
     pub fn get_action_kind(&self) -> TraceActionKind {
         match self.act_kind {
-            ObservableActionKind::Reception => {
+            ObservableActionKind::Reception(_) => {
                 return TraceActionKind::Reception;
             },
             ObservableActionKind::Emission(_) => {
@@ -77,8 +88,13 @@ impl ObservableAction {
         match self.act_kind {
             ObservableActionKind::Emission(ref targets) => {
                 let mut occ : HashSet<usize> = HashSet::new();
-                for lf_id in targets {
-                    occ.insert( *lf_id );
+                for target_ref in targets {
+                    match target_ref {
+                        &EmissionTargetRef::Lifeline(tar_lf_id) => {
+                            occ.insert( tar_lf_id );
+                        },
+                        _ => {}
+                    }
                 }
                 occ.insert( self.lf_id );
                 return occ;

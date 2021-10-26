@@ -27,13 +27,13 @@ use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 
 
-use crate::from_text::error::HibouParsingError;
+use crate::from_hfiles::error::HibouParsingError;
 use crate::process::log::ProcessLogger;
 
-use crate::from_text::parser::*;
-use crate::from_text::interaction::parse_interaction;
+use crate::from_hfiles::parser::*;
+use crate::from_hfiles::interaction::parse_interaction;
 use crate::rendering::process::graphic_logger::GraphicProcessLogger;
-use crate::from_text::hibou_options::*;
+use crate::from_hfiles::hibou_options::*;
 
 
 pub static HIBOU_MODEL_FILE_EXTENSION : &'static str = "hsf";
@@ -102,6 +102,13 @@ fn parse_lifeline_decl(lf_decl_pair : Pair<Rule>, gen_ctx : &mut GeneralContext 
     }
 }
 
+fn parse_gate_decl(gt_decl_pair : Pair<Rule>, gen_ctx : &mut GeneralContext ) {
+    for gt_pair in gt_decl_pair.into_inner() {
+        let gt_name : String = gt_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+        gen_ctx.add_gt(gt_name);
+    }
+}
+
 fn parse_setup(setup_pair : Pair<Rule>,
                gen_ctx : &mut GeneralContext,
                file_name : &str,
@@ -111,6 +118,7 @@ fn parse_setup(setup_pair : Pair<Rule>,
     let mut got_section_analyze_options   : bool = false;
     let mut got_section_messages  : bool = false;
     let mut got_section_lifelines : bool = false;
+    let mut got_section_gates : bool = false;
     // ***
     let mut contents = setup_pair.into_inner();
     let mut hibou_options_opt : Option<HibouOptions> = None;
@@ -167,6 +175,13 @@ fn parse_setup(setup_pair : Pair<Rule>,
                 }
                 got_section_lifelines = true;
                 parse_lifeline_decl(current_pair,gen_ctx);
+            },
+            Rule::HIBOU_MODEL_GT_DECL => {
+                if got_section_gates {
+                    return Err( HibouParsingError::HsfSetupError("several '@gate' sections declared".to_string()));
+                }
+                got_section_gates = true;
+                parse_gate_decl(current_pair,gen_ctx);
             },
             _ => {
                 panic!("what rule then ? : {:?}", current_pair.as_rule() );

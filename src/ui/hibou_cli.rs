@@ -38,15 +38,14 @@ use crate::process::log::*;
 
 use crate::process::analysis::analyze;
 use crate::process::exploration::explore;
-use crate::from_text::hsf_file::{ProcessKind,parse_hsf_file};
-use crate::from_text::htf_file::parse_htf_file;
+use crate::from_hfiles::hsf_file::{ProcessKind,parse_hsf_file};
+use crate::from_hfiles::htf_file::parse_htf_file;
 
 use crate::plantuml::sequence::to_plant_uml_sd;
 use crate::plantuml::automata_product::to_plant_uml_ap;
 use crate::canonize::term_repr_out::to_term_repr;
 use crate::canonize::process::canon_process_interaction_term;
-
-use crate::canonize::precondition::InteractionPreconditionCheckForCanonization;
+use crate::merge_gates::process::merge_process_interaction_term;
 
 fn get_ascii_border() -> &'static str {
     return r#"===================="#;
@@ -60,7 +59,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.5.7   "#);
+    my_vec.push(r#"  V-label-0.6.0   "#);
     return my_vec;
 }
 
@@ -181,20 +180,13 @@ pub fn hibou_cli() -> i32 {
                     search_all = false;
                 }
                 // ***
-                let is_sugar_free : bool;
-                match canon_process_interaction_term(&my_int,&gen_ctx,&process_name,search_all) {
-                    InteractionPreconditionCheckForCanonization::HasCoReg => {
-                        ret_print.push( "Interaction term has CoReg -> Not Implemented".to_string() );
-                        print_retval(ret_print);
-                        return -1;
-                    },
-                    InteractionPreconditionCheckForCanonization::HasTargets => {
-                        is_sugar_free = false;
-                    },
-                    _ => {
-                        is_sugar_free = true;
-                    }
+                if my_int.has_coregions() || my_int.has_ands() {
+                    ret_print.push( "Interaction term has coregions and/or ands -> Not Implemented".to_string() );
+                    print_retval(ret_print);
+                    return -1;
                 }
+                // ***
+                canon_process_interaction_term(&my_int,&gen_ctx,&process_name,search_all);
                 // ***
                 ret_print.push( "".to_string());
                 ret_print.push( "CANONIZING process for INTERACTION".to_string());
@@ -206,12 +198,39 @@ pub fn hibou_cli() -> i32 {
                 } else {
                     ret_print.push( "(searched one transformation sequence)".to_string());
                 }
-                if !is_sugar_free {
-                    ret_print.push( "WARNING: interaction was not sugar-free (emission targets have been flattened)".to_string());
-                }
             }
         }
-    }/* else if let Some(matches) = matches.subcommand_matches("term_repr") {
+    }else if let Some(matches) = matches.subcommand_matches("merge") {
+        let hsf_file_path = matches.value_of("hsf").unwrap();
+        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+            Err(e) => {
+                ret_print.push( e.to_string() );
+                print_retval(ret_print);
+                return -1;
+            },
+            Ok( (gen_ctx,my_int,hoptions) ) => {
+                let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
+                //
+                let opt_returns : bool = matches.is_present("returns");
+                let opt_complete : bool = matches.is_present("complete");
+                let opt_graphic : bool = matches.is_present("graphic");
+                // ***
+                // ***
+                if my_int.has_coregions() {
+                    ret_print.push( "Interaction term has coregions -> Not Implemented".to_string() );
+                    print_retval(ret_print);
+                    return -1;
+                }
+                merge_process_interaction_term(&my_int,&gen_ctx,opt_returns,opt_complete,opt_graphic,&file_name);
+                // ***
+                ret_print.push( "".to_string());
+                ret_print.push( "MERGING process for INTERACTION".to_string());
+                ret_print.push( format!("from file '{}'",hsf_file_path) );
+                ret_print.push( "".to_string());
+                ret_print.push( "".to_string());
+            }
+        }
+    } else if let Some(matches) = matches.subcommand_matches("term_repr") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
@@ -231,7 +250,7 @@ pub fn hibou_cli() -> i32 {
                 to_term_repr(&output_name, &my_int, &gen_ctx);
             }
         }
-    }*/ else if let Some(matches) = matches.subcommand_matches("explore") {
+    } else if let Some(matches) = matches.subcommand_matches("explore") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::Explore) {
             Err(e) => {

@@ -21,17 +21,15 @@ use std::cmp;
 
 use image::{Rgb, RgbImage};
 use imageproc::drawing::{
-    Point,
     draw_cross_mut,
     draw_line_segment_mut,
     draw_hollow_rect_mut,
     draw_filled_rect_mut,
     draw_hollow_circle_mut,
     draw_filled_circle_mut,
-    draw_convex_polygon_mut,
     draw_text_mut
 };
-use rusttype::{FontCollection, Scale};
+use rusttype::{Font,Scale};
 
 // **********
 
@@ -121,6 +119,9 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 }
             }
+        },
+        _ => {
+            panic!("non-conform interaction");
         }
     }
 }
@@ -248,7 +249,7 @@ fn draw_combined_fragment_frame(    image : &mut RgbImage,
                               (x_right, y_coord),
                               Rgb(HCP_Black));
     }
-    let font = FontCollection::from_bytes(HIBOU_GRAPHIC_FONT).unwrap().into_font().unwrap();
+    let font = Font::try_from_bytes(HIBOU_GRAPHIC_FONT).unwrap();
 
     let scale = Scale { x: FONT_WIDTH, y: FONT_HEIGHT };
     draw_colored_text(image,&label,x_left+FRAGMENT_TITLE_MARGIN,y_start + VERTICAL_SIZE);

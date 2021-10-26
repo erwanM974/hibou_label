@@ -78,6 +78,9 @@ fn get_interaction_depth(interaction : &Interaction ) -> usize {
         },
         &Interaction::Loop(_, ref i1) => {
             return get_interaction_depth(i1) + 4;
+        },
+        _ => {
+            panic!("non-conform interaction");
         }
     }
 }

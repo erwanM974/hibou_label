@@ -14,13 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::cmp::Ordering;
-
-
-use std::cmp;
-use std::collections::{HashMap,HashSet};
+use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 
 use crate::core::syntax::position::*;
 use crate::core::syntax::action::*;
@@ -43,7 +38,8 @@ pub enum Interaction {
     CoReg(Vec<usize>,Box<Interaction>,Box<Interaction>),
     Alt(Box<Interaction>,Box<Interaction>),
     Par(Box<Interaction>,Box<Interaction>),
-    Loop(LoopKind,Box<Interaction>)
+    Loop(LoopKind,Box<Interaction>),
+    And(Box<Interaction>,Box<Interaction>)
 }
 
 
@@ -122,19 +118,19 @@ impl Interaction {
             },
             Position::Left(sub_pos) => {
                 match self {
-                    &Interaction::Seq(ref i1, ref i2) => {
+                    &Interaction::Seq(ref i1, _) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
+                    &Interaction::CoReg(_, ref i1, _) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Strict(ref i1, ref i2) => {
+                    &Interaction::Strict(ref i1, _) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Alt(ref i1, ref i2) => {
+                    &Interaction::Alt(ref i1, _) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Par(ref i1, ref i2) => {
+                    &Interaction::Par(ref i1, _) => {
                         return (&*i1).get_sub_interaction( &(*sub_pos) );
                     },
                     &Interaction::Loop(_ , ref i1) => {
@@ -147,19 +143,19 @@ impl Interaction {
             },
             Position::Right(sub_pos) => {
                 match self {
-                    &Interaction::Seq(ref i1, ref i2) => {
+                    &Interaction::Seq(_, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
+                    &Interaction::CoReg(_, _, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Strict(ref i1, ref i2) => {
+                    &Interaction::Strict(_, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Alt(ref i1, ref i2) => {
+                    &Interaction::Alt(_, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
-                    &Interaction::Par(ref i1, ref i2) => {
+                    &Interaction::Par(_, ref i2) => {
                         return (&*i2).get_sub_interaction( &(*sub_pos) );
                     },
                     _ => {
@@ -188,6 +184,9 @@ impl Interaction {
                 return i1.express_empty() || i2.express_empty();
             }, &Interaction::Loop(_, _) => {
                 return true;
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -220,6 +219,9 @@ impl Interaction {
                 return content;
             }, &Interaction::Loop(_, i1) => {
                 return i1.contained_actions();
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -246,6 +248,9 @@ impl Interaction {
                 return i1.avoids(lf_id) || i2.avoids(lf_id);
             }, &Interaction::Loop(_, _) => {
                 return true;
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -272,6 +277,9 @@ impl Interaction {
                 return i1.involves(lf_id) || i2.involves(lf_id);
             }, &Interaction::Loop(_, ref i1) => {
                 return i1.involves(lf_id);
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -299,6 +307,9 @@ impl Interaction {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             }, &Interaction::Loop(_, ref i1) => {
                 return i1.involves_any_of(lf_ids);
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -321,6 +332,9 @@ impl Interaction {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
             }, &Interaction::Loop(_, ref i1) => {
                 return 1 + i1.max_nested_loop_depth();
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }
@@ -390,16 +404,21 @@ impl Interaction {
             Interaction::Action( ref act ) => {
                 if lfs_to_remove.contains(&act.lf_id) {
                     match &act.act_kind {
-                        ObservableActionKind::Reception => {
+                        ObservableActionKind::Reception(_) => {
                             return Interaction::Empty;
                         },
                         ObservableActionKind::Emission( targets ) => {
                             let mut receptions : Vec<ObservableAction> = Vec::new();
-                            for target_lf_id in targets {
-                                if !lfs_to_remove.contains(target_lf_id) {
-                                    receptions.push( ObservableAction{lf_id:*target_lf_id,
-                                        act_kind:ObservableActionKind::Reception,
-                                        ms_id:act.ms_id} );
+                            for target_ref in targets {
+                                match target_ref {
+                                    &EmissionTargetRef::Lifeline(tar_lf_id) => {
+                                        if !lfs_to_remove.contains(&tar_lf_id) {
+                                            receptions.push( ObservableAction{lf_id:tar_lf_id,
+                                                act_kind:ObservableActionKind::Reception(None),
+                                                ms_id:act.ms_id} );
+                                        }
+                                    },
+                                    _ => {}
                                 }
                             }
                             return fold_reception_actions_with_seq(&mut receptions);
@@ -407,14 +426,21 @@ impl Interaction {
                     }
                 } else {
                     match &act.act_kind {
-                        ObservableActionKind::Reception => {
+                        ObservableActionKind::Reception(_) => {
                             return Interaction::Action(act.clone());
                         },
                         ObservableActionKind::Emission( targets ) => {
-                            let mut new_targets : Vec<usize> = Vec::new();
-                            for target_lf_id in targets {
-                                if !lfs_to_remove.contains(target_lf_id) {
-                                    new_targets.push( *target_lf_id );
+                            let mut new_targets : Vec<EmissionTargetRef> = Vec::new();
+                            for target_ref in targets {
+                                match target_ref {
+                                    &EmissionTargetRef::Lifeline(tar_lf_id) => {
+                                        if !lfs_to_remove.contains(&tar_lf_id) {
+                                            new_targets.push( EmissionTargetRef::Lifeline(tar_lf_id) );
+                                        }
+                                    },
+                                    &EmissionTargetRef::Gate(tar_gt_id) => {
+                                        new_targets.push( EmissionTargetRef::Gate(tar_gt_id) );
+                                    },
                                 }
                             }
                             let new_act = ObservableAction{lf_id:act.lf_id,
@@ -530,6 +556,9 @@ impl Interaction {
                         return Interaction::Loop(opkind.clone(),Box::new(i1hid) );
                     }
                 }
+            },
+            _ => {
+                panic!("non-conform interaction");
             }
         }
     }

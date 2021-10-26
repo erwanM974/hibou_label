@@ -27,13 +27,13 @@ use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 
 
-use crate::from_text::error::HibouParsingError;
+use crate::from_hfiles::error::HibouParsingError;
 use crate::process::log::ProcessLogger;
 
-use crate::from_text::parser::*;
+use crate::from_hfiles::parser::*;
 use crate::rendering::process::graphic_logger::{GraphicProcessLoggerOutputKind,GraphicProcessLoggerLayout,GraphicProcessLogger};
 use crate::process::hibou_process::*;
-use crate::from_text::hsf_file::ProcessKind;
+use crate::from_hfiles::hsf_file::ProcessKind;
 
 use crate::process::priorities::ProcessPriorities;
 use crate::process::verdicts::GlobalVerdict;

@@ -255,7 +255,7 @@ impl HibouProcessManager {
             &NextToProcessKind::Execute( ref front_pos ) => {
                 let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
                 match front_act.act_kind {
-                    ObservableActionKind::Reception => {
+                    ObservableActionKind::Reception(_) => {
                         priority = priority + priorities.reception;
                     },
                     ObservableActionKind::Emission(_) => {
@@ -274,7 +274,7 @@ impl HibouProcessManager {
                 priority = priority + priorities.simulate;
                 let front_act = (parent_state.interaction).get_sub_interaction(&front_pos).as_leaf();
                 match front_act.act_kind {
-                    ObservableActionKind::Reception => {
+                    ObservableActionKind::Reception(_) => {
                         priority = priority + priorities.reception;
                     },
                     ObservableActionKind::Emission(_) => {
@@ -518,7 +518,9 @@ impl HibouProcessManager {
                                         new_canals.push(canal.clone());
                                     }
                                 }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals, (multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth)) );
+                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,
+                                                                                  multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth)
+                                );
                             }
                         }
                         // ***

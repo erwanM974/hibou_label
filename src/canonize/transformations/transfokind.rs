@@ -36,7 +36,15 @@ pub enum TransformationKind {
     DeFactorizeL,
     DeFactorizeR,
     LoopSimpl,
-    LoopUnNest
+    LoopUnNest,
+    StrictToPassing,
+    SortEmissionTargets,
+    MergeAndLeft1,
+    MergeAndRight1,
+    MergeAndLeft2,
+    MergeAndRight2,
+    MergeAction,
+    MergeSkip
 }
 
 impl TransformationKind {
@@ -101,6 +109,30 @@ impl TransformationKind {
             },
             &TransformationKind::LoopUnNest => {
                 return "LoopUnNest".to_string();
+            },
+            &TransformationKind::StrictToPassing => {
+                return "StrictToPassing".to_string();
+            },
+            &TransformationKind::SortEmissionTargets => {
+                return "SortEmissionTargets".to_string();
+            },
+            &TransformationKind::MergeAndLeft1 => {
+                return "MergeAndLeft1".to_string();
+            },
+            &TransformationKind::MergeAndRight1 => {
+                return "MergeAndRight1".to_string();
+            },
+            &TransformationKind::MergeAndLeft2 => {
+                return "MergeAndLeft2".to_string();
+            },
+            &TransformationKind::MergeAndRight2 => {
+                return "MergeAndRight2".to_string();
+            },
+            &TransformationKind::MergeAction => {
+                return "MergeAction".to_string();
+            },
+            &TransformationKind::MergeSkip => {
+                return "MergeSkip".to_string();
             }
         }
     }

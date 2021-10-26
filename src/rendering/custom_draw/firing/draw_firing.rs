@@ -24,14 +24,12 @@ use std::collections::HashMap;
 use image::{Rgb, RgbImage};
 use imageproc::rect::Rect;
 use imageproc::drawing::{
-    Point,
     draw_cross_mut,
     draw_line_segment_mut,
     draw_hollow_rect_mut,
     draw_filled_rect_mut,
     draw_hollow_circle_mut,
     draw_filled_circle_mut,
-    draw_convex_polygon_mut,
     draw_text_mut
 };
 // **********

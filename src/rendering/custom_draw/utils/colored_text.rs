@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 use image::{Rgb, RgbImage};
-use rusttype::{FontCollection, Scale};
+use rusttype::{Font, Scale};
 use imageproc::drawing::draw_text_mut;
 
 use crate::rendering::textual::convention::*;
@@ -25,7 +25,7 @@ pub fn draw_colored_text(image : &mut RgbImage,
                          to_print : &Vec<TextToPrint>,
                          msg_x_pos : f32,
                          msg_y_pos : f32) {
-    let font = FontCollection::from_bytes(HIBOU_GRAPHIC_FONT).unwrap().into_font().unwrap();
+    let font = Font::try_from_bytes(HIBOU_GRAPHIC_FONT).unwrap();
     let scale = Scale { x: FONT_WIDTH, y: FONT_HEIGHT };
 
     // ***
