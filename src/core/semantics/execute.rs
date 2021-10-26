@@ -89,7 +89,7 @@ pub fn execute(my_int : Interaction,
                         return Interaction::Loop(lkind, old_i1 );
                     } else {
                         match &lkind {
-                            LoopKind::XStrictSeq => {
+                            LoopKind::SStrictSeq => {
                                 let orig_i = Interaction::Loop(lkind, old_i1 );
                                 return Interaction::Strict( Box::new(new_i1), Box::new(orig_i) );
                             },
@@ -97,12 +97,12 @@ pub fn execute(my_int : Interaction,
                                 let orig_i = Interaction::Loop(lkind, old_i1 );
                                 return Interaction::Seq( Box::new(new_i1), Box::new(orig_i) );
                             },
-                            LoopKind::SWeakSeq => {
+                            LoopKind::WWeakSeq => {
                                 // ***
                                 let orig_i = Interaction::Loop(lkind, old_i1.clone() );
                                 let new_right_int_wsloop = Interaction::Seq( Box::new(new_i1), Box::new(orig_i) );
                                 // ***
-                                let pruned_loop = prune(Interaction::Loop(LoopKind::SWeakSeq, old_i1 ),tar_lf_id);
+                                let pruned_loop = prune(Interaction::Loop(LoopKind::WWeakSeq, old_i1 ),tar_lf_id);
                                 if pruned_loop == Interaction::Empty {
                                     return new_right_int_wsloop;
                                 } else {

@@ -29,9 +29,9 @@ use crate::core::trace::TraceAction;
 #[derive(Clone, PartialEq, Debug, Eq, PartialOrd, Ord, Hash)]
 pub enum LoopKind {
     PInterleaving  = 1,
-    SWeakSeq       = 2,
+    WWeakSeq       = 2,
     HHeadFirstWS   = 3,
-    XStrictSeq     = 4
+    SStrictSeq     = 4
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]

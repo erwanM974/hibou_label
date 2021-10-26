@@ -129,14 +129,14 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
                 },
                 Ok( sub_int ) => {
                     match loop_kind_pair.as_rule() {
-                        Rule::SD_LOOP_KIND_X => {
-                            return Ok( Interaction::Loop(LoopKind::XStrictSeq,Box::new(sub_int)) );
+                        Rule::SD_LOOP_KIND_S => {
+                            return Ok( Interaction::Loop(LoopKind::SStrictSeq,Box::new(sub_int)) );
                         },
                         Rule::SD_LOOP_KIND_H => {
                             return Ok( Interaction::Loop(LoopKind::HHeadFirstWS,Box::new(sub_int)) );
                         },
-                        Rule::SD_LOOP_KIND_S => {
-                            return Ok( Interaction::Loop(LoopKind::SWeakSeq,Box::new(sub_int)) );
+                        Rule::SD_LOOP_KIND_W => {
+                            return Ok( Interaction::Loop(LoopKind::WWeakSeq,Box::new(sub_int)) );
                         },
                         Rule::SD_LOOP_KIND_P => {
                             return Ok( Interaction::Loop(LoopKind::PInterleaving,Box::new(sub_int)) );

@@ -104,16 +104,16 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
         },
         &Interaction::Loop(ref lkind, ref i1) => {
             match lkind {
-                LoopKind::XStrictSeq => {
-                    let label = vec![TextToPrint{text:SYNTAX_LOOP_X.to_string(),color:Rgb(HCP_Black)}];
+                LoopKind::SStrictSeq => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_S.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 },
                 LoopKind::HHeadFirstWS => {
                     let label = vec![TextToPrint{text:SYNTAX_LOOP_H.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 },
-                LoopKind::SWeakSeq => {
-                    let label = vec![TextToPrint{text:SYNTAX_LOOP_S.to_string(),color:Rgb(HCP_Black)}];
+                LoopKind::WWeakSeq => {
+                    let label = vec![TextToPrint{text:SYNTAX_LOOP_W.to_string(),color:Rgb(HCP_Black)}];
                     return draw_unary_combined_fragment(image,  gen_ctx,i1,lf_x_widths, lf_num,label, nest_shift, yshift);
                 },
                 LoopKind::PInterleaving => {

@@ -169,14 +169,14 @@ fn interaction_repr_rec(to_write : &mut String,
                 let mut strict_node_gv_options : GraphvizNodeStyle = Vec::new();
                 strict_node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
                 match lp_kind {
-                    &LoopKind::XStrictSeq => {
-                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_X.to_string() ) );
+                    &LoopKind::SStrictSeq => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_S.to_string() ) );
                     },
                     &LoopKind::HHeadFirstWS => {
                         strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_H.to_string() ) );
                     },
-                    &LoopKind::SWeakSeq => {
-                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_S.to_string() ) );
+                    &LoopKind::WWeakSeq => {
+                        strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_W.to_string() ) );
                     },
                     &LoopKind::PInterleaving => {
                         strict_node_gv_options.push( GraphvizNodeStyleItem::Label( SYNTAX_LOOP_P.to_string() ) );

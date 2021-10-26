@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "hibou_label"
-version = "0.5.6"
+version = "0.5.7"
 dependencies = [
  "clap",
  "image",

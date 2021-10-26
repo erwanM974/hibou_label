@@ -115,13 +115,13 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
         &Interaction::Loop(ref kind, ref i1) => {
             // ***
             match kind {
-                &LoopKind::XStrictSeq => {
+                &LoopKind::SStrictSeq => {
                     output_file.write( "group loopX\n".as_bytes() );
                 },
                 &LoopKind::HHeadFirstWS => {
                     output_file.write( "group loopH\n".as_bytes() );
                 },
-                &LoopKind::SWeakSeq => {
+                &LoopKind::WWeakSeq => {
                     output_file.write( "group loopS\n".as_bytes() );
                 },
                 &LoopKind::PInterleaving => {
