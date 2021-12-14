@@ -19,5 +19,5 @@ mod interaction;
 mod action;
 pub mod hsf_file;
 pub mod htf_file;
-mod hibou_options;
+pub mod hibou_options;
 

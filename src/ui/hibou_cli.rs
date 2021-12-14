@@ -301,13 +301,7 @@ pub fn hibou_cli() -> i32 {
                         let (verdict,node_count) = analyze(my_int,
                                                            multi_trace,
                                                            gen_ctx,
-                                                           hoptions.pre_filters,
-                                                           hoptions.strategy,
-                                                           hoptions.frontier_priorities,
-                                                           hoptions.loggers,
-                                                           hoptions.ana_kind.unwrap(),
-                                                           hoptions.use_locfront,
-                                                           hoptions.goal);
+                                                           hoptions);
 
                         ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );
                         ret_print.push( format!("node count : {:?}", node_count ) );

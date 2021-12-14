@@ -36,29 +36,24 @@ use crate::process::priorities::ProcessPriorities;
 
 
 use crate::process::anakind::AnalysisKind;
-
+use crate::from_hfiles::hibou_options::HibouOptions;
 
 pub fn analyze(interaction : Interaction,
                multi_trace : AnalysableMultiTrace,
                gen_ctx : GeneralContext,
-               pre_filters : Vec<HibouPreFilter>,
-               strategy : HibouSearchStrategy,
-               frontier_priorities : ProcessPriorities,
-               loggers : Vec<Box<dyn ProcessLogger>>,
-               ana_kind: AnalysisKind,
-               use_locfront : bool,
-               goal : Option<GlobalVerdict>) -> (GlobalVerdict,u32) {
+               hoptions : HibouOptions) -> (GlobalVerdict,u32) {
     // ***
+    let goal = hoptions.goal;
     // ***
     let mut manager = HibouProcessManager::new(gen_ctx,
-                                               strategy,
-                                               Some(ana_kind),
-                                               use_locfront,
-                                               pre_filters,
+                                               hoptions.strategy,
+                                               Some(hoptions.ana_kind.unwrap()),
+                                               hoptions.use_locfront,
+                                               hoptions.pre_filters,
                                                HashMap::new(),
                                                Box::new(SimpleProcessQueue::new()),
-                                               frontier_priorities,
-                                               loggers);
+                                               hoptions.frontier_priorities,
+                                               hoptions.loggers);
     // ***
     let multi_trace_option = Some(multi_trace);
     manager.init_loggers(&interaction,&multi_trace_option);
@@ -149,6 +144,25 @@ pub fn analyze(interaction : Interaction,
 }
 
 
+fn add_action_matches_in_analysis(interaction : &Interaction,
+                                  //multi_trace : &AnalysableMultiTrace,
+                                  head_actions : &HashSet<&TraceAction>,
+                                  next_child_id : &mut u32,
+                                  to_enqueue : &mut Vec<(u32,NextToProcessKind)>) {
+    // ***
+    for front_pos in global_frontier(interaction) {
+        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
+        for head_act in head_actions {
+            if head_act.is_match(front_act) {
+                *next_child_id = *next_child_id +1;
+                let child_kind = NextToProcessKind::Execute(front_pos);
+                to_enqueue.push( (*next_child_id,child_kind) );
+                break;
+            }
+        }
+    }
+}
+
 fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                                  state_id    : u32,
                                  interaction : Interaction,
@@ -166,47 +180,36 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
         }
     }
     // ***
+    let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
     let head_actions = multi_trace.head_actions();
     // ***
-    let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
-    // ***
-    for front_pos in global_frontier(&interaction) {
-        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
-        for head_act in &head_actions {
-            if head_act.is_match(front_act) {
-                next_child_id = next_child_id +1;
-                let child_kind = NextToProcessKind::Execute(front_pos);
-                to_enqueue.push( (next_child_id,child_kind) );
-                break;
-            }
-        }
-        /*
-        for canal in &multi_trace.canals {
-            if canal.trace.len() > 0 {
-                let head_act : &TraceAction = canal.trace.get(0).unwrap();
-                if head_act.is_match(front_act) {
-                    next_child_id = next_child_id +1;
-                    let child_kind = NextToProcessKind::Execute(front_pos);
-                    to_enqueue.push( (next_child_id,child_kind) );
-                    break;
-                }
-            }
-        }*/
-    }
-    // *** Add Hiding steps in case of "hide" semantics OR Simulate steps in case of "simulate" semantics
     match manager.get_ana_kind() {
+        &AnalysisKind::Accept => {
+            add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
+        },
+        &AnalysisKind::Prefix => {
+            add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
+        },
         &AnalysisKind::Hide => {
             if multi_trace.length() > 0 {
+                let mut to_hide : HashSet<usize> = HashSet::new();
                 for canal in &multi_trace.canals {
                     if (canal.trace.len() == 0) && (canal.flag_hidden == false) && (interaction.involves_any_of(&canal.lifelines)) {
-                        next_child_id = next_child_id +1;
-                        let child_kind = NextToProcessKind::Hide(canal.lifelines.clone());
-                        to_enqueue.push( (next_child_id,child_kind) );
+                        to_hide.extend( canal.lifelines.clone() )
                     }
+                }
+                //
+                if to_hide.len() > 0 {
+                    next_child_id = next_child_id +1;
+                    let child_kind = NextToProcessKind::Hide( to_hide );
+                    to_enqueue.push( (next_child_id,child_kind) );
+                } else {
+                    add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
                 }
             }
         },
         &AnalysisKind::Simulate(sim_before) => {
+            add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
             if multi_trace.length() > 0 {
                 for front_pos in global_frontier(&interaction) {
                     if interaction.get_loop_depth_at_pos(&front_pos) <= multi_trace.remaining_loop_instantiations_in_simulation {
@@ -264,7 +267,6 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                 }
             }
         }
-        _ => {}
     }
     // ***
     if next_child_id > 0 {

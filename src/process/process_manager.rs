@@ -35,7 +35,7 @@ use crate::process::queue::*;
 use crate::process::priorities::ProcessPriorities;
 
 
-use crate::process::anakind::AnalysisKind;
+use crate::process::anakind::{AnalysisKind};
 
 
 pub struct HibouProcessManager {
@@ -441,17 +441,17 @@ impl HibouProcessManager {
                             Some( ref multi_trace ) => {
                                 let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
                                 for canal in &multi_trace.canals {
-                                    if &(canal.lifelines) != lfs_to_hide {
+                                    if canal.lifelines.is_subset( &lfs_to_hide ) {
                                         new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
                                                                              canal.trace.clone(),
-                                                                             canal.flag_hidden,
+                                                                             true,
                                                                              canal.consumed,
                                                                              canal.simulated_before,
                                                                              canal.simulated_after));
                                     } else {
                                         new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
                                                                              canal.trace.clone(),
-                                                                             true,
+                                                                             canal.flag_hidden,
                                                                              canal.consumed,
                                                                              canal.simulated_before,
                                                                              canal.simulated_after));
