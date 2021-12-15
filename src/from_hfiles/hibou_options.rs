@@ -37,14 +37,14 @@ use crate::from_hfiles::hsf_file::ProcessKind;
 
 use crate::process::priorities::ProcessPriorities;
 use crate::process::verdicts::GlobalVerdict;
-use crate::process::anakind::AnalysisKind;
+use crate::process::anakind::{AnalysisKind,UseLocalAnalysis};
 
 pub struct HibouOptions {
     pub loggers : Vec<Box<dyn ProcessLogger>>,
     pub strategy : HibouSearchStrategy,
     pub pre_filters : Vec<HibouPreFilter>,
     pub ana_kind : Option<AnalysisKind>,
-    pub use_locfront : bool,
+    pub local_analysis : Option<UseLocalAnalysis>,
     pub goal : Option<GlobalVerdict>,
     pub frontier_priorities : ProcessPriorities
 }
@@ -56,10 +56,10 @@ impl HibouOptions {
                strategy : HibouSearchStrategy,
                pre_filters : Vec<HibouPreFilter>,
                ana_kind : Option<AnalysisKind>,
-               use_locfront : bool,
+               local_analysis : Option<UseLocalAnalysis>,
                goal:Option<GlobalVerdict>,
                frontier_priorities : ProcessPriorities) -> HibouOptions {
-        return HibouOptions{loggers,strategy,pre_filters,ana_kind,use_locfront,goal,frontier_priorities};
+        return HibouOptions{loggers,strategy,pre_filters,ana_kind,local_analysis,goal,frontier_priorities};
     }
 
     pub fn default_explore() -> HibouOptions {
@@ -68,19 +68,32 @@ impl HibouOptions {
             pre_filters:vec![HibouPreFilter::MaxLoopInstanciation(1)],
             ana_kind:None,
             goal:None,
-            use_locfront:false,
+            local_analysis:None,
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
 
     pub fn default_analyze() -> HibouOptions {
         return HibouOptions{loggers:Vec::new(),
-            strategy:HibouSearchStrategy::BFS,
+            strategy:HibouSearchStrategy::DFS,
             pre_filters:Vec::new(),
             ana_kind:Some(AnalysisKind::Prefix),
-            use_locfront:true,
-            goal:Some(GlobalVerdict::Pass),
+            local_analysis:Some(UseLocalAnalysis::Yes),
+            goal:Some(GlobalVerdict::WeakPass),
             frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)};
     }
+
+    /* to be used recursively in global analyses when checking that its component local analysis are ok
+       important to keep "local_analysis:UseLocalAnalysis::No" so we don't infinitely recurse!! */
+    pub fn local_analyze() -> HibouOptions {
+        return HibouOptions{loggers:Vec::new(),
+            strategy:HibouSearchStrategy::DFS, // of course DFS is better here
+            pre_filters:Vec::new(),
+            ana_kind:Some(AnalysisKind::Prefix), // because only one canal, no need for hide or simulate
+            local_analysis:Some(UseLocalAnalysis::No), // No so we don't infinitely recurse
+            goal:Some(GlobalVerdict::WeakPass), // it suffices to have a prefix
+            frontier_priorities:ProcessPriorities::new(0,0,0, None, -2, -2)}; // whatever works
+    }
+
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -134,7 +147,7 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut frontier_priorities = ProcessPriorities::new(0,0,0, None, -2, -2);
     let mut pre_filters : Vec<HibouPreFilter> = Vec::new();
     let mut ana_kind_opt : Option<AnalysisKind> = Some(AnalysisKind::Prefix);
-    let mut use_locfront = true;
+    let mut local_analysis : Option<UseLocalAnalysis> = Some(UseLocalAnalysis::Yes);
     let mut goal : Option<GlobalVerdict> = Some(GlobalVerdict::WeakPass);
     // ***
     let mut got_loggers   : bool = false;
@@ -142,28 +155,28 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     let mut got_frontier_priorities : bool = false;
     let mut got_pre_filters : bool = false;
     let mut got_ana_kind : bool = false;
-    let mut got_locfront : bool = false;
+    let mut got_locana : bool = false;
     let mut got_goal : bool = false;
     // ***
     let mut declared_loggers : HashSet<LoggerKinds> = HashSet::new();
     // ***
     for option_decl_pair in option_pair.into_inner() {
         match option_decl_pair.as_rule() {
-            Rule::OPTION_LOCFRONT_true => {
-                if got_locfront {
-                    return Err( HibouParsingError::HsfSetupError("several 'use_locfront=X' declared in the same '@X_option' section".to_string()));
+            Rule::OPTION_LOCANA_yes => {
+                if got_locana {
+                    return Err( HibouParsingError::HsfSetupError("several 'local_analysis=X' declared in the same '@X_option' section".to_string()));
                 }
-                got_locfront = true;
+                got_locana = true;
                 // ***
-                use_locfront = true;
+                local_analysis = Some(UseLocalAnalysis::Yes);
             },
-            Rule::OPTION_LOCFRONT_false => {
-                if got_locfront {
-                    return Err( HibouParsingError::HsfSetupError("several 'use_locfront=X' declared in the same '@X_option' section".to_string()));
+            Rule::OPTION_LOCANA_no => {
+                if got_locana {
+                    return Err( HibouParsingError::HsfSetupError("several 'local_analysis=X' declared in the same '@X_option' section".to_string()));
                 }
-                got_locfront = true;
+                got_locana = true;
                 // ***
-                use_locfront = false;
+                local_analysis = Some(UseLocalAnalysis::No);
             },
             Rule::OPTION_LOGGER_DECL => {
                 if got_loggers {
@@ -354,10 +367,10 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
     }
     match process_kind {
         ProcessKind::Analyze => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,ana_kind_opt, use_locfront, goal,frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,ana_kind_opt, local_analysis, goal,frontier_priorities) );
         },
         _ => {
-            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, false, None,frontier_priorities) );
+            return Ok( HibouOptions::new(loggers,strategy,pre_filters,None, None, None,frontier_priorities) );
         }
     }
 }

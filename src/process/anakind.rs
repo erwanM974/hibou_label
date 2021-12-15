@@ -45,3 +45,30 @@ impl std::string::ToString for AnalysisKind {
         }
     }
 }
+
+
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum UseLocalAnalysis {
+    No,
+    OnlyFront,
+    Yes
+}
+
+
+impl std::string::ToString for UseLocalAnalysis {
+    fn to_string(&self) -> String {
+        match self {
+            UseLocalAnalysis::No => {
+                return "No".to_string();
+            },
+            UseLocalAnalysis::OnlyFront => {
+                return "OnlyFront".to_string();
+            },
+            UseLocalAnalysis::Yes => {
+                return "Yes".to_string();
+            }
+        }
+    }
+}
+

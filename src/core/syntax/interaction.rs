@@ -226,6 +226,45 @@ impl Interaction {
         }
     }
 
+    pub fn involved_lifelines(&self) -> HashSet<usize> {
+        match &self {
+            &Interaction::Empty => {
+                return HashSet::new();
+            }, &Interaction::Action(ref act) => {
+                let mut involved_lfs = HashSet::new();
+                for tract in act.get_all_atomic_actions() {
+                    involved_lfs.insert( tract.lf_id );
+                }
+                return involved_lfs;
+            }, &Interaction::Strict(ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            }, &Interaction::Seq(ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            }, &Interaction::Par(ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            }, &Interaction::Alt(ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            }, &Interaction::Loop(_, i1) => {
+                return i1.involved_lifelines();
+            },
+            _ => {
+                panic!("non-conform interaction");
+            }
+        }
+    }
+
     pub fn avoids(&self, lf_id : usize) -> bool {
         match self {
             &Interaction::Empty => {

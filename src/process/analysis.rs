@@ -35,7 +35,7 @@ use crate::process::queue::*;
 use crate::process::priorities::ProcessPriorities;
 
 
-use crate::process::anakind::AnalysisKind;
+use crate::process::anakind::{AnalysisKind,UseLocalAnalysis};
 use crate::from_hfiles::hibou_options::HibouOptions;
 
 pub fn analyze(interaction : Interaction,
@@ -48,7 +48,7 @@ pub fn analyze(interaction : Interaction,
     let mut manager = HibouProcessManager::new(gen_ctx,
                                                hoptions.strategy,
                                                Some(hoptions.ana_kind.unwrap()),
-                                               hoptions.use_locfront,
+                                               hoptions.local_analysis,
                                                hoptions.pre_filters,
                                                HashMap::new(),
                                                Box::new(SimpleProcessQueue::new()),
@@ -166,18 +166,16 @@ fn add_action_matches_in_analysis(interaction : &Interaction,
 fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                                  state_id    : u32,
                                  interaction : Interaction,
-                                 multi_trace : AnalysableMultiTrace,
+                                 mut multi_trace : AnalysableMultiTrace,
                                  depth       : u32,
                                  loop_depth  : u32) -> Option<CoverageVerdict> {
     // ***
     let mut next_child_id : u32 = 0;
     // ***
-    if manager.use_locfront {
-        if manager.is_dead_loc_front(&interaction,&multi_trace) {
-            let verdict = CoverageVerdict::Dead;
-            manager.verdict_loggers(&verdict,state_id);
-            return Some( verdict );
-        }
+    if manager.is_dead_local_analysis(&interaction,&mut multi_trace) {
+        let verdict = CoverageVerdict::Dead;
+        manager.verdict_loggers(&verdict,state_id);
+        return Some( verdict );
     }
     // ***
     let mut to_enqueue : Vec<(u32,NextToProcessKind)> = Vec::new();
@@ -241,7 +239,7 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
                                                 confirm_simulate = true;
                                             },
                                             Some( (loop_content,relative_front_pos) ) => {
-                                                let after_execute_content = execute(loop_content,relative_front_pos, front_act.lf_id);
+                                                let (after_execute_content,_) = execute(loop_content,relative_front_pos, front_act.lf_id);
                                                 let contained_actions = after_execute_content.contained_actions();
                                                 for head_act in &head_actions {
                                                     if contained_actions.contains(head_act){

@@ -17,7 +17,7 @@ limitations under the License.
 
 use std::collections::HashSet;
 use crate::core::syntax::action::*;
-
+use crate::process::hibou_process::SimulationStepKind;
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum TraceActionKind {
@@ -60,6 +60,7 @@ pub struct MultiTraceCanal {
     pub lifelines : HashSet<usize>,
     pub trace : Vec<TraceAction>,
     pub flag_hidden : bool,
+    pub flag_dirty4local : bool,
     pub consumed : u32,
     pub simulated_before : u32,
     pub simulated_after : u32
@@ -69,10 +70,11 @@ impl MultiTraceCanal {
     pub fn new(lifelines : HashSet<usize>,
                trace : Vec<TraceAction>,
                flag_hidden : bool,
+               flag_dirty4local : bool,
                consumed : u32,
                simulated_before : u32,
                simulated_after : u32) -> MultiTraceCanal {
-        return MultiTraceCanal{lifelines,trace,flag_hidden,consumed,simulated_before,simulated_after};
+        return MultiTraceCanal{lifelines,trace,flag_hidden,flag_dirty4local,consumed,simulated_before,simulated_after};
     }
 }
 
@@ -147,6 +149,101 @@ impl AnalysableMultiTrace {
             }
         }
         return true;
+    }
+
+    pub fn update_on_execution(&self, affected_lfs : &HashSet<usize>, target_lf_id : usize, remaining_loop_instantiations_in_simulation : u32) -> AnalysableMultiTrace {
+        let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+        for canal in &self.canals {
+            let canal_lfs = canal.lifelines.clone();
+            let mut new_trace = canal.trace.clone();
+            let new_flag_dirty4local : bool;
+            if canal_lfs.is_disjoint(affected_lfs) {
+                new_flag_dirty4local = canal.flag_dirty4local;
+            } else {
+                new_flag_dirty4local = true;
+            }
+            let new_simu_before = canal.simulated_before;
+            let new_simu_after = canal.simulated_after;
+            let new_flag_hidden = canal.flag_hidden;
+            let mut new_consumed = canal.consumed;
+            if canal.lifelines.contains(&target_lf_id) {
+                new_trace.remove(0);
+                new_consumed = new_consumed + 1;
+            }
+            new_canals.push( MultiTraceCanal::new(canal_lfs,
+                                                  new_trace,
+                                                  new_flag_hidden,
+                                                  new_flag_dirty4local,
+                                                  new_consumed,
+                                                  new_simu_before,
+                                                  new_simu_after) );
+        }
+        return AnalysableMultiTrace::new(new_canals,remaining_loop_instantiations_in_simulation);
+    }
+
+    pub fn update_on_hide(&self, lfs_to_hide : &HashSet<usize>) -> AnalysableMultiTrace {
+        let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+        for canal in &self.canals {
+            if canal.lifelines.is_subset( lfs_to_hide ) {
+                new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
+                                                     canal.trace.clone(),
+                                                     true,
+                                                     canal.flag_dirty4local,
+                                                     canal.consumed,
+                                                     canal.simulated_before,
+                                                     canal.simulated_after));
+            } else {
+                new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
+                                                     canal.trace.clone(),
+                                                     canal.flag_hidden,
+                                                     canal.flag_dirty4local,
+                                                     canal.consumed,
+                                                     canal.simulated_before,
+                                                     canal.simulated_after));
+            }
+        }
+        return AnalysableMultiTrace::new(new_canals,0);
+    }
+
+    pub fn update_on_simulation(&self, sim_kind : &SimulationStepKind, affected_lfs : &HashSet<usize>, target_lf_id : usize, rem_sim_depth : u32) -> AnalysableMultiTrace {
+        let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
+        for canal in &self.canals {
+            let canal_lfs = canal.lifelines.clone();
+            let new_trace = canal.trace.clone();
+            let new_flag_dirty4local : bool;
+            if canal_lfs.is_disjoint(affected_lfs) {
+                new_flag_dirty4local = canal.flag_dirty4local;
+            } else {
+                new_flag_dirty4local = true;
+            }
+            let new_flag_hidden = canal.flag_hidden;
+            let new_consumed = canal.consumed;
+            let new_simu_before : u32;
+            let new_simu_after : u32;
+            if canal.lifelines.contains(&target_lf_id) {
+                match sim_kind {
+                    SimulationStepKind::BeforeStart => {
+                        new_simu_before = canal.simulated_before + 1;
+                        new_simu_after = canal.simulated_after;
+                    },
+                    SimulationStepKind::AfterEnd => {
+                        new_simu_before = canal.simulated_before;
+                        new_simu_after = canal.simulated_after + 1;
+                    },
+                }
+            } else {
+                new_simu_before = canal.simulated_before;
+                new_simu_after = canal.simulated_after;
+            }
+            new_canals.push( MultiTraceCanal::new(canal_lfs,
+                                                  new_trace,
+                                                  new_flag_hidden,
+                                                  new_flag_dirty4local,
+                                                  new_consumed,
+                                                  new_simu_before,
+                                                  new_simu_after) );
+        }
+        return AnalysableMultiTrace::new(new_canals,rem_sim_depth);
     }
 }
 

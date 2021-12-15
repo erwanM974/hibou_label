@@ -30,19 +30,21 @@ use crate::core::semantics::execute::execute;
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
 use crate::core::trace::TraceActionKind;
+use crate::from_hfiles::hibou_options::HibouOptions;
 use crate::process::queue::*;
 
 use crate::process::priorities::ProcessPriorities;
 
 
-use crate::process::anakind::{AnalysisKind};
+use crate::process::anakind::{AnalysisKind,UseLocalAnalysis};
+use crate::process::analysis::analyze;
 
 
 pub struct HibouProcessManager {
     gen_ctx : GeneralContext,
     strategy : HibouSearchStrategy,
     ana_kind : Option<AnalysisKind>,
-    pub use_locfront : bool,
+    local_analysis : Option<UseLocalAnalysis>,
     pre_filters : Vec<HibouPreFilter>,
     // ***
     memorized_states : HashMap<u32,MemorizedState>,
@@ -59,10 +61,14 @@ impl HibouProcessManager {
         return self.ana_kind.as_ref().unwrap();
     }
 
+    pub fn get_local_analysis(&self) -> &UseLocalAnalysis {
+        return self.local_analysis.as_ref().unwrap();
+    }
+
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
                ana_kind : Option<AnalysisKind>,
-               use_locfront : bool,
+               local_analysis : Option<UseLocalAnalysis>,
                pre_filters : Vec<HibouPreFilter>,
                memorized_states : HashMap<u32,MemorizedState>,
                process_queue : Box<ProcessQueue>,
@@ -72,7 +78,7 @@ impl HibouProcessManager {
         return HibouProcessManager{gen_ctx,
             strategy,
             ana_kind,
-            use_locfront,
+            local_analysis,
             pre_filters,
             memorized_states,
             process_queue,
@@ -89,10 +95,21 @@ impl HibouProcessManager {
             Some( (goal,verd) ) => {
                 options_str.push("process=analysis".to_string());
                 options_str.push( format!("analysis kind={}", self.ana_kind.as_ref().unwrap().to_string()) );
-                if self.use_locfront {
-                    options_str.push("use_locfront=true".to_string());
-                } else {
-                    options_str.push("use_locfront=false".to_string());
+                match self.local_analysis {
+                    None => {},
+                    Some( ref loc_ana ) => {
+                        match loc_ana {
+                            &UseLocalAnalysis::No => {
+                                options_str.push("local_analysis=false".to_string());
+                            },
+                            &UseLocalAnalysis::Yes => {
+                                options_str.push("local_analysis=true".to_string());
+                            },
+                            _ => {
+                                panic!("TODO: implement")
+                            }
+                        }
+                    }
                 }
                 match goal {
                     None => {
@@ -123,38 +140,75 @@ impl HibouProcessManager {
         return options_str;
     }
 
-    pub fn is_dead_loc_front(&self, interaction : &Interaction, multi_trace : &AnalysableMultiTrace) -> bool {
-        for canal in &(multi_trace.canals) {
-            if canal.trace.len() > 0 {
-                // ***
-                match self.ana_kind.as_ref().unwrap() {
-                    AnalysisKind::Simulate( sim_before ) => {
-                        if *sim_before && (canal.consumed == 0) {
-                            // here we allow the simulation of actions before the start of
-                            // the given component trace
-                            // hence we shouldn't discard the node
-                            break;
-                        }
-                    },
-                    _ => {}
-                }
-                // ***
-                let loc_front = local_frontier(&self.gen_ctx, interaction, &canal.lifelines);
-                // ***
-                let head_act : &TraceAction = canal.trace.get(0).unwrap();
-                let mut is_in_local_frontier = false;
-                for front_act in loc_front {
-                    if head_act.is_match(&front_act) {
-                        is_in_local_frontier = true;
-                        break;
+    fn perform_local_analysis(&self, interaction : &Interaction, canal : &MultiTraceCanal) -> GlobalVerdict {
+        if canal.flag_dirty4local && canal.trace.len() > 0 {
+            // ***
+            match self.ana_kind.as_ref().unwrap() {
+                AnalysisKind::Simulate( sim_before ) => {
+                    if *sim_before && (canal.consumed == 0) {
+                        // here we allow the simulation of actions before the start of
+                        // the given component trace
+                        // hence we shouldn't discard the node
+                        return GlobalVerdict::Pass;
                     }
+                },
+                _ => {}
+            }
+            // ***
+            let local_interaction : Interaction;
+            {
+                let mut lfs_to_remove = self.gen_ctx.get_all_lfs_ids();
+                for lf_id in &canal.lifelines {
+                    lfs_to_remove.remove( &lf_id );
                 }
-                if !is_in_local_frontier {
-                    return true;
+                local_interaction = interaction.hide(&lfs_to_remove);
+            }
+            // ***
+            let local_mu : AnalysableMultiTrace;
+            {
+                let mut canals = Vec::new();
+                canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
+                                                  canal.trace.clone(),
+                                                  false,
+                                                  false,
+                                                      0,
+                                                      0,
+                                                      0) );
+                local_mu = AnalysableMultiTrace::new(canals,0);
+            }
+            // ***
+            let (local_verdict,_) = analyze(local_interaction,local_mu,self.gen_ctx.clone(),HibouOptions::local_analyze());
+            return local_verdict;
+        } else {
+            return GlobalVerdict::Pass;
+        }
+    }
+
+    pub fn is_dead_local_analysis(&self, interaction : &Interaction, multi_trace : &mut AnalysableMultiTrace) -> bool {
+        match &self.local_analysis {
+            None => { return false;},
+            Some( use_locana ) => {
+                match use_locana {
+                    UseLocalAnalysis::No => {return false;},
+                    UseLocalAnalysis::Yes => {
+                        for canal in multi_trace.canals.iter_mut() {
+                            match self.perform_local_analysis(interaction,canal) {
+                                GlobalVerdict::Fail => {
+                                    return true;
+                                },
+                                _ => {
+                                    canal.flag_dirty4local = false;
+                                }
+                            }
+                        }
+                        return false;
+                    },
+                    UseLocalAnalysis::OnlyFront => {
+                        panic!("TODO implement");
+                    }
                 }
             }
         }
-        return false;
     }
 
     pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<AnalysableMultiTrace>) {
@@ -382,7 +436,7 @@ impl HibouProcessManager {
                 let target_action = (parent_state.interaction).get_sub_interaction(position).as_leaf();
                 match self.apply_pre_filters(new_depth,Some(new_loop_depth),node_counter) {
                     None => {
-                        let new_interaction = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
+                        let (new_interaction,affected_lfs) = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
                         // ***
                         let new_multi_trace : Option<AnalysableMultiTrace>;
                         match (parent_state.multi_trace).as_ref(){
@@ -390,22 +444,7 @@ impl HibouProcessManager {
                                 new_multi_trace = None;
                             },
                             Some( ref multi_trace ) => {
-                                let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
-                                for canal in &multi_trace.canals {
-                                    if canal.lifelines.contains(&target_action.lf_id) {
-                                        let mut new_trace = canal.trace.clone();
-                                        new_trace.remove(0);
-                                        new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
-                                                                              new_trace,
-                                                                              false,
-                                                                              canal.consumed+1,
-                                                                              canal.simulated_before,
-                                                                              canal.simulated_after) );
-                                    } else {
-                                        new_canals.push(canal.clone());
-                                    }
-                                }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,new_interaction.max_nested_loop_depth()) );
+                                new_multi_trace = Some(multi_trace.update_on_execution(&affected_lfs, target_action.lf_id, new_interaction.max_nested_loop_depth()));
                             }
                         }
                         // ***
@@ -439,25 +478,7 @@ impl HibouProcessManager {
                                 panic!();
                             },
                             Some( ref multi_trace ) => {
-                                let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
-                                for canal in &multi_trace.canals {
-                                    if canal.lifelines.is_subset( &lfs_to_hide ) {
-                                        new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
-                                                                             canal.trace.clone(),
-                                                                             true,
-                                                                             canal.consumed,
-                                                                             canal.simulated_before,
-                                                                             canal.simulated_after));
-                                    } else {
-                                        new_canals.push(MultiTraceCanal::new(canal.lifelines.clone(),
-                                                                             canal.trace.clone(),
-                                                                             canal.flag_hidden,
-                                                                             canal.consumed,
-                                                                             canal.simulated_before,
-                                                                             canal.simulated_after));
-                                    }
-                                }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,0) );
+                                new_multi_trace = Some(multi_trace.update_on_hide(&lfs_to_hide));
                             }
                         }
                         // ***
@@ -485,7 +506,7 @@ impl HibouProcessManager {
                 let target_action = (parent_state.interaction).get_sub_interaction(position).as_leaf();
                 match self.apply_pre_filters(new_depth,Some(new_loop_depth), node_counter) {
                     None => {
-                        let new_interaction = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
+                        let (new_interaction,affected_lfs) = execute((parent_state.interaction).clone(),position.clone(),target_action.lf_id);
                         // ***
                         let new_multi_trace : Option<AnalysableMultiTrace>;
                         match (parent_state.multi_trace).as_ref(){
@@ -493,34 +514,8 @@ impl HibouProcessManager {
                                 new_multi_trace = None;
                             },
                             Some( ref multi_trace ) => {
-                                let mut new_canals : Vec<MultiTraceCanal> = Vec::new();
-                                for canal in &multi_trace.canals {
-                                    if canal.lifelines.contains(&target_action.lf_id) {
-                                        match sim_kind {
-                                            SimulationStepKind::BeforeStart => {
-                                                new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
-                                                                                      canal.trace.clone(),
-                                                                                      false,
-                                                                                      canal.consumed,
-                                                                                      canal.simulated_before + 1,
-                                                                                      canal.simulated_after) );
-                                            },
-                                            SimulationStepKind::AfterEnd => {
-                                                new_canals.push( MultiTraceCanal::new(canal.lifelines.clone(),
-                                                                                      canal.trace.clone(),
-                                                                                      false,
-                                                                                      canal.consumed,
-                                                                                      canal.simulated_before,
-                                                                                      canal.simulated_after + 1) );
-                                            }
-                                        }
-                                    } else {
-                                        new_canals.push(canal.clone());
-                                    }
-                                }
-                                new_multi_trace = Some( AnalysableMultiTrace::new(new_canals,
-                                                                                  multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth)
-                                );
+                                let rem_sim_depth = multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth;
+                                new_multi_trace = Some(multi_trace.update_on_simulation(sim_kind, &affected_lfs,target_action.lf_id,rem_sim_depth));
                             }
                         }
                         // ***

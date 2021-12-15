@@ -16,6 +16,7 @@ limitations under the License.
 
 
 use std::collections::HashSet;
+use std::iter::FromIterator;
 
 
 use crate::core::error::HibouCoreError;
@@ -105,6 +106,14 @@ impl GeneralContext {
 
     pub fn get_ms_num(&self) -> usize {
         return self.ms_names.len();
+    }
+
+    // ********** ********** ********** ********** ********** ********** **********
+    // ********** ********** ********** ********** ********** ********** **********
+    // ********** ********** ********** ********** ********** ********** **********
+
+    pub fn get_all_lfs_ids(&self) -> HashSet<usize> {
+        return HashSet::from_iter(0..self.get_lf_num() );
     }
 
     // ********** ********** ********** ********** ********** ********** **********
