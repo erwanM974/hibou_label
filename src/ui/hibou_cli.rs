@@ -59,7 +59,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.6.0   "#);
+    my_vec.push(r#"  V-label-0.6.5   "#);
     return my_vec;
 }
 
@@ -200,7 +200,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    }else if let Some(matches) = matches.subcommand_matches("merge") {
+    } else if let Some(matches) = matches.subcommand_matches("merge") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
@@ -309,31 +309,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    }/* else if let Some(matches) = matches.subcommand_matches("bench_hvs1") {
-        let hsf_file = matches.value_of("hsf").unwrap();
-        let htf_file = matches.value_of("htf").unwrap();
-        let report_file = matches.value_of("out").unwrap();
-        if matches.is_present("csp") {
-            hvs1_bench_analyze(hsf_file,htf_file,report_file,true);
-        } else {
-            hvs1_bench_analyze(hsf_file,htf_file,report_file,false);
-        }
-        ret_print.push( "BENCHMARKING hide vs simulation".to_string());
-        ret_print.push( format!("with interaction from file '{}'",hsf_file) );
-        ret_print.push( format!("and trace from file '{}'",htf_file) );
-        ret_print.push( format!("output in file '{}'",report_file) );
-        ret_print.push( "".to_string());
-    } else if let Some(matches) = matches.subcommand_matches("bench_hvs2") {
-        let hsf_file = matches.value_of("hsf").unwrap();
-        let htf_file = matches.value_of("htf").unwrap();
-        let report_file = matches.value_of("out").unwrap();
-        hvs2_bench_analyze(hsf_file,htf_file,report_file);
-        ret_print.push( "BENCHMARKING hide vs simulation".to_string());
-        ret_print.push( format!("with interaction from file '{}'",hsf_file) );
-        ret_print.push( format!("and trace from file '{}'",htf_file) );
-        ret_print.push( format!("output in file '{}'",report_file) );
-        ret_print.push( "".to_string());
-    }*/ else {
+    } else {
         ret_print.push( "".to_string() );
         ret_print.push( "TYPE help or -h to get a summary of the utilities".to_string() );
     }

@@ -591,6 +591,9 @@ impl Interaction {
                     Interaction::Empty => {
                         return Interaction::Empty;
                     },
+                    Interaction::Loop(opkind2,i11) => {
+                        return Interaction::Loop((opkind.min(opkind2)).clone(), i11.clone());
+                    },
                     _ => {
                         return Interaction::Loop(opkind.clone(),Box::new(i1hid) );
                     }

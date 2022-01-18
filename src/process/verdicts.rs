@@ -64,7 +64,7 @@ impl std::string::ToString for CoverageVerdict {
 
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum GlobalVerdict {
     Fail,
     Inconc,
