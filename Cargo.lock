@@ -267,6 +267,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "hibou_label"
+version = "0.7.1"
+dependencies = [
+ "clap",
+ "image",
+ "imageproc",
+ "maplit",
+ "pest",
+ "pest_derive",
+ "rusttype",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "image"
 version = "0.23.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -513,20 +528,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "ourtool"
-version = "0.6.5"
-dependencies = [
- "clap",
- "image",
- "imageproc",
- "pest",
- "pest_derive",
- "rusttype",
- "strum",
- "strum_macros",
 ]
 
 [[package]]
