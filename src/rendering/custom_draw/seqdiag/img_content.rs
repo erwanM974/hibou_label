@@ -44,7 +44,8 @@ use crate::rendering::sd_drawing_conf::*;
 use crate::rendering::textual::convention::*;
 use crate::rendering::textual::colored::colored_text::*;
 use crate::rendering::custom_draw::seqdiag::dimensions_tools::*;
-use crate::rendering::custom_draw::seqdiag::action::draw_action;
+use crate::rendering::custom_draw::seqdiag::action::emission::draw_emission;
+use crate::rendering::custom_draw::seqdiag::action::reception::draw_reception;
 use crate::rendering::custom_draw::seqdiag::lf_coords::DrawingLifelineCoords;
 use crate::rendering::hibou_color_palette::*;
 use crate::rendering::custom_draw::utils::colored_text::draw_colored_text;
@@ -66,8 +67,13 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
         &Interaction::Empty => {
             return [lf_num,0]; // because when going up we keep the minimum on the left and maximum on the right
         },
-        &Interaction::Action(ref act) => {
-            let lr_bounds = draw_action(image,gen_ctx,act,lf_x_widths,*yshift);
+        &Interaction::Emission(ref em_act) => {
+            let lr_bounds = draw_emission(image,gen_ctx,em_act,lf_x_widths,*yshift);
+            *yshift = *yshift + 3;
+            return lr_bounds;
+        },
+        &Interaction::Reception(ref rc_act) => {
+            let lr_bounds = draw_reception(image,gen_ctx,rc_act,lf_x_widths,*yshift);
             *yshift = *yshift + 3;
             return lr_bounds;
         },

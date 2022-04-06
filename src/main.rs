@@ -33,6 +33,9 @@ extern crate pest_derive;
 #[macro_use]
 extern crate clap;
 
+#[macro_use]
+extern crate maplit;
+
 // **********
 
 pub mod core;
@@ -43,6 +46,7 @@ pub mod ui;
 pub mod plantuml;
 pub mod canonize;
 pub mod merge_gates;
+//pub mod proc_refactoring;
 
 // **********
 

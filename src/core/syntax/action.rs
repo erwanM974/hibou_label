@@ -19,11 +19,107 @@ use std::collections::HashSet;
 
 use crate::core::trace::{TraceActionKind,TraceAction};
 
+
+
 #[derive(PartialOrd, Ord, Clone, PartialEq, Debug, Eq, Hash)]
 pub enum EmissionTargetRef {
     Lifeline(usize),
     Gate(usize)
 }
+
+#[derive(PartialOrd, Ord, Clone, PartialEq, Debug, Eq, Hash)]
+pub enum CommunicationSynchronicity {
+    Asynchronous,
+    Synchronous
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub struct EmissionAction {
+    pub origin_lf_id : usize,
+    pub ms_id : usize,
+    pub synchronicity : CommunicationSynchronicity,
+    pub targets : Vec<EmissionTargetRef> // both lf_ids and gt_ids possible
+}
+
+impl EmissionAction {
+    pub fn new(origin_lf_id : usize,
+               ms_id : usize,
+               synchronicity : CommunicationSynchronicity,
+               targets : Vec<EmissionTargetRef>) -> EmissionAction {
+        return EmissionAction{origin_lf_id,ms_id,synchronicity,targets}
+    }
+
+    pub fn lifeline_occupation(&self) -> HashSet<usize> {
+        let mut occ : HashSet<usize> = HashSet::new();
+        for target_ref in &self.targets {
+            match target_ref {
+                EmissionTargetRef::Lifeline(tar_lf_id) => {
+                    occ.insert( *tar_lf_id );
+                },
+                _ => {}
+            }
+        }
+        occ.insert( self.origin_lf_id );
+        return occ;
+    }
+
+    pub fn get_emission_atomic_action(&self) -> TraceAction {
+        return TraceAction::new(self.origin_lf_id,TraceActionKind::Emission,self.ms_id);
+    }
+
+    pub fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
+        let mut contents : HashSet<TraceAction> = HashSet::new();
+        contents.insert( self.get_emission_atomic_action() );
+        for target_ref in &self.targets {
+            match target_ref {
+                &EmissionTargetRef::Lifeline(tar_lf_id) => {
+                    contents.insert( TraceAction::new(tar_lf_id,TraceActionKind::Reception, self.ms_id) );
+                },
+                _ => {}
+            }
+        }
+        return contents;
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub struct ReceptionAction {
+    pub origin_gt_id : Option<usize>,
+    pub ms_id : usize,
+    pub synchronicity : CommunicationSynchronicity,
+    pub recipients : Vec<usize> // only lf_ids here
+}
+
+impl ReceptionAction {
+    pub fn new(origin_gt_id : Option<usize>,
+               ms_id : usize,
+               synchronicity : CommunicationSynchronicity,
+               recipients : Vec<usize>) -> ReceptionAction {
+        return ReceptionAction{origin_gt_id,ms_id,synchronicity,recipients}
+    }
+
+    pub fn lifeline_occupation(&self) -> HashSet<usize> {
+        let mut occ : HashSet<usize> = HashSet::new();
+        for rcp_lf_id in &self.recipients {
+            occ.insert( *rcp_lf_id );
+        }
+        return occ;
+    }
+
+    pub fn get_specific_reception_atomic_action(&self, rc_idx : usize) -> TraceAction {
+        return TraceAction::new(*self.recipients.get(rc_idx).unwrap(),TraceActionKind::Reception,self.ms_id);
+    }
+
+    pub fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
+        let mut contents : HashSet<TraceAction> = HashSet::new();
+        for rc_lf_id in &self.recipients {
+            contents.insert( TraceAction::new(*rc_lf_id,TraceActionKind::Reception,self.ms_id) );
+        }
+        return contents;
+    }
+}
+
+/*
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum ObservableActionKind {
@@ -109,3 +205,4 @@ impl ObservableAction {
     
 }
 
+*/

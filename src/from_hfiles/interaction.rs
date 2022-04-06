@@ -13,18 +13,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+
+
 use pest::iterators::{Pair,Pairs};
 
-
 use crate::from_hfiles::parser::*;
-
 
 use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::{Interaction,LoopKind};
+use crate::from_hfiles::action::action::parse_communication_action;
 
 use crate::from_hfiles::error::HibouParsingError;
-use crate::from_hfiles::action::{parse_emission,parse_reception};
 
 
 pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pair<Rule>) -> Result<Interaction,HibouParsingError> {
@@ -33,25 +34,8 @@ pub fn parse_interaction(gen_ctx : &mut GeneralContext, sd_interaction_pair : Pa
         Rule::SD_EMPTY_INTERACTION => {
             return Ok( Interaction::Empty );
         },
-        Rule::SD_ACTION_RECEPTION => {
-            match parse_reception(gen_ctx,&mut sd_content_pair.into_inner()) {
-                Err(e) => {
-                    return Err(e);
-                },
-                Ok( observable_action ) => {
-                    return Ok( Interaction::Action(observable_action) );
-                }
-            }
-        },
-        Rule::SD_ACTION_EMISSION => {
-            match parse_emission(gen_ctx,&mut sd_content_pair.into_inner()) {
-                Err(e) => {
-                    return Err(e);
-                },
-                Ok( got_interaction ) => {
-                    return Ok( got_interaction );
-                }
-            }
+        Rule::SD_COMMUNICATION_ACTION => {
+            return parse_communication_action(gen_ctx,&mut sd_content_pair.into_inner());
         },
         Rule::SD_STRICT_INT => {
             match get_nary_sub_interactions_from_pair(gen_ctx, sd_content_pair) {

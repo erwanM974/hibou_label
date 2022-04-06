@@ -23,67 +23,80 @@ use crate::core::general_context::GeneralContext;
 
 use crate::core::trace::TraceActionKind;
 
-use crate::core::semantics::execute::deploy_receptions;
 
 
+fn emission_lower_than(em_act1 : &EmissionAction, em_act2 : &EmissionAction) -> bool {
+    if &em_act1.ms_id < &em_act2.ms_id {
+        return true;
+    } else if &em_act1.ms_id > &em_act2.ms_id{
+        return false;
+    }
+    // ***
+    if &em_act1.origin_lf_id < &em_act2.origin_lf_id {
+        return true;
+    } else if &em_act1.origin_lf_id > &em_act2.origin_lf_id {
+        return false;
+    }
+    // ***
+    let max_tar_len = em_act1.targets.len().max(em_act2.targets.len());
+    for i in 0..max_tar_len {
+        match (em_act1.targets.get(i) , em_act2.targets.get(i) ) {
+            ( Some( tar_ref1 ), Some(tar_ref2) ) => {
+                if tar_ref1 < tar_ref2 {
+                    return true;
+                }
+            },
+            (None,Some(_)) => {
+                return true;
+            },
+            (Some(_),None) => {},
+            (None,None) => {}
+        }
+    }
+    // ***
+    return em_act1.synchronicity < em_act2.synchronicity;
+}
 
-fn action_lower_than(act1 : &ObservableAction, act2 : &ObservableAction) -> bool {
-    match (&act1.act_kind,&act2.act_kind) {
-        (&ObservableActionKind::Emission(_),&ObservableActionKind::Reception(_)) => {
+
+fn reception_lower_than(rc_act1 : &ReceptionAction, rc_act2 : &ReceptionAction) -> bool {
+    if &rc_act1.ms_id < &rc_act2.ms_id {
+        return true;
+    } else if &rc_act1.ms_id > &rc_act2.ms_id{
+        return false;
+    }
+    // ***
+    match (rc_act1.origin_gt_id,rc_act2.origin_gt_id) {
+        (None,Some(_)) => {
             return true;
         },
-        (&ObservableActionKind::Reception(_),&ObservableActionKind::Emission(_)) => {
-            return false;
-        },
-        (&ObservableActionKind::Reception(orig1),&ObservableActionKind::Reception(orig2)) => {
-            match (orig1,orig2) {
-                (None,None) => {
-                    // nothing
-                },
-                (gt_id1,None) => {
-                    return false;
-                },
-                (None,gt_id2) => {
-                    return true;
-                },
-                (gt_id1,gt_id2) => {
-                    if gt_id1 < gt_id2 {
-                        return true;
-                    } else if gt_id1 > gt_id2 {
-                        return false;
-                    }
-                }
-            }
-            if &act1.ms_id < &act2.ms_id {
+        (Some(_),None) => {},
+        (None,None) => {},
+        (Some( gt_id1),Some(gt_id2)) => {
+            if gt_id1 < gt_id2 {
                 return true;
-            } else if &act1.ms_id > &act2.ms_id{
-                return false;
-            }
-            if &act1.lf_id < &act2.lf_id {
-                return true;
-            } else if &act1.lf_id > &act2.lf_id {
-                return false;
-            }
-        },
-        (&ObservableActionKind::Emission(ref targets_refs1),&ObservableActionKind::Emission(ref targets_refs2)) => {
-            if &act1.ms_id < &act2.ms_id {
-                return true;
-            } else if &act1.ms_id > &act2.ms_id{
-                return false;
-            }
-            if &act1.lf_id < &act2.lf_id {
-                return true;
-            } else if &act1.lf_id > &act2.lf_id {
-                return false;
-            }
-            let max_tar_len = targets_refs1.len().max(targets_refs2.len());
-            for i in 0..max_tar_len {
-                // todo complete
             }
         }
     }
-    panic!("cannot compare actions");
+    // ***
+    let max_tar_len = rc_act1.recipients.len().max(rc_act2.recipients.len());
+    for i in 0..max_tar_len {
+        match (rc_act1.recipients.get(i) , rc_act2.recipients.get(i) ) {
+            ( Some( tar_lf_id1 ), Some(tar_lf_id2) ) => {
+                if tar_lf_id1 < tar_lf_id2 {
+                    return true;
+                }
+            },
+            (None,Some(_)) => {
+                return true;
+            },
+            (Some(_),None) => {},
+            (None,None) => {}
+        }
+    }
+    // ***
+    return rc_act1.synchronicity < rc_act2.synchronicity;
 }
+
 
 pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
     match i1 {
@@ -97,25 +110,44 @@ pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
                 }
             }
         },
-        &Interaction::Action(ref a1) => {
+        &Interaction::Emission(ref em_act1) => {
             match i2 {
                 &Interaction::Empty => {
                     return false;
                 },
-                &Interaction::Action(ref a2) => {
-                    return action_lower_than(a1,a2);
+                &Interaction::Emission(ref em_act2) => {
+                    return emission_lower_than(em_act1,em_act2);
                 },
                 _ => {
                     return true;
                 }
             }
         },
+        &Interaction::Reception(ref rc_act1) => {
+            match i2 {
+                &Interaction::Empty => {
+                    return false;
+                },
+                &Interaction::Emission(_) => {
+                    return false;
+                },
+                &Interaction::Reception(ref rc_act2) => {
+                    return reception_lower_than(rc_act1,rc_act2);
+                },
+                _ => {
+                    return true;
+                }
+            }
+        }
         &Interaction::Par(ref i11, ref i12) => {
             match i2 {
                 &Interaction::Empty => {
                     return false;
                 },
-                &Interaction::Action(ref a2) => {
+                &Interaction::Emission(_) => {
+                    return false;
+                },
+                &Interaction::Reception(_) => {
                     return false;
                 },
                 &Interaction::Par(ref i21, ref i22) => {
@@ -139,10 +171,13 @@ pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
                 &Interaction::Empty => {
                     return false;
                 },
-                &Interaction::Action(ref a2) => {
+                &Interaction::Emission(_) => {
                     return false;
                 },
-                &Interaction::Par(ref i21, ref i22) => {
+                &Interaction::Reception(_) => {
+                    return false;
+                },
+                &Interaction::Par(_,_) => {
                     return false;
                 },
                 &Interaction::Seq(ref i21, ref i22) => {
@@ -166,13 +201,16 @@ pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
                 &Interaction::Empty => {
                     return false;
                 },
-                &Interaction::Action(ref a2) => {
+                &Interaction::Emission(_) => {
                     return false;
                 },
-                &Interaction::Par(ref i21, ref i22) => {
+                &Interaction::Reception(_) => {
                     return false;
                 },
-                &Interaction::Seq(ref i21, ref i22) => {
+                &Interaction::Par(_,_) => {
+                    return false;
+                },
+                &Interaction::Seq(_,_) => {
                     return false;
                 },
                 &Interaction::Strict(ref i21, ref i22) => {
@@ -196,16 +234,19 @@ pub fn interaction_lower_than(i1 : &Interaction, i2 : &Interaction) -> bool {
                 &Interaction::Empty => {
                     return false;
                 },
-                &Interaction::Action(ref a2) => {
+                &Interaction::Emission(_) => {
                     return false;
                 },
-                &Interaction::Par(ref i21, ref i22) => {
+                &Interaction::Reception(_) => {
                     return false;
                 },
-                &Interaction::Seq(ref i21, ref i22) => {
+                &Interaction::Par(_,_) => {
                     return false;
                 },
-                &Interaction::Strict(ref i21, ref i22) => {
+                &Interaction::Seq(_,_) => {
+                    return false;
+                },
+                &Interaction::Strict(_,_) => {
                     return false;
                 },
                 &Interaction::Alt(ref i21, ref i22) => {

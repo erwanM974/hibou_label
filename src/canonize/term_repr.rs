@@ -24,8 +24,8 @@ use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::position::Position;
 
-use crate::core::semantics::execute::deploy_receptions;
 use crate::rendering::textual::convention::*;
+use crate::canonize::action_repr::*;
 
 pub fn interaction_repr(interaction : &Interaction, gen_ctx : &GeneralContext, name : &String, as_subgraph : bool) -> String {
     let mut repr : String = String::new();
@@ -41,57 +41,11 @@ pub fn interaction_repr(interaction : &Interaction, gen_ctx : &GeneralContext, n
     } else {
         repr.push_str( &format!("digraph {} {{\n", name) );
     }
-    interaction_repr_rec(&mut repr, interaction, gen_ctx, name, Position::Epsilon);
+    interaction_repr_rec(&mut repr, interaction, gen_ctx, name, Position::Epsilon(None));
     repr.push_str( "}\n" );
     return repr;
 }
 
-fn action_repr(to_write : &mut String,
-               act : &ObservableAction,
-               gen_ctx : &GeneralContext,
-               interaction_name : &String,
-               current_pos : Position) {
-    let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
-    let lf_name = gen_ctx.get_lf_name(act.lf_id).unwrap();
-    // ***
-    let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-    node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::PlainText) );
-    // ***
-    let node_name = format!("{}p{}",interaction_name,position_to_id(&current_pos));
-    // ***
-    match &act.act_kind {
-        &ObservableActionKind::Reception(orig) => {
-            match orig {
-                None => {
-                    node_gv_options.push( GraphvizNodeStyleItem::Label( format!("|-{}>{}", &ms_name, &lf_name) ) );
-                },
-                Some(gt_id) => {
-                    let gt_name = gen_ctx.get_gt_name(gt_id).unwrap();
-                    node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}-{}>{}", &gt_name, &ms_name, &lf_name) ) );
-                }
-            }
-        },
-        &ObservableActionKind::Emission(ref targets_refs) => {
-            let mut targ_names : Vec<String> = Vec::new();
-            for targ_ref in targets_refs {
-                match targ_ref {
-                    EmissionTargetRef::Lifeline(tar_lf_id) => {
-                        targ_names.push( gen_ctx.get_lf_name(*tar_lf_id).unwrap() );
-                    },
-                    EmissionTargetRef::Gate(tar_gt_id) => {
-                        targ_names.push( gen_ctx.get_gt_name(*tar_gt_id).unwrap() );
-                    }
-                }
-            }
-            // ***
-            let targets_str = targ_names.join(",");
-            node_gv_options.push( GraphvizNodeStyleItem::Label( format!("{}-{}>({})", &lf_name, &ms_name, &targ_names.join(",")) ) );
-        }
-    }
-    let gv_node = GraphVizNode{id : node_name, style : node_gv_options};
-    to_write.push_str( &gv_node.to_dot_string() );
-    to_write.push_str("\n");
-}
 
 fn interaction_repr_rec(to_write : &mut String,
                         interaction : &Interaction,
@@ -108,8 +62,11 @@ fn interaction_repr_rec(to_write : &mut String,
             to_write.push_str( &gv_node.to_dot_string() );
             to_write.push_str("\n");
         },
-        &Interaction::Action(ref act) => {
-            action_repr(to_write,act,gen_ctx,interaction_name,current_pos);
+        &Interaction::Emission(ref em_act) => {
+            emission_repr(to_write,em_act,gen_ctx,interaction_name,current_pos);
+        },
+        &Interaction::Reception(ref rc_act) => {
+            reception_repr(to_write,rc_act,gen_ctx,interaction_name,current_pos);
         },
         &Interaction::Strict(ref i1, ref i2) => {
             repr_binary_operator(to_write, i1, i2, SYNTAX_STRICT, gen_ctx, interaction_name, current_pos);
@@ -219,7 +176,7 @@ fn repr_binary_operator(to_write : &mut String,
 
 
 
-fn position_to_id(position : &Position) -> String {
+pub(crate) fn position_to_id(position : &Position) -> String {
     match position {
         Position::Left(ref in_self) => {
             let mut my_string = "1".to_string();
@@ -237,8 +194,15 @@ fn position_to_id(position : &Position) -> String {
             }
             return my_string;
         },
-        Position::Epsilon => {
-            return "0".to_string();
+        Position::Epsilon(sub_pos) => {
+            match sub_pos {
+                None => {
+                    return "0".to_string();
+                },
+                Some(sbp_idx) => {
+                    return format!("s{:}",sbp_idx);
+                }
+            }
         }
     }
 }

@@ -34,7 +34,10 @@ pub fn get_interaction_max_yshift(interaction : &Interaction) -> usize {
 fn get_interaction_depth(interaction : &Interaction ) -> usize {
     match interaction {
         &Interaction::Empty => {return  0},
-        &Interaction::Action(ref act) => {
+        &Interaction::Emission(_) => {
+            return 3;
+        },
+        &Interaction::Reception(_) => {
             return 3;
         },
         &Interaction::Strict(ref i1, ref i2) => {

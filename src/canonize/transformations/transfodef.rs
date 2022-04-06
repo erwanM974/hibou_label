@@ -521,6 +521,41 @@ pub(in crate::canonize) fn loop_unnest(interaction : &Interaction) -> Option<Int
 }
 
 
+
+pub(in crate::canonize) fn sort_emission_targets(interaction : &Interaction) -> Option<Interaction> {
+    match interaction {
+        &Interaction::Emission(ref em_act) => {
+            let mut new_targets = em_act.targets.clone();
+            new_targets.sort();
+            if new_targets != em_act.targets {
+                let new_emission = EmissionAction::new(em_act.origin_lf_id,em_act.ms_id,em_act.synchronicity.clone(),new_targets);
+                return Some( Interaction::Emission(new_emission) );
+            }
+        },
+        &Interaction::Reception(ref rc_act) => {
+            let mut new_targets = rc_act.recipients.clone();
+            new_targets.sort();
+            if new_targets != rc_act.recipients {
+                let new_reception = ReceptionAction::new(rc_act.origin_gt_id.clone(),rc_act.ms_id,rc_act.synchronicity.clone(),new_targets);
+                return Some( Interaction::Reception(new_reception) );
+            }
+        },
+        _ => {}
+    }
+    return None;
+}
+
+
+
+
+
+
+
+
+
+
+/*
+
 pub(in crate::canonize) fn strict_to_passing(interaction : &Interaction) -> Option<Interaction> {
     match interaction {
         &Interaction::Strict(ref i1, ref i2) => {
@@ -585,37 +620,7 @@ pub(in crate::canonize) fn strict_to_passing(interaction : &Interaction) -> Opti
     }
     return None;
 }
-
-pub(in crate::canonize) fn sort_emission_targets(interaction : &Interaction) -> Option<Interaction> {
-    match interaction {
-        &Interaction::Action(ref act) => {
-            match &act.act_kind {
-                ObservableActionKind::Emission(ref targets) => {
-                    let mut new_targets = targets.clone();
-                    new_targets.sort();
-                    if &new_targets != targets {
-                        return Some( Interaction::Action(ObservableAction{lf_id:act.lf_id,
-                            act_kind:ObservableActionKind::Emission(new_targets),ms_id:act.ms_id}) );
-                    }
-                },
-                _ => {}
-            }
-        },
-        _ => {}
-    }
-    return None;
-}
-
-
-
-
-
-
-
-
-
-
-
+*/
 
 
 

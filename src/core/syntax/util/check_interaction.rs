@@ -25,28 +25,24 @@ impl Interaction {
             Interaction::Empty => {
                 return false;
             },
-            Interaction::Action(ref act) => {
-                match act.act_kind {
-                    ObservableActionKind::Reception( possible_source ) => {
-                        match possible_source {
-                            None => {
-                                return false;
-                            },
-                            Some( source_gate ) => {
-                                return true;
-                            }
-                        }
-                    },
-                    ObservableActionKind::Emission(ref targets) => {
-                        for target_ref in targets {
-                            match target_ref {
-                                EmissionTargetRef::Lifeline(_) => {},
-                                EmissionTargetRef::Gate( target_gate ) => {
-                                    return true;
-                                }
-                            }
-                        }
+            Interaction::Emission(ref em_act) => {
+                for tar_ref in &em_act.targets {
+                    match tar_ref {
+                        EmissionTargetRef::Gate(_) => {
+                            return true;
+                        },
+                        _ => {}
+                    }
+                }
+                return false;
+            },
+            Interaction::Reception(ref rc_act) => {
+                match rc_act.origin_gt_id {
+                    None => {
                         return false;
+                    },
+                    Some(_) => {
+                        return true;
                     }
                 }
             },
@@ -79,7 +75,10 @@ impl Interaction {
             Interaction::Empty => {
                 return false;
             },
-            Interaction::Action(ref act) => {
+            Interaction::Emission(_) => {
+                return false;
+            },
+            Interaction::Reception(_) => {
                 return false;
             },
             Interaction::Strict(ref i1, ref i2) => {
@@ -111,7 +110,10 @@ impl Interaction {
             Interaction::Empty => {
                 return false;
             },
-            Interaction::Action(ref act) => {
+            Interaction::Emission(_) => {
+                return false;
+            },
+            Interaction::Reception(_) => {
                 return false;
             },
             Interaction::Strict(ref i1, ref i2) => {

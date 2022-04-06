@@ -33,10 +33,8 @@ impl ProcessPriorities {
                simulate : i32) -> ProcessPriorities {
         return ProcessPriorities{emission,reception,in_loop,step,hide,simulate};
     }
-}
 
-impl std::string::ToString for ProcessPriorities {
-    fn to_string(&self) -> String {
+    pub fn print_as_string(&self, is_analysis : bool) -> String {
         let mut my_str = String::new();
         match &self.step {
             None => {},
@@ -47,6 +45,10 @@ impl std::string::ToString for ProcessPriorities {
         my_str.push_str( &format!("emission={:},",self.emission) );
         my_str.push_str( &format!("reception={:},",self.reception) );
         my_str.push_str( &format!("loop={:}",self.in_loop) );
+        if is_analysis {
+            my_str.push_str( &format!(",hide={:},",self.hide) );
+            my_str.push_str( &format!("simulate={:}",self.simulate) );
+        }
         return my_str;
     }
 }

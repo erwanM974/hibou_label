@@ -345,7 +345,8 @@ fn get_possible_merges_from_root(interaction : &Interaction) -> Vec<InteractionT
 }
 
 
-fn merge_actions(emission : (&usize,&Vec<EmissionTargetRef>,&usize), reception : (&usize,&Option<usize>,&usize)) -> Option<ObservableAction> {
+fn merge_actions(emission : (&usize,&Vec<EmissionTargetRef>,&usize),
+                 reception : (&usize,&Option<usize>,&usize)) -> Option<ObservableAction> {
     let (src_lf_id,target_refs,src_ms_id) = emission;
     let (tar_lf_id,tar_orig,tar_ms_id) = reception;
     if src_ms_id == tar_ms_id {

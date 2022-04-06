@@ -48,6 +48,7 @@ use crate::rendering::textual::monochrome::position::position_to_text;
 use crate::rendering::custom_draw::utils::colored_text::draw_colored_text;
 
 use crate::core::trace::{TraceAction,TraceActionKind};
+use crate::process::hibou_process::SimulationStepKind;
 // **********
 
 
@@ -57,31 +58,49 @@ use crate::core::trace::{TraceAction,TraceActionKind};
 
 pub fn draw_firing(path_str : &String,
                    action_position : &Position,
-                   action : &TraceAction,
-                   is_simulation : bool,
+                   executed_actions : &HashSet<TraceAction>,
+                   sim_map : &HashMap<usize,SimulationStepKind>,
                    gen_ctx : &GeneralContext) {
     let path = Path::new( path_str );
     // ***
     let mut text_lines : Vec<Vec<TextToPrint>> = Vec::new();
     // ***
+    if sim_map.len() > 0 {
+        let mut ttp: Vec<TextToPrint> = Vec::new();
+        ttp.push( TextToPrint{text:"SIMU ".to_string(),color:Rgb(HCP_LightGray)} );
+        for (lf_id,sim_kind) in sim_map {
+            let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
+            ttp.push( TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)} );
+            match sim_kind {
+                SimulationStepKind::BeforeStart => {
+                    ttp.push( TextToPrint{text:"↑".to_string(),color:Rgb(HCP_LightGray)} );
+                },
+                SimulationStepKind::AfterEnd => {
+                    ttp.push( TextToPrint{text:"↓".to_string(),color:Rgb(HCP_LightGray)} );
+                }
+            }
+            ttp.push( TextToPrint{text:" ".to_string(),color:Rgb(HCP_Black)} );
+        }
+        text_lines.push( ttp );
+    }
+    // ***
     {
         let mut ttp: Vec<TextToPrint> = Vec::new();
-        if is_simulation {
-            ttp.push( TextToPrint{text:"/simu\\ ".to_string(),color:Rgb(HCP_LightGray)} );
+        for tr_act in executed_actions {
+            ttp.append( &mut diagram_repr_trace_action(tr_act,gen_ctx) );
+            ttp.push( TextToPrint{text:" ".to_string(),color:Rgb(HCP_Black)} );
         }
-        ttp.append( &mut diagram_repr_trace_action(action,gen_ctx) );
         // ***
         ttp.push( TextToPrint{text:"@p".to_string(),color:Rgb(HCP_StandardPurple)} );
         ttp.push( TextToPrint{text:position_to_text(action_position),color:Rgb(HCP_Black)} );
         text_lines.push( ttp );
-
     }
     // ***
     let line_lens : Vec<usize> = text_lines.iter().map(|x| TextToPrint::char_count(x) ).collect();
     let max_x_shift = *line_lens.iter().max().unwrap();
     // ***
     let img_width : f32 = 2.0*MARGIN + (max_x_shift as f32)*FONT_WIDTH/2.0;
-    let img_height : f32 = 2.0*MARGIN + (text_lines.len() as f32)*FONT_HEIGHT/2.0;
+    let img_height : f32 = MARGIN + (text_lines.len() as f32)*(MARGIN + VERTICAL_SIZE);
 
     // Draw Frame
     let mut image = RgbImage::new( img_width as u32, img_height as u32);
@@ -92,7 +111,7 @@ pub fn draw_firing(path_str : &String,
         let msg_x_pos = img_width/2.0 - (TextToPrint::char_count(&text) as f32)*FONT_WIDTH/4.0;
         let msg_y_pos = MARGIN + (yshift as f32)*VERTICAL_SIZE;
         draw_colored_text(&mut image,&text,msg_x_pos,msg_y_pos);
-        yshift = yshift +1;
+        yshift = yshift + 2;
     }
     // ***
     image.save(path).unwrap();

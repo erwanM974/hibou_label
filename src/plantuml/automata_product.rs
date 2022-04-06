@@ -31,8 +31,7 @@ pub fn to_plant_uml_ap(output_path : &String,
                        gen_ctx : &GeneralContext) {
     let mut output_file = File::create(output_path).unwrap();
     output_file.write( "@startuml\n".as_bytes() );
-    //TODO: for each lifeline make an automaton
-    // to do so hide all other lifelines, canonize the remainder and inductively build the automaton
+    // ***
     for lf_id in 0..gen_ctx.get_lf_num() {
         let lf_name = gen_ctx.get_lf_name(lf_id).unwrap();
         let mut lfs_to_remove : HashSet<usize> = (0..(gen_ctx.get_lf_num())).collect();
@@ -57,18 +56,24 @@ fn to_plant_uml_ap_rec(output_file : &mut File,
         &Interaction::Empty => {
             return (last_state,state_count);
         },
-        &Interaction::Action(ref act) => {
-            let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
-            let transition_label : String;
-            match act.act_kind {
-                ObservableActionKind::Reception(_) => {
-                    transition_label = format!("?{}",ms_name);
+        &Interaction::Emission(ref em_act) => {
+            let ms_name = gen_ctx.get_ms_name(em_act.ms_id).unwrap();
+            match em_act.targets.len() {
+                0 => {
+                    let transition_label = format!("!{}",ms_name);
+                    let new_state_label = format!("lf{}_s{}",lf_id,state_count);
+                    let last_state_label = get_last_label(lf_id, last_state);
+                    output_file.write( format!("{} --> {} : {}\n",last_state_label,new_state_label,transition_label).as_bytes() );
+                    return (state_count,state_count + 1);
                 },
-                ObservableActionKind::Emission(ref targets) => {
-                    assert!(targets.len() == 0);
-                    transition_label = format!("!{}",ms_name);
+                _ => {
+                    panic!("projection on automata cannot have message passing (check if on itself)");
                 }
             }
+        },
+        &Interaction::Reception(ref rc_act) => {
+            let ms_name = gen_ctx.get_ms_name(rc_act.ms_id).unwrap();
+            let transition_label = format!("?{}",ms_name);
             let new_state_label = format!("lf{}_s{}",lf_id,state_count);
             let last_state_label = get_last_label(lf_id, last_state);
             output_file.write( format!("{} --> {} : {}\n",last_state_label,new_state_label,transition_label).as_bytes() );

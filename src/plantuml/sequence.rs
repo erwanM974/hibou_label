@@ -42,31 +42,40 @@ fn to_plant_uml_sd_rec(output_file : &mut File,
                        gen_ctx : &GeneralContext) {
     match interaction {
         &Interaction::Empty => {},
-        &Interaction::Action(ref act) => {
-            let ms_name = gen_ctx.get_ms_name(act.ms_id).unwrap();
-            let lf_name = gen_ctx.get_lf_name(act.lf_id).unwrap();
-            match act.act_kind {
-                ObservableActionKind::Reception(_) => {
+        &Interaction::Reception(ref rc_act) => {
+            let ms_name = gen_ctx.get_ms_name(rc_act.ms_id).unwrap();
+            match rc_act.recipients.len() {
+                1 => {
+                    let lf_id = rc_act.recipients.get(0).unwrap();
+                    let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
                     output_file.write( format!("->{} : {}\n", &lf_name, &ms_name).as_bytes() );
                 },
-                ObservableActionKind::Emission(ref targets) => {
-                    let tars_len = targets.len();
-                    if tars_len == 0 {
-                        output_file.write( format!("{}-> : {}\n", &lf_name, &ms_name).as_bytes() );
-                    } else if tars_len == 1 {
-                        let target_ref = targets.get(0).unwrap();
-                        match target_ref {
-                            EmissionTargetRef::Gate(_) => {
-                                output_file.write( format!("{}->] : {}\n", &lf_name, &ms_name).as_bytes() );
-                            },
-                            EmissionTargetRef::Lifeline(tar_lf_id) => {
-                                let tar_lf_name = gen_ctx.get_lf_name(*tar_lf_id).unwrap();
-                                output_file.write( format!("{}->{} : {}\n", &lf_name, &tar_lf_name, &ms_name).as_bytes() );
-                            }
+                _ => {
+                    panic!("translation towards puml-sd does not implement broadcasts");
+                }
+            }
+        },
+        &Interaction::Emission(ref em_act) => {
+            let ms_name = gen_ctx.get_ms_name(em_act.ms_id).unwrap();
+            let lf_name = gen_ctx.get_lf_name(em_act.origin_lf_id).unwrap();
+            match em_act.targets.len() {
+                0 => {
+                    output_file.write( format!("{}-> : {}\n", &lf_name, &ms_name).as_bytes() );
+                },
+                1 => {
+                    let target_ref = em_act.targets.get(0).unwrap();
+                    match target_ref {
+                        EmissionTargetRef::Gate(_) => {
+                            output_file.write( format!("{}->] : {}\n", &lf_name, &ms_name).as_bytes() );
+                        },
+                        EmissionTargetRef::Lifeline(tar_lf_id) => {
+                            let tar_lf_name = gen_ctx.get_lf_name(*tar_lf_id).unwrap();
+                            output_file.write( format!("{}->{} : {}\n", &lf_name, &tar_lf_name, &ms_name).as_bytes() );
                         }
-                    } else {
-                        panic!("translation towards puml-sd does not implement broadcasts");
                     }
+                },
+                _ => {
+                    panic!("translation towards puml-sd does not implement broadcasts");
                 }
             }
         },

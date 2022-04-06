@@ -16,12 +16,17 @@ limitations under the License.
 
 
 
-
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Position {
     Left(Box<Position>),
     Right(Box<Position>),
-    Epsilon
+    Epsilon(Option<usize>)
 }
+
+
+
+
+
+
 
 

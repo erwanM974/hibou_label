@@ -21,6 +21,7 @@ pub enum HibouParsingError {
     FileError(String),
     MatchError(String),
     MissingMessageDeclarationError(String),
+    MissingLifelineDeclarationError(String),
     MissingLifelineOrGateDeclarationError(String),
     WrongGateUsage(String),
     EmissionDefinitionError(String),
@@ -44,6 +45,9 @@ impl fmt::Display for HibouParsingError {
             },
             HibouParsingError::MissingMessageDeclarationError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing ; missing message declaration : {:}", sub_e));
+            },
+            HibouParsingError::MissingLifelineDeclarationError(sub_e) => {
+                return write!(f, "{}", format!("error while parsing ; missing lifeline declaration : {:}", sub_e));
             },
             HibouParsingError::MissingLifelineOrGateDeclarationError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing ; missing lifeline or gate declaration : {:}", sub_e));

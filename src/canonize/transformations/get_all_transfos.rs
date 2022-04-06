@@ -43,7 +43,7 @@ fn get_all_transformations_inner(transfos : &Vec<(TransformationKind, &dyn Fn(&I
         match transfo_func(interaction) {
             None => {},
             Some(new_int) => {
-                results.push( InteractionTermTransformation::new((*transfo_kind).clone(),Position::Epsilon,new_int) );
+                results.push( InteractionTermTransformation::new((*transfo_kind).clone(),Position::Epsilon(None),new_int) );
             }
         }
     }
@@ -56,7 +56,9 @@ fn get_all_transformations_rec(transfos : &Vec<(TransformationKind, &dyn Fn(&Int
     match interaction {
         &Interaction::Empty => {
             // ***
-        }, &Interaction::Action(_) => {
+        }, &Interaction::Emission(_) => {
+            // ***
+        }, &Interaction::Reception(_) => {
             // ***
         }, &Interaction::Strict(ref i1, ref i2) => {
             for left_transfo in get_all_transformations_rec(transfos,i1) {

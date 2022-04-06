@@ -22,7 +22,6 @@ use crate::core::syntax::interaction::Interaction;
 use crate::core::syntax::position::Position;
 
 use crate::core::trace::TraceAction;
-use crate::core::syntax::action::ObservableAction;
 
 
 

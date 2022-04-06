@@ -21,6 +21,7 @@ use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::*;
 use crate::core::syntax::action::*;
 use crate::core::syntax::position::*;
+use crate::core::semantics::frontier::FrontierElement;
 use crate::core::trace::{AnalysableMultiTrace,MultiTraceCanal,TraceAction};
 use crate::process::log::ProcessLogger;
 use crate::process::verdicts::CoverageVerdict;
@@ -55,9 +56,9 @@ pub enum SimulationStepKind {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum NextToProcessKind {
-    Execute(Position),
-    Hide( HashSet<usize> ),
-    Simulate(Position,SimulationStepKind)
+    Execute(FrontierElement),
+    Hide( HashSet<usize> ), // all the lifelines to hide
+    Simulate(FrontierElement,HashMap<usize,SimulationStepKind>) // for each lifeline on which simulation is done, which kind (the other lifelines, if participating in the action, consume events)
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -123,8 +124,7 @@ impl std::string::ToString for FilterEliminationKind {
 
 pub enum HibouSearchStrategy {
     BFS,
-    DFS,
-    GFS(ProcessPriorities)
+    DFS
 }
 
 impl std::string::ToString for HibouSearchStrategy {
@@ -135,9 +135,6 @@ impl std::string::ToString for HibouSearchStrategy {
             },
             HibouSearchStrategy::DFS => {
                 return "DepthFS".to_string();
-            },
-            HibouSearchStrategy::GFS(ref pp) => {
-                return format!("GreedyBestFS[{:}]", &pp.to_string());
             }
         }
     }

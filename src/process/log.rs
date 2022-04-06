@@ -47,8 +47,8 @@ pub trait ProcessLogger {
                 parent_state_id : u32,
                 new_state_id : u32,
                 action_position : &Position,
-                action : &TraceAction,
-                is_simulation : bool,
+                executed_actions : &HashSet<TraceAction>,
+                sim_map : &HashMap<usize,SimulationStepKind>,
                 new_interaction : &Interaction,
                 remaining_multi_trace : &Option<AnalysableMultiTrace>);
 

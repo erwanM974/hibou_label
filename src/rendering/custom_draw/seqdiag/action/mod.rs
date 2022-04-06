@@ -14,14 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
-pub mod anakind;
-pub mod priorities;
-pub mod log;
-pub mod hibou_process;
-pub mod process_manager;
-pub mod verdicts;
-pub mod exploration;
-pub mod analysis;
-
-
+mod common;
+pub mod emission;
+pub mod reception;

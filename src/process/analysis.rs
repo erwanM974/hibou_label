@@ -24,14 +24,12 @@ use crate::core::syntax::position::*;
 use crate::core::trace::*;
 use crate::process::log::ProcessLogger;
 use crate::core::semantics::frontier::global_frontier;
-use crate::core::semantics::locfront::local_frontier;
 
-use crate::core::semantics::execute::execute;
+use crate::core::semantics::execute::execute_interaction;
 
 use crate::process::verdicts::*;
 use crate::process::hibou_process::*;
 use crate::process::process_manager::*;
-use crate::process::queue::*;
 use crate::process::priorities::ProcessPriorities;
 
 
@@ -51,7 +49,6 @@ pub fn analyze(interaction : Interaction,
                                                hoptions.local_analysis,
                                                hoptions.pre_filters,
                                                HashMap::new(),
-                                               Box::new(SimpleProcessQueue::new()),
                                                hoptions.frontier_priorities,
                                                hoptions.loggers);
     // ***
@@ -150,14 +147,114 @@ fn add_action_matches_in_analysis(interaction : &Interaction,
                                   next_child_id : &mut u32,
                                   to_enqueue : &mut Vec<(u32,NextToProcessKind)>) {
     // ***
-    for front_pos in global_frontier(interaction) {
-        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
-        for head_act in head_actions {
-            if head_act.is_match(front_act) {
-                *next_child_id = *next_child_id +1;
-                let child_kind = NextToProcessKind::Execute(front_pos);
-                to_enqueue.push( (*next_child_id,child_kind) );
-                break;
+    for frt_elt in global_frontier(interaction,&Some(head_actions)) {
+        *next_child_id = *next_child_id +1;
+        let child_kind = NextToProcessKind::Execute(frt_elt);
+        to_enqueue.push( (*next_child_id,child_kind) );
+    }
+}
+
+fn powerset<T>(s: &[T]) -> Vec<Vec<T>> where T: Clone {
+    (0..2usize.pow(s.len() as u32)).map(|i| {
+        s.iter().enumerate().filter(|&(t, _)| (i >> t) % 2 == 1)
+            .map(|(_, element)| element.clone())
+            .collect()
+    }).collect()
+}
+
+
+fn add_simulation_matches_in_analysis(interaction : &Interaction,
+                                  multi_trace : &AnalysableMultiTrace,
+                                      sim_before:bool,
+                                  next_child_id : &mut u32,
+                                  to_enqueue : &mut Vec<(u32,NextToProcessKind)>) {
+    // ***
+    for frt_elt in global_frontier(&interaction,&None) {
+        let mut match_on_canal : Vec<(usize,usize)> = vec!{}; // ids of the canals on which there is a match
+        let mut ok_lifelines : HashSet<usize> = hashset!{}; // lifelines in which we already do something match or simu
+        let mut act_left_to_match : HashSet<&TraceAction> = frt_elt.target_actions.iter().collect();
+        for (canal_id, canal) in multi_trace.canals.iter().enumerate() {
+            match canal.trace.get(0) {
+                None => {},
+                Some( got_act ) => {
+                    if act_left_to_match.contains(got_act) {
+                        match_on_canal.push((got_act.lf_id,canal_id) );
+                        act_left_to_match.remove(got_act);
+                        ok_lifelines.extend(&canal.lifelines);
+                    }
+                }
+            }
+        }
+        if multi_trace.length() > 0 {
+            let mut to_simulate : HashMap<usize,SimulationStepKind> = hashmap!{};
+            let mut ok_to_simulate = true;
+            if act_left_to_match.len() > 0 && interaction.get_loop_depth_at_pos(&frt_elt.position) > multi_trace.remaining_loop_instantiations_in_simulation {
+                ok_to_simulate = false;
+            }
+            for tract in act_left_to_match {
+                if !ok_to_simulate {
+                    break;
+                }
+                if ok_lifelines.contains(&tract.lf_id) {
+                    println!("analysis line 199 : several actions on the same lifeline ?");
+                } else {
+                    let mut gotit = false;
+                    for canal in &multi_trace.canals {
+                        if canal.lifelines.contains(&tract.lf_id) {
+                            if canal.trace.len() == 0 {
+                                to_simulate.insert( tract.lf_id, SimulationStepKind::AfterEnd);
+                                gotit = true;
+                                break;
+                            } else {
+                                if sim_before && (canal.consumed == 0) {
+                                    to_simulate.insert(tract.lf_id,SimulationStepKind::BeforeStart);
+                                    gotit = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if !gotit {
+                        ok_to_simulate = false;
+                    }
+                }
+            }
+            if ok_to_simulate {
+                {
+                    *next_child_id = *next_child_id +1;
+                    let child_kind = NextToProcessKind::Simulate(frt_elt.clone(),to_simulate.clone());
+                    to_enqueue.push( (*next_child_id,child_kind) );
+                }
+                if match_on_canal.len() > 0 && interaction.get_loop_depth_at_pos(&frt_elt.position) <= multi_trace.remaining_loop_instantiations_in_simulation {
+                    for combinations in powerset(&match_on_canal) {
+                        if combinations.len() > 0 {
+                            let mut ok_to_simulate = true;
+                            let mut to_simulate_more = to_simulate.clone();
+                            for (lf_id,canal_id) in combinations {
+                                if !ok_to_simulate{
+                                    break;
+                                }
+                                let canal = multi_trace.canals.get(canal_id).unwrap();
+                                if canal.trace.len() == 0 {
+                                    to_simulate_more.insert( lf_id, SimulationStepKind::AfterEnd);
+                                } else {
+                                    if sim_before && (canal.consumed == 0) {
+                                        to_simulate_more.insert(lf_id,SimulationStepKind::BeforeStart);
+                                    } else {
+                                        ok_to_simulate = false;
+                                    }
+                                }
+                            }
+                            if ok_to_simulate {
+                                {
+                                    *next_child_id = *next_child_id +1;
+                                    let child_kind = NextToProcessKind::Simulate(frt_elt.clone(),to_simulate_more.clone());
+                                    to_enqueue.push( (*next_child_id,child_kind) );
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -189,81 +286,23 @@ fn enqueue_next_node_in_analysis(manager     : &mut HibouProcessManager,
             add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
         },
         &AnalysisKind::Hide => {
-            if multi_trace.length() > 0 {
-                let mut to_hide : HashSet<usize> = HashSet::new();
-                for canal in &multi_trace.canals {
-                    if (canal.trace.len() == 0) && (canal.flag_hidden == false) && (interaction.involves_any_of(&canal.lifelines)) {
-                        to_hide.extend( canal.lifelines.clone() )
-                    }
+            let mut to_hide : HashSet<usize> = HashSet::new();
+            for canal in &multi_trace.canals {
+                if (canal.flag_hidden == false) && (canal.trace.len() == 0) { // && (interaction.involves_any_of(&canal.lifelines)) {
+                    to_hide.extend( canal.lifelines.clone() )
                 }
-                //
-                if to_hide.len() > 0 {
-                    next_child_id = next_child_id +1;
-                    let child_kind = NextToProcessKind::Hide( to_hide );
-                    to_enqueue.push( (next_child_id,child_kind) );
-                } else {
-                    add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
-                }
+            }
+            //
+            if to_hide.len() > 0 {
+                next_child_id = next_child_id +1;
+                let child_kind = NextToProcessKind::Hide( to_hide );
+                to_enqueue.push( (next_child_id,child_kind) );
+            } else {
+                add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
             }
         },
         &AnalysisKind::Simulate(sim_before) => {
-            add_action_matches_in_analysis(&interaction,&head_actions,&mut next_child_id, &mut to_enqueue);
-            if multi_trace.length() > 0 {
-                for front_pos in global_frontier(&interaction) {
-                    if interaction.get_loop_depth_at_pos(&front_pos) <= multi_trace.remaining_loop_instantiations_in_simulation {
-                        let front_act = interaction.get_sub_interaction(&front_pos).as_leaf();
-                        for canal in &multi_trace.canals {
-                            if canal.lifelines.contains(&front_act.lf_id) {
-                                // ***
-                                let ok_to_simulate : Option<SimulationStepKind>;
-                                // ***
-                                if canal.trace.len() == 0 {
-                                    ok_to_simulate = Some(SimulationStepKind::AfterEnd);
-                                } else {
-                                    // ***
-                                    if sim_before && (canal.consumed == 0) {
-                                        ok_to_simulate = Some(SimulationStepKind::BeforeStart);
-                                    } else {
-                                        ok_to_simulate = None;
-                                    }
-                                }
-                                match ok_to_simulate {
-                                    None => {},
-                                    Some( sim_step_kind ) => {
-                                        // ***
-                                        // additional checking; we instanciate content from loops
-                                        // iff it contains actions susceptible to allow duther consumption of the multi-trace
-                                        let mut confirm_simulate : bool = false;
-                                        match interaction.get_outermost_loop_content(&front_pos) {
-                                            None => {
-                                                confirm_simulate = true;
-                                            },
-                                            Some( (loop_content,relative_front_pos) ) => {
-                                                let (after_execute_content,_) = execute(loop_content,relative_front_pos, front_act.lf_id);
-                                                let contained_actions = after_execute_content.contained_actions();
-                                                for head_act in &head_actions {
-                                                    if contained_actions.contains(head_act){
-                                                        confirm_simulate = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        // ***
-                                        if confirm_simulate {
-                                            next_child_id = next_child_id +1;
-                                            let child_kind = NextToProcessKind::Simulate(front_pos,sim_step_kind);
-                                            to_enqueue.push( (next_child_id,child_kind) );
-                                        }
-                                        // ***
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            add_simulation_matches_in_analysis(&interaction,&multi_trace,sim_before,&mut next_child_id, &mut to_enqueue);
         }
     }
     // ***

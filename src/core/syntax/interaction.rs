@@ -17,9 +17,8 @@ limitations under the License.
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
-use crate::core::syntax::position::*;
 use crate::core::syntax::action::*;
-use crate::core::trace::TraceAction;
+use crate::core::trace::{TraceAction, TraceActionKind};
 
 #[derive(Clone, PartialEq, Debug, Eq, PartialOrd, Ord, Hash)]
 pub enum LoopKind {
@@ -32,7 +31,8 @@ pub enum LoopKind {
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum Interaction {
     Empty,
-    Action(ObservableAction),
+    Emission(EmissionAction),
+    Reception(ReceptionAction),
     Strict(Box<Interaction>,Box<Interaction>),
     Seq(Box<Interaction>,Box<Interaction>),
     CoReg(Vec<usize>,Box<Interaction>,Box<Interaction>),
@@ -45,10 +45,13 @@ pub enum Interaction {
 
 impl Interaction {
 
-    pub fn as_leaf(&self) -> &ObservableAction {
+    pub fn get_leaf_action_kind(&self) -> TraceActionKind {
         match self {
-            Interaction::Action(act) => {
-                return act;
+            Interaction::Emission(_) => {
+                return TraceActionKind::Emission;
+            },
+            Interaction::Reception(_) => {
+                return TraceActionKind::Reception;
             },
             _ => {
                 panic!("called as_leaf on something that's not a leaf : {:?}", self);
@@ -56,133 +59,34 @@ impl Interaction {
         }
     }
 
-    pub fn get_outermost_loop_content(&self, my_pos : &Position) -> Option<(Interaction,Position)> {
-        match my_pos {
-            Position::Epsilon => {
-                return None;
-            },
-            Position::Left(sub_pos) => {
-                match self {
-                    &Interaction::Seq(ref i1, ref i2) => {
-                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
-                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Strict(ref i1, ref i2) => {
-                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Alt(ref i1, ref i2) => {
-                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Par(ref i1, ref i2) => {
-                        return (&*i1).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Loop(_ , ref i1) => {
-                        return Some( ( *(i1.clone()) , *(sub_pos.clone()) ) );
-                    },
-                    _ => {
-                        panic!();
-                    }
-                }
-            },
-            Position::Right(sub_pos) => {
-                match self {
-                    &Interaction::Seq(ref i1, ref i2) => {
-                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
-                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Strict(ref i1, ref i2) => {
-                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Alt(ref i1, ref i2) => {
-                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    &Interaction::Par(ref i1, ref i2) => {
-                        return (&*i2).get_outermost_loop_content( &(*sub_pos) );
-                    },
-                    _ => {
-                        panic!();
-                    }
-                }
-            }
-        }
-    }
-
-    pub fn get_sub_interaction(&self, my_pos : &Position) -> &Interaction {
-        match my_pos {
-            Position::Epsilon => {
-                return self;
-            },
-            Position::Left(sub_pos) => {
-                match self {
-                    &Interaction::Seq(ref i1, _) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, ref i1, _) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Strict(ref i1, _) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Alt(ref i1, _) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Par(ref i1, _) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Loop(_ , ref i1) => {
-                        return (&*i1).get_sub_interaction( &(*sub_pos) );
-                    },
-                    _ => {
-                        panic!();
-                    }
-                }
-            },
-            Position::Right(sub_pos) => {
-                match self {
-                    &Interaction::Seq(_, ref i2) => {
-                        return (&*i2).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, _, ref i2) => {
-                        return (&*i2).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Strict(_, ref i2) => {
-                        return (&*i2).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Alt(_, ref i2) => {
-                        return (&*i2).get_sub_interaction( &(*sub_pos) );
-                    },
-                    &Interaction::Par(_, ref i2) => {
-                        return (&*i2).get_sub_interaction( &(*sub_pos) );
-                    },
-                    _ => {
-                        panic!();
-                    }
-                }
-            }
-        }
-    }
 
     pub fn express_empty(&self) -> bool {
         match self {
             &Interaction::Empty => {
                 return true;
-            }, &Interaction::Action(_) => {
+            },
+            &Interaction::Emission(_) => {
                 return false;
-            }, &Interaction::Strict(ref i1, ref i2) => {
+            },
+            &Interaction::Reception(ref rc_act) => {
+                return rc_act.recipients.len() == 0;
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
-            }, &Interaction::Seq(ref i1, ref i2) => {
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
-            }, &Interaction::Par(ref i1, ref i2) => {
+            },
+            &Interaction::Par(ref i1, ref i2) => {
                 return i1.express_empty() && i2.express_empty();
-            }, &Interaction::Alt(ref i1, ref i2) => {
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
                 return i1.express_empty() || i2.express_empty();
-            }, &Interaction::Loop(_, _) => {
+            },
+            &Interaction::Loop(_, _) => {
                 return true;
             },
             _ => {
@@ -191,34 +95,99 @@ impl Interaction {
         }
     }
 
-    pub fn contained_actions(&self) -> HashSet<TraceAction> {
+    pub fn contained_model_actions(&self) -> (HashSet<&EmissionAction>,HashSet<&ReceptionAction>) {
+        match &self {
+            &Interaction::Empty => {
+                return (hashset!{},hashset!{});
+            },
+            &Interaction::Emission(ref em_act) => {
+                return (hashset!{em_act},hashset!{});
+            },
+            &Interaction::Reception(ref rc_act) => {
+                return (hashset!{},hashset!{rc_act});
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
+            &Interaction::Par(ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
+            &Interaction::Loop(_, i1) => {
+                return i1.contained_model_actions();
+            },
+            _ => {
+                panic!("non-conform interaction");
+            }
+        }
+    }
+
+    pub fn contained_trace_actions(&self) -> HashSet<TraceAction> {
         match &self {
             &Interaction::Empty => {
                 return HashSet::new();
-            }, &Interaction::Action(ref act) => {
-                return act.get_all_atomic_actions();
-            }, &Interaction::Strict(ref i1, ref i2) => {
-                let mut content = i1.contained_actions();
-                content.extend( i2.contained_actions() );
+            },
+            &Interaction::Emission(ref em_act) => {
+                return em_act.get_all_atomic_actions();
+            },
+            &Interaction::Reception(ref rc_act) => {
+                return rc_act.get_all_atomic_actions();
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
+                let mut content = i1.contained_trace_actions();
+                content.extend( i2.contained_trace_actions() );
                 return content;
-            }, &Interaction::Seq(ref i1, ref i2) => {
-                let mut content = i1.contained_actions();
-                content.extend( i2.contained_actions() );
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
+                let mut content = i1.contained_trace_actions();
+                content.extend( i2.contained_trace_actions() );
                 return content;
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
-                let mut content = i1.contained_actions();
-                content.extend( i2.contained_actions() );
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
+                let mut content = i1.contained_trace_actions();
+                content.extend( i2.contained_trace_actions() );
                 return content;
-            }, &Interaction::Par(ref i1, ref i2) => {
-                let mut content = i1.contained_actions();
-                content.extend( i2.contained_actions() );
+            },
+            &Interaction::Par(ref i1, ref i2) => {
+                let mut content = i1.contained_trace_actions();
+                content.extend( i2.contained_trace_actions() );
                 return content;
-            }, &Interaction::Alt(ref i1, ref i2) => {
-                let mut content = i1.contained_actions();
-                content.extend( i2.contained_actions() );
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
+                let mut content = i1.contained_trace_actions();
+                content.extend( i2.contained_trace_actions() );
                 return content;
-            }, &Interaction::Loop(_, i1) => {
-                return i1.contained_actions();
+            },
+            &Interaction::Loop(_, i1) => {
+                return i1.contained_trace_actions();
             },
             _ => {
                 panic!("non-conform interaction");
@@ -230,33 +199,39 @@ impl Interaction {
         match &self {
             &Interaction::Empty => {
                 return HashSet::new();
-            }, &Interaction::Action(ref act) => {
-                let mut involved_lfs = HashSet::new();
-                for tract in act.get_all_atomic_actions() {
-                    involved_lfs.insert( tract.lf_id );
-                }
-                return involved_lfs;
-            }, &Interaction::Strict(ref i1, ref i2) => {
+            },
+            &Interaction::Emission(ref em_act) => {
+                return em_act.lifeline_occupation();
+            },
+            &Interaction::Reception(ref rc_act) => {
+                return rc_act.lifeline_occupation();
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
                 return content;
-            }, &Interaction::Seq(ref i1, ref i2) => {
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
                 return content;
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
                 return content;
-            }, &Interaction::Par(ref i1, ref i2) => {
+            },
+            &Interaction::Par(ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
                 return content;
-            }, &Interaction::Alt(ref i1, ref i2) => {
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
                 return content;
-            }, &Interaction::Loop(_, i1) => {
+            },
+            &Interaction::Loop(_, i1) => {
                 return i1.involved_lifelines();
             },
             _ => {
@@ -265,57 +240,44 @@ impl Interaction {
         }
     }
 
-    pub fn avoids(&self, lf_id : usize) -> bool {
+    pub fn avoids_all_of(&self, lf_ids : &HashSet<usize>) -> bool {
         match self {
             &Interaction::Empty => {
-                return true;
-            }, &Interaction::Action(ref act) => {
-                if act.occupation_after().contains(&lf_id) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }, &Interaction::Strict(ref i1, ref i2) => {
-                return i1.avoids(lf_id) && i2.avoids(lf_id);
-            }, &Interaction::Seq(ref i1, ref i2) => {
-                return i1.avoids(lf_id) && i2.avoids(lf_id);
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.avoids(lf_id) && i2.avoids(lf_id);
-            }, &Interaction::Par(ref i1, ref i2) => {
-                return i1.avoids(lf_id) && i2.avoids(lf_id);
-            }, &Interaction::Alt(ref i1, ref i2) => {
-                return i1.avoids(lf_id) || i2.avoids(lf_id);
-            }, &Interaction::Loop(_, _) => {
                 return true;
             },
-            _ => {
-                panic!("non-conform interaction");
-            }
-        }
-    }
-
-    pub fn involves(&self, lf_id : usize) -> bool {
-        match self {
-            &Interaction::Empty => {
-                return false;
-            }, &Interaction::Action(ref act) => {
-                if act.occupation_after().contains(&lf_id) {
+            &Interaction::Emission(ref em_act) => {
+                let occ = em_act.lifeline_occupation();
+                if occ.is_disjoint(lf_ids) {
                     return true;
                 } else {
                     return false;
                 }
-            }, &Interaction::Strict(ref i1, ref i2) => {
-                return i1.involves(lf_id) || i2.involves(lf_id);
-            }, &Interaction::Seq(ref i1, ref i2) => {
-                return i1.involves(lf_id) || i2.involves(lf_id);
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.involves(lf_id) || i2.involves(lf_id);
-            }, &Interaction::Par(ref i1, ref i2) => {
-                return i1.involves(lf_id) || i2.involves(lf_id);
-            }, &Interaction::Alt(ref i1, ref i2) => {
-                return i1.involves(lf_id) || i2.involves(lf_id);
-            }, &Interaction::Loop(_, ref i1) => {
-                return i1.involves(lf_id);
+            },
+            &Interaction::Reception(ref rc_act) => {
+                let occ = rc_act.lifeline_occupation();
+                if occ.is_disjoint(lf_ids) {
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
+            },
+            &Interaction::Par(ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) || i2.avoids_all_of(lf_ids);
+            },
+            &Interaction::Loop(_, _) => {
+                return true;
             },
             _ => {
                 panic!("non-conform interaction");
@@ -327,24 +289,39 @@ impl Interaction {
         match self {
             &Interaction::Empty => {
                 return false;
-            }, &Interaction::Action(ref act) => {
-                for lf_id in lf_ids {
-                    if act.occupation_after().contains(lf_id) {
-                        return true;
-                    }
+            },
+            &Interaction::Emission(ref em_act) => {
+                let occ = em_act.lifeline_occupation();
+                if occ.is_disjoint(lf_ids) {
+                    return false;
+                } else {
+                    return true;
                 }
-                return false;
-            }, &Interaction::Strict(ref i1, ref i2) => {
+            },
+            &Interaction::Reception(ref rc_act) => {
+                let occ = rc_act.lifeline_occupation();
+                if occ.is_disjoint(lf_ids) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
-            }, &Interaction::Seq(ref i1, ref i2) => {
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
-            }, &Interaction::Par(ref i1, ref i2) => {
+            },
+            &Interaction::Par(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
-            }, &Interaction::Alt(ref i1, ref i2) => {
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
-            }, &Interaction::Loop(_, ref i1) => {
+            },
+            &Interaction::Loop(_, ref i1) => {
                 return i1.involves_any_of(lf_ids);
             },
             _ => {
@@ -357,7 +334,9 @@ impl Interaction {
         match self {
             &Interaction::Empty => {
                 return 0;
-            }, &Interaction::Action(ref act) => {
+            }, &Interaction::Emission(_) => {
+                return 0;
+            }, &Interaction::Reception(_) => {
                 return 0;
             }, &Interaction::Strict(ref i1, ref i2) => {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
@@ -378,60 +357,6 @@ impl Interaction {
         }
     }
 
-    pub fn get_loop_depth_at_pos(&self, my_pos : &Position) -> u32 {
-        match my_pos {
-            Position::Epsilon => {
-                return 0;
-            },
-            Position::Left(sub_pos) => {
-                match self {
-                    &Interaction::Alt(ref i1, ref i2) => {
-                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Strict(ref i1, ref i2) => {
-                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Seq(ref i1, ref i2) => {
-                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
-                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Par(ref i1, ref i2) => {
-                        return i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Loop(_, ref i1) => {
-                        return 1 + i1.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    _ => {
-                        panic!("undefined pos");
-                    }
-                }
-            },
-            Position::Right(sub_pos) => {
-                match self {
-                    &Interaction::Alt(ref i1, ref i2) => {
-                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Strict(ref i1, ref i2) => {
-                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Seq(ref i1, ref i2) => {
-                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::CoReg(_, ref i1, ref i2) => {
-                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    &Interaction::Par(ref i1, ref i2) => {
-                        return i2.get_loop_depth_at_pos(&(*sub_pos) );
-                    },
-                    _ => {
-                        panic!("undefined pos");
-                    }
-                }
-            }
-        }
-    }
 
 
 
@@ -440,54 +365,61 @@ impl Interaction {
             Interaction::Empty => {
                 return Interaction::Empty;
             },
-            Interaction::Action( ref act ) => {
-                if lfs_to_remove.contains(&act.lf_id) {
-                    match &act.act_kind {
-                        ObservableActionKind::Reception(_) => {
-                            return Interaction::Empty;
-                        },
-                        ObservableActionKind::Emission( targets ) => {
-                            let mut receptions : Vec<ObservableAction> = Vec::new();
-                            for target_ref in targets {
-                                match target_ref {
-                                    &EmissionTargetRef::Lifeline(tar_lf_id) => {
-                                        if !lfs_to_remove.contains(&tar_lf_id) {
-                                            receptions.push( ObservableAction{lf_id:tar_lf_id,
-                                                act_kind:ObservableActionKind::Reception(None),
-                                                ms_id:act.ms_id} );
-                                        }
-                                    },
-                                    _ => {}
+            Interaction::Emission( ref em_act ) => {
+                if lfs_to_remove.contains(&em_act.origin_lf_id) {
+                    let mut has_lf_tars = false;
+                    let mut target_lfs : Vec<usize> = Vec::new();
+                    for tar_ref in &em_act.targets {
+                        match tar_ref {
+                            EmissionTargetRef::Lifeline( tar_lf_id ) => {
+                                if !lfs_to_remove.contains( tar_lf_id ) {
+                                    has_lf_tars = true;
+                                    target_lfs.push(  *tar_lf_id );
                                 }
-                            }
-                            return fold_reception_actions_with_seq(&mut receptions);
+                            },
+                            EmissionTargetRef::Gate( tar_gt_id ) => {}
                         }
+                    }
+                    // ***
+                    if has_lf_tars {
+                        let hidden_act = ReceptionAction::new(None,em_act.ms_id,em_act.synchronicity.clone(),target_lfs);
+                        return Interaction::Reception( hidden_act );
+                    } else {
+                        return Interaction::Empty;
                     }
                 } else {
-                    match &act.act_kind {
-                        ObservableActionKind::Reception(_) => {
-                            return Interaction::Action(act.clone());
-                        },
-                        ObservableActionKind::Emission( targets ) => {
-                            let mut new_targets : Vec<EmissionTargetRef> = Vec::new();
-                            for target_ref in targets {
-                                match target_ref {
-                                    &EmissionTargetRef::Lifeline(tar_lf_id) => {
-                                        if !lfs_to_remove.contains(&tar_lf_id) {
-                                            new_targets.push( EmissionTargetRef::Lifeline(tar_lf_id) );
-                                        }
-                                    },
-                                    &EmissionTargetRef::Gate(tar_gt_id) => {
-                                        new_targets.push( EmissionTargetRef::Gate(tar_gt_id) );
-                                    },
+                    let mut targets : Vec<EmissionTargetRef> = Vec::new();
+                    for tar_ref in &em_act.targets {
+                        match tar_ref {
+                            EmissionTargetRef::Lifeline( tar_lf_id ) => {
+                                if !lfs_to_remove.contains( tar_lf_id ) {
+                                    targets.push(  EmissionTargetRef::Lifeline( *tar_lf_id ) );
                                 }
+                            },
+                            EmissionTargetRef::Gate( tar_gt_id ) => {
+                                targets.push(  EmissionTargetRef::Gate( *tar_gt_id ) );
                             }
-                            let new_act = ObservableAction{lf_id:act.lf_id,
-                                act_kind:ObservableActionKind::Emission(new_targets),
-                                ms_id:act.ms_id};
-                            return Interaction::Action(new_act);
                         }
                     }
+                    let hidden_act = EmissionAction::new(em_act.origin_lf_id,em_act.ms_id,em_act.synchronicity.clone(),targets);
+                    return Interaction::Emission( hidden_act );
+                }
+            },
+            Interaction::Reception( ref rc_act ) => {
+                let mut has_lf_tars = false;
+                let mut target_lfs : Vec<usize> = Vec::new();
+                for tar_lf_id in &rc_act.recipients {
+                    if !lfs_to_remove.contains( tar_lf_id ) {
+                        has_lf_tars = true;
+                        target_lfs.push(  *tar_lf_id );
+                    }
+                }
+                // ***
+                if has_lf_tars {
+                    let hidden_act = ReceptionAction::new(rc_act.origin_gt_id.clone(),rc_act.ms_id,rc_act.synchronicity.clone(),target_lfs);
+                    return Interaction::Reception( hidden_act );
+                } else {
+                    return Interaction::Empty;
                 }
             },
             Interaction::Seq(i1,i2) => {
@@ -611,19 +543,3 @@ impl Interaction {
 }
 
 
-pub fn fold_reception_actions_with_seq(receptions : &mut Vec<ObservableAction>) -> Interaction {
-    let recepnum = receptions.len();
-    if recepnum == 2 {
-        let recep1 = receptions.pop().unwrap();
-        let recep2 = receptions.pop().unwrap();
-        return Interaction::Seq( Box::new(Interaction::Action(recep1)), Box::new(Interaction::Action(recep2)) );
-    } else if recepnum == 1 {
-        let recep1 = receptions.pop().unwrap();
-        return Interaction::Action(recep1);
-    } else if recepnum == 0 {
-        return Interaction::Empty
-    } else {
-        let recep1 = receptions.pop().unwrap();
-        return Interaction::Seq( Box::new(Interaction::Action(recep1)), Box::new( fold_reception_actions_with_seq(receptions) ) );
-    }
-}

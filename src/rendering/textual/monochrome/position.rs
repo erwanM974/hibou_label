@@ -21,7 +21,10 @@ pub fn position_to_text(position : &Position) -> String {
         Position::Left(ref in_self) => {
             let mut my_string = SYNTAX_POSITION_LEFT.to_string();
             let sub_pos = position_to_text( &(*in_self) );
-            if sub_pos != SYNTAX_POSITION_EPSILON.to_string() {
+            if sub_pos.starts_with(SYNTAX_POSITION_EPSILON) {
+                let text_vec = sub_pos.chars().collect::<Vec<_>>();
+                my_string.push_str( &text_vec[1..].iter().cloned().collect::<String>() );
+            } else {
                 my_string.push_str( &sub_pos );
             }
             return my_string;
@@ -29,13 +32,23 @@ pub fn position_to_text(position : &Position) -> String {
         Position::Right(ref in_self) => {
             let mut my_string = SYNTAX_POSITION_RIGHT.to_string();
             let sub_pos = position_to_text( &(*in_self) );
-            if sub_pos != SYNTAX_POSITION_EPSILON.to_string() {
+            if sub_pos.starts_with(SYNTAX_POSITION_EPSILON) {
+                let text_vec = sub_pos.chars().collect::<Vec<_>>();
+                my_string.push_str( &text_vec[1..].iter().cloned().collect::<String>() );
+            } else {
                 my_string.push_str( &sub_pos );
             }
             return my_string;
         },
-        Position::Epsilon => {
-            return SYNTAX_POSITION_EPSILON.to_string();
+        Position::Epsilon(sub_pos) => {
+            match sub_pos {
+                None => {
+                    return SYNTAX_POSITION_EPSILON.to_string();
+                },
+                Some( pos_idx ) => {
+                    return format!("{:}({:})", SYNTAX_POSITION_EPSILON, pos_idx);
+                }
+            }
         }
     }
 }

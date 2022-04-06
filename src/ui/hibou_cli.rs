@@ -45,7 +45,7 @@ use crate::plantuml::sequence::to_plant_uml_sd;
 use crate::plantuml::automata_product::to_plant_uml_ap;
 use crate::canonize::term_repr_out::to_term_repr;
 use crate::canonize::process::canon_process_interaction_term;
-use crate::merge_gates::process::merge_process_interaction_term;
+//use crate::merge_gates::process::merge_process_interaction_term;
 
 fn get_ascii_border() -> &'static str {
     return r#"===================="#;
@@ -59,7 +59,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.6.5   "#);
+    my_vec.push(r#"  V-label-0.7.1   "#);
     return my_vec;
 }
 
@@ -200,7 +200,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("merge") {
+    }/* else if let Some(matches) = matches.subcommand_matches("merge") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
@@ -230,7 +230,7 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( "".to_string());
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("term_repr") {
+    }*/ else if let Some(matches) = matches.subcommand_matches("term_repr") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {

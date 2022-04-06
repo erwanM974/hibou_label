@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+mod action_repr;
 pub mod term_repr;
 pub mod term_repr_out;
 pub mod transformations;

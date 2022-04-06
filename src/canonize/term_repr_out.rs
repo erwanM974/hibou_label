@@ -30,8 +30,6 @@ use crate::core::syntax::action::*;
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::position::Position;
 
-use crate::core::semantics::execute::deploy_receptions;
-
 use crate::canonize::term_repr::interaction_repr;
 
 pub fn to_term_repr(name : &String,

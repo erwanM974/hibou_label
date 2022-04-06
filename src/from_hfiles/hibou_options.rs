@@ -244,25 +244,6 @@ pub fn parse_hibou_options(option_pair : Pair<Rule>, file_name : &str, process_k
                     Rule::OPTION_STRATEGY_DFS => {
                         strategy = HibouSearchStrategy::DFS;
                     },
-                    Rule::OPTION_STRATEGY_GFS => {
-                        let mut gfs_priorities = ProcessPriorities::new(0,0,0,Some(1), -2, -2);
-                        match strategy_pair.into_inner().next() {
-                            None => {},
-                            Some(gfs_opts_pair) => {
-                                match gfs_opts_pair.as_rule() {
-                                    Rule::OPTION_STRATEGY_GFS_opts => {
-                                        for priority_pair in gfs_opts_pair.into_inner() {
-                                            parse_priorities(priority_pair,&mut gfs_priorities,false);
-                                        }
-                                    },
-                                    _ => {
-                                        panic!("what rule then ? : {:?}", gfs_opts_pair.as_rule() );
-                                    }
-                                }
-                            }
-                        }
-                        strategy = HibouSearchStrategy::GFS(gfs_priorities);
-                    },
                     _ => {
                         panic!("what rule then ? : {:?}", strategy_pair.as_rule() );
                     }

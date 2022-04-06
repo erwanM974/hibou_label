@@ -204,18 +204,20 @@ impl ProcessLogger for GraphicProcessLogger {
                      parent_state_id : u32,
                      new_state_id : u32,
                      action_position : &Position,
-                     action : &TraceAction,
-                     is_simulation : bool,
+                     executed_actions : &HashSet<TraceAction>,
+                     sim_map : &HashMap<usize,SimulationStepKind>,
                      new_interaction : &Interaction,
                      remaining_multi_trace : &Option<AnalysableMultiTrace>) {
         // *** Parent Interaction Node
+        let is_simulation = sim_map.len() > 0;
+        // ***
         let parent_interaction_node_name = format!("i{:}", parent_state_id);
         // *** Firing Node
         let current_node_name = format!("i{:}", new_state_id);
         let firing_node_name = format!("f{:}", new_state_id);
         {
             let firing_node_path : String = format!("./temp/{:}_{}.png",  self.log_name ,firing_node_name);
-            draw_firing(&firing_node_path,action_position,action,is_simulation,gen_ctx);
+            draw_firing(&firing_node_path,action_position,executed_actions,sim_map,gen_ctx);
             // ***
             let mut firing_gv_node_options : GraphvizNodeStyle = Vec::new();
             firing_gv_node_options.push( GraphvizNodeStyleItem::Image( firing_node_path ) );
