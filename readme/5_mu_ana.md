@@ -17,14 +17,14 @@ This form of "offline analysis" alone does not constitute a proof of correctness
 As most testing practices (e.g. classical software testing with unit tests)
 it is simply here to increase confidence in the implementation and/or fulfill some quality standards.
 
-<img src="./readme/images/4/mbt_offline_general.svg" alt="offline analysis general principle" width="1000">
+<img src="./images/4/mbt_offline_general.svg" alt="offline analysis general principle" width="1000">
 
 In hibou_label, this general workflow translates into the following diagram.
 The "model" is the specification of an interaction via a .hsf file and the "trace" comes in a .htf file.
 Then hibou_label can be called with the sub-command "analyze" and produces a certain verdict,
 which possible values and corresponding meanings we detail later on in the README when evoking the "analyze" sub-command.
 
-<img src="./readme/images/4/mbt_offline_hibou_label.svg" alt="offline analysis with hibou_label" width="800">
+<img src="./images/4/mbt_offline_hibou_label.svg" alt="offline analysis with hibou_label" width="800">
 
 
 

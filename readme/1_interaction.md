@@ -4,7 +4,7 @@
 Interaction models are specified within ".hsf" (Hibou Specification File) files.
 An example interaction diagram (as drawn by HIBOU) is given below.
 
-<img src="./readme/images/1/ex_readme.png" alt="interaction diagram" width="750">
+<img src="./images/1/ex_readme.png" alt="interaction diagram" width="750">
 
 This diagram is encoded as follows.
 
@@ -62,7 +62,7 @@ Those terms are build inductively from the composition of basic buildings blocks
 
 ### Basic building blocks
 
-<img src="./readme/images/1/basic_blocks.png" alt="building blocks" width="600">
+<img src="./images/1/basic_blocks.png" alt="building blocks" width="600">
 
 The most basic interactions can either be:
 - the empty interaction, that specify an absence of observable behavior and which is encoded with "o" or "∅"

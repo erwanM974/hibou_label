@@ -9,7 +9,7 @@ The "explore" command of HIBOU can generate execution trees (drawings) which ill
 Below is given an example exploration drawing that you can obtain by typing
 "hibou_label.exe explore ex_readme.hsf" with the files from "examples" folder.
 
-<img src="./readme/images/3/ex_readme_explo.svg" alt="exploration" width="950">
+<img src="./images/3/ex_readme_explo.svg" alt="exploration" width="950">
 
 In the header of a ".hsf" file, we can configure a number of options that will then be used if the ".hsf" file is exploited
 with the "explore command". Those options are set within an "@explore_option" section. Here we used the following options for the exploration:

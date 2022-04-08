@@ -18,7 +18,7 @@ immediately executed within it, and, for each of those, the corresponding "follo
 This process can of course be repeated in a next step, making possible the computation of the expected behaviors (semantics)
 of the initial interaction.
 
-<img src="./readme/images/2/interaction_execution_principle.svg" alt="interaction execution principle" width="1000">
+<img src="./images/2/interaction_execution_principle.svg" alt="interaction execution principle" width="1000">
 
 In the following, we will give some insights on the different elements of our language via the execution of interaction models.
 
@@ -27,33 +27,33 @@ In the following, we will give some insights on the different elements of our la
 
 Execution of an atomic emission:
 
-<img src="./readme/images/2/basic/emission.svg" alt="execution of an emission" width="150">
+<img src="./images/2/basic/emission.svg" alt="execution of an emission" width="150">
 
 Execution of an atomic reception:
 
-<img src="./readme/images/2/basic/reception.svg" alt="execution of a reception" width="150">
+<img src="./images/2/basic/reception.svg" alt="execution of a reception" width="150">
 
 Execution of an asynchronous message passing:
 
-<img src="./readme/images/2/basic/asynch_passing.svg" alt="execution of an asynchronous message passing" width="150">
+<img src="./images/2/basic/asynch_passing.svg" alt="execution of an asynchronous message passing" width="150">
 
 Execution of a synchronous message passing:
 
-<img src="./readme/images/2/basic/synch_passing.svg" alt="execution of a synchronous message passing" width="150">
+<img src="./images/2/basic/synch_passing.svg" alt="execution of a synchronous message passing" width="150">
 
 Execution of an asynchronous broadcast:
 
-<img src="./readme/images/2/basic/asynch_broadcast.svg" alt="execution of an asynchronous broadcast" width="275">
+<img src="./images/2/basic/asynch_broadcast.svg" alt="execution of an asynchronous broadcast" width="275">
 
 Execution of a synchronous broadcast:
 
-<img src="./readme/images/2/basic/synch_broadcast.svg" alt="execution of a synchronous broadcast" width="150">
+<img src="./images/2/basic/synch_broadcast.svg" alt="execution of a synchronous broadcast" width="150">
 
 
 
 ## Alt
 
-<img src="./readme/images/2/alt.svg" alt="execution of actions within an alternative" width="275">
+<img src="./images/2/alt.svg" alt="execution of actions within an alternative" width="275">
 
 
 ## Strict, Seq and Par
@@ -62,29 +62,29 @@ Execution of a synchronous broadcast:
 
 With strict sequencing:
 
-<img src="./readme/images/2/sched/strict_same.svg" alt="" width="150">
+<img src="./images/2/sched/strict_same.svg" alt="" width="150">
 
 With weak sequencing:
 
-<img src="./readme/images/2/sched/seq_same.svg" alt="" width="150">
+<img src="./images/2/sched/seq_same.svg" alt="" width="150">
 
 With interleaving:
 
-<img src="./readme/images/2/sched/par_same.svg" alt="" width="275">
+<img src="./images/2/sched/par_same.svg" alt="" width="275">
 
 ### Actions on different lifelines
 
 With strict sequencing:
 
-<img src="./readme/images/2/sched/strict_diff.svg" alt="" width="150">
+<img src="./images/2/sched/strict_diff.svg" alt="" width="150">
 
 With weak sequencing:
 
-<img src="./readme/images/2/sched/seq_diff.svg" alt="" width="275">
+<img src="./images/2/sched/seq_diff.svg" alt="" width="275">
 
 With interleaving:
 
-<img src="./readme/images/2/sched/par_diff.svg" alt="" width="275">
+<img src="./images/2/sched/par_diff.svg" alt="" width="275">
 
 
 ## Coreg
@@ -94,7 +94,7 @@ Here, we can see that:
 - l1 must emit m1 before it can emit m2 because the coregion behaves as seq on l1 
 - and l2 can receive m1 and m2 in any order because the coregion behaves as par on l2 
 
-<img src="./readme/images/2/coreg.svg" alt="" width="275">
+<img src="./images/2/coreg.svg" alt="" width="275">
 
 ## Pruning
 
@@ -102,11 +102,11 @@ The interplay between alternatives and sequencing makes so that the execution of
 implicitly imply making certain choices on alternatives. 
 This must be taken into account when computing the corresponding follow-up interaction.
 
-<img src="./readme/images/2/pruning/pruning_strict.svg" alt="" width="275">
+<img src="./images/2/pruning/pruning_strict.svg" alt="" width="275">
 
 Another example with a coregion:
 
-<img src="./readme/images/2/pruning/pruning_coreg.svg" alt="" width="350">
+<img src="./images/2/pruning/pruning_coreg.svg" alt="" width="350">
 
 
 
@@ -120,11 +120,11 @@ Below we demonstrate the difference between loopH and loopW on an example:
 
 Here with loopH:
 
-<img src="./readme/images/2/loop/loop_withH.svg" alt="" width="550">
+<img src="./images/2/loop/loop_withH.svg" alt="" width="550">
 
 Here with loopW:
 
-<img src="./readme/images/2/loop/loop_withW.svg" alt="" width="650">
+<img src="./images/2/loop/loop_withW.svg" alt="" width="650">
 
 
 
