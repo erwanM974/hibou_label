@@ -1,0 +1,13 @@
+@message{m1;m2}
+@lifeline{l1;l2}
+@explore_option{
+    loggers = [graphic[svg,vertical]];
+    strategy = DepthFS
+}
+strict(
+	alt(
+		l1 -- <synch>m1 -> l2,
+		o
+	),
+	l2 -- m2 ->|
+)

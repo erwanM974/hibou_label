@@ -1,0 +1,10 @@
+@message{m1;m2}
+@lifeline{l1;l2}
+@explore_option{
+    loggers = [graphic[svg,vertical]];
+    strategy = DepthFS
+}
+strict(
+	l1 -- m1 ->|,
+	l2 -- m2 ->|
+)
