@@ -211,7 +211,7 @@ impl HibouProcessManager {
         }
     }
 
-    pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+    pub fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
         for logger in self.loggers.iter_mut() {
             (*logger).log_init(interaction, &self.gen_ctx, remaining_multi_trace);
         }
@@ -252,7 +252,7 @@ impl HibouProcessManager {
                              new_interaction : &Interaction,
                              parent_state_id : u32,
                              new_state_id :u32,
-                             remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                             remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
         for logger in self.loggers.iter_mut() {
             logger.log_execution(&self.gen_ctx,
                                  parent_state_id,
@@ -270,7 +270,7 @@ impl HibouProcessManager {
                              new_interaction : &Interaction,
                              parent_state_id : u32,
                              new_state_id :u32,
-                             remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                             remaining_multi_trace : &AnalysableMultiTrace) {
         for logger in self.loggers.iter_mut() {
             logger.log_hide(&self.gen_ctx,
                                  parent_state_id,
@@ -447,7 +447,7 @@ impl HibouProcessManager {
                                           &exe_result.interaction,
                                           to_process.state_id,
                                                new_state_id,
-                                          &new_multi_trace);
+                                          &new_multi_trace.as_ref());
                         // ***
                         return Some( (exe_result.interaction,new_multi_trace,new_depth,new_loop_depth) );
                     },
@@ -466,13 +466,13 @@ impl HibouProcessManager {
                     None => {
                         let new_interaction = (parent_state.interaction).hide(lfs_to_hide);
                         // ***
-                        let new_multi_trace : Option<AnalysableMultiTrace>;
+                        let new_multi_trace : AnalysableMultiTrace;
                         match (parent_state.multi_trace).as_ref(){
                             None => {
                                 panic!();
                             },
                             Some( ref multi_trace ) => {
-                                new_multi_trace = Some(multi_trace.update_on_hide(&lfs_to_hide));
+                                new_multi_trace = multi_trace.update_on_hide(&lfs_to_hide);
                             }
                         }
                         // ***
@@ -482,7 +482,7 @@ impl HibouProcessManager {
                                                new_state_id,
                                                &new_multi_trace);
                         // ***
-                        return Some( (new_interaction,new_multi_trace,new_depth,parent_state.loop_depth) );
+                        return Some( (new_interaction,Some(new_multi_trace),new_depth,parent_state.loop_depth) );
                     },
                     Some( elim_kind ) => {
                         self.filtered_loggers(to_process.state_id,
@@ -534,7 +534,7 @@ impl HibouProcessManager {
                                                &exe_result.interaction,
                                                to_process.state_id,
                                                new_state_id,
-                                               &new_multi_trace);
+                                               &new_multi_trace.as_ref());
                         // ***
                         return Some( (exe_result.interaction,new_multi_trace,new_depth,new_loop_depth) );
                     },

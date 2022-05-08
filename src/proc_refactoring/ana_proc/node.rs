@@ -14,10 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-mod action_repr;
-mod term_repr;
-pub mod term_repr_out;
-mod transformations;
-pub mod process;
-mod total_order;
+
+
+
+
+use crate::core::syntax::interaction::Interaction;
+use crate::core::trace::AnalysableMultiTrace;
+use crate::proc_refactoring::abstract_proc::AbstractNodeKind;
+
+pub struct AnalysisNodeKind {
+    pub interaction : Interaction,
+    pub multi_trace : AnalysableMultiTrace,
+    pub loop_depth : u32
+}
+
+impl AbstractNodeKind for AnalysisNodeKind {}
 

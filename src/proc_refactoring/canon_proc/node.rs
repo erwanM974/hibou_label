@@ -14,10 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-mod action_repr;
-mod term_repr;
-pub mod term_repr_out;
-mod transformations;
-pub mod process;
-mod total_order;
+
+
+
+
+use crate::core::syntax::interaction::Interaction;
+use crate::proc_refactoring::abstract_proc::AbstractNodeKind;
+
+pub struct CanonizationNodeKind {
+    pub interaction : Interaction
+}
+
+impl AbstractNodeKind for CanonizationNodeKind {}
 

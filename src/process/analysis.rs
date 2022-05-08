@@ -52,9 +52,8 @@ pub fn analyze(interaction : Interaction,
                                                hoptions.frontier_priorities,
                                                hoptions.loggers);
     // ***
-    let multi_trace_option = Some(multi_trace);
-    manager.init_loggers(&interaction,&multi_trace_option);
-    let mut multi_trace = multi_trace_option.unwrap();
+    let mut multi_trace = multi_trace;
+    manager.init_loggers(&interaction,&Some(&multi_trace));
     multi_trace.remaining_loop_instantiations_in_simulation = interaction.max_nested_loop_depth();
     // ***
     let mut next_state_id : u32 = 1;

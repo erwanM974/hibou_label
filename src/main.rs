@@ -46,7 +46,7 @@ pub mod ui;
 pub mod plantuml;
 pub mod canonize;
 pub mod merge_gates;
-//pub mod proc_refactoring;
+pub mod proc_refactoring;
 
 // **********
 

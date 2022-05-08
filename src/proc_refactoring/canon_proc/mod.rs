@@ -14,10 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-mod action_repr;
-mod term_repr;
-pub mod term_repr_out;
-mod transformations;
-pub mod process;
-mod total_order;
+
+
+
+pub(in crate::proc_refactoring::canon_proc) mod node;
+pub(in crate::proc_refactoring::canon_proc) mod step;
+pub(in crate::proc_refactoring::canon_proc) mod transformations;
+pub(in crate::proc_refactoring::canon_proc) mod priorities;
+pub(in crate::proc_refactoring::canon_proc) mod conf;
+pub(in crate::proc_refactoring::canon_proc) mod filter;
+
+
+
+
+
+
 

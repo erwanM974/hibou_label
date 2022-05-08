@@ -115,7 +115,7 @@ impl ProcessLogger for GraphicProcessLogger {
     fn log_init(&mut self,
                 interaction : &Interaction,
                 gen_ctx : &GeneralContext,
-                remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
         // ***
         // empties temp directory if exists
         match fs::remove_dir_all("./temp") {
@@ -207,7 +207,7 @@ impl ProcessLogger for GraphicProcessLogger {
                      executed_actions : &HashSet<TraceAction>,
                      sim_map : &HashMap<usize,SimulationStepKind>,
                      new_interaction : &Interaction,
-                     remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                     remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
         // *** Parent Interaction Node
         let is_simulation = sim_map.len() > 0;
         // ***
@@ -273,7 +273,7 @@ impl ProcessLogger for GraphicProcessLogger {
                 new_state_id : u32,
                 lfs_to_hide : &HashSet<usize>,
                 hidden_interaction : &Interaction,
-                remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                remaining_multi_trace : &AnalysableMultiTrace) {
         // *** Parent Interaction Node
         let parent_interaction_node_name = format!("i{:}", parent_state_id);
         // *** Hiding Node
@@ -303,7 +303,7 @@ impl ProcessLogger for GraphicProcessLogger {
         // *** Resulting Interaction Node
         {
             let gv_path : String = format!("./temp/{:}_{}.png",  self.log_name ,current_node_name);
-            draw_interaction(&gv_path, hidden_interaction, gen_ctx, remaining_multi_trace);
+            draw_interaction(&gv_path, hidden_interaction, gen_ctx, &Some(remaining_multi_trace));
             // ***
             let mut node_gv_options : GraphvizNodeStyle = Vec::new();
             node_gv_options.push( GraphvizNodeStyleItem::Image( gv_path ) );

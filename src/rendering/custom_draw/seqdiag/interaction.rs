@@ -45,7 +45,7 @@ use crate::rendering::custom_draw::seqdiag::ext_multi_trace::extract_texts_on_mu
 pub fn draw_interaction(path_str : &String,
                         interaction : &Interaction,
                         gen_ctx : &GeneralContext,
-                        remaining_multi_trace : &Option<AnalysableMultiTrace>) {
+                        remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
     let path = Path::new( path_str );
     // ***
     let mut lf_x_widths : HashMap<usize,DrawingLifelineCoords> = HashMap::new();

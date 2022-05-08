@@ -37,7 +37,7 @@ pub trait ProcessLogger {
     fn log_init(&mut self,
                  interaction : &Interaction,
                  gen_ctx : &GeneralContext,
-                 remaining_multi_trace : &Option<AnalysableMultiTrace>);
+                 remaining_multi_trace : &Option<&AnalysableMultiTrace>);
 
     fn log_term(&mut self,
                 options_as_str : &Vec<String>);
@@ -50,7 +50,7 @@ pub trait ProcessLogger {
                 executed_actions : &HashSet<TraceAction>,
                 sim_map : &HashMap<usize,SimulationStepKind>,
                 new_interaction : &Interaction,
-                remaining_multi_trace : &Option<AnalysableMultiTrace>);
+                remaining_multi_trace : &Option<&AnalysableMultiTrace>);
 
 
     fn log_hide(&mut self,
@@ -59,7 +59,7 @@ pub trait ProcessLogger {
                 new_state_id : u32,
                 lfs_to_hide : &HashSet<usize>,
                 hidden_interaction : &Interaction,
-                remaining_multi_trace : &Option<AnalysableMultiTrace>);
+                remaining_multi_trace : &AnalysableMultiTrace);
 
     fn log_filtered(&mut self,
                           gen_ctx : &GeneralContext,
