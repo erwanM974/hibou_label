@@ -41,12 +41,16 @@ extern crate maplit;
 pub mod core;
 pub mod from_hfiles;
 pub mod rendering;
-pub mod process;
+//pub mod process;
 pub mod ui;
 pub mod plantuml;
-pub mod canonize;
-pub mod merge_gates;
-pub mod proc_refactoring;
+//pub mod canonize;
+//pub mod merge_gates;
+pub mod process;
+pub mod to_hfiles;
+pub mod loggers;
+pub mod util;
+pub mod slice;
 
 // **********
 

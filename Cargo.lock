@@ -268,11 +268,12 @@ dependencies = [
 
 [[package]]
 name = "hibou_label"
-version = "0.7.4"
+version = "0.7.6"
 dependencies = [
  "clap",
  "image",
  "imageproc",
+ "itertools 0.10.3",
  "maplit",
  "pest",
  "pest_derive",
@@ -308,7 +309,7 @@ checksum = "7923654f3ce7cb6849d5dc9e544aaeab49c508a90b56c721b046e7234c74ab53"
 dependencies = [
  "conv",
  "image",
- "itertools",
+ "itertools 0.9.0",
  "num 0.3.1",
  "rand",
  "rand_distr",
@@ -332,6 +333,15 @@ name = "itertools"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
 dependencies = [
  "either",
 ]

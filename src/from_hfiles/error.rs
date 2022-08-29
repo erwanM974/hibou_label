@@ -27,6 +27,7 @@ pub enum HibouParsingError {
     EmissionDefinitionError(String),
     OtherDefinitionError(String),
     NonDisjointTraceComponents,
+    IllDefinedTraceComponents(String),
     HsfSetupError(String),
     ProcessPriorityError(String)
 }
@@ -63,6 +64,9 @@ impl fmt::Display for HibouParsingError {
             },
             HibouParsingError::NonDisjointTraceComponents => {
                 return write!(f, "{}", format!("error while parsing ; non disjoint trace canals"));
+            },
+            HibouParsingError::IllDefinedTraceComponents(sub_e) => {
+                return write!(f, "{}", format!("error while parsing ; ill defined trace canals : {:}", sub_e));
             },
             HibouParsingError::HsfSetupError(sub_e) => {
                 return write!(f, "{}", format!("error while parsing setup section of .hsf file : {:}", sub_e));

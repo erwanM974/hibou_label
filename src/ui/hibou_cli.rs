@@ -33,24 +33,20 @@ use crate::core::trace::*;
 use crate::rendering::custom_draw::seqdiag::interaction::draw_interaction;
 
 
-use crate::rendering::process::graphic_logger::GraphicProcessLogger;
+use crate::process::explo_proc::manager::ExplorationProcessManager;
+use crate::process::ana_proc::manager::AnalysisProcessManager;
 
-use crate::process::log::*;
-
-use crate::process::analysis::analyze;
-use crate::process::exploration::explore;
-
-use crate::proc_refactoring::explo_proc::{ExplorationProcessManager,explo_filter_translate,explo_priorities_translate};
-
-use crate::from_hfiles::hsf_file::{ProcessKind,parse_hsf_file};
-use crate::from_hfiles::htf_file::parse_htf_file;
+use crate::from_hfiles::hsf_file::parse_hsf_file;
+use crate::from_hfiles::traces::htf_file::parse_htf_file;
 
 use crate::plantuml::sequence::to_plant_uml_sd;
 use crate::plantuml::automata_product::to_plant_uml_ap;
-use crate::canonize::term_repr_out::to_term_repr;
-use crate::canonize::process::canon_process_interaction_term;
-use crate::proc_refactoring::ana_proc::{AnalysisProcessManager,ana_filter_translate,ana_priorities_translate};
+use crate::rendering::custom_draw::term::term_repr_out::to_term_repr;
+use crate::slice::generate_slices;
+//use crate::canonize::process::canon_process_interaction_term;
 //use crate::merge_gates::process::merge_process_interaction_term;
+
+
 
 fn get_ascii_border() -> &'static str {
     return r#"===================="#;
@@ -64,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.7.4   "#);
+    my_vec.push(r#"  V-label-0.7.6   "#);
     return my_vec;
 }
 
@@ -101,13 +97,13 @@ pub fn hibou_cli() -> i32 {
 
     if let Some(matches) = matches.subcommand_matches("draw") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (gen_ctx,my_int,_) ) => {
                 let spec_output_file : String;
                 if matches.is_present("output") {
                     let extracted = matches.value_of("output").unwrap();
@@ -126,13 +122,13 @@ pub fn hibou_cli() -> i32 {
         }
     } else if let Some(matches) = matches.subcommand_matches("puml_sd") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (gen_ctx,my_int,_) ) => {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
                 let spec_output_file = format!("{}_sd.puml", file_name);
                 // ***
@@ -146,13 +142,13 @@ pub fn hibou_cli() -> i32 {
         }
     } else if let Some(matches) = matches.subcommand_matches("puml_ap") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (gen_ctx,my_int,_) ) => {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
                 let spec_output_file = format!("{}_ap.puml", file_name);
                 // ***
@@ -164,15 +160,15 @@ pub fn hibou_cli() -> i32 {
                 to_plant_uml_ap(&spec_output_file,file_name, &my_int, &gen_ctx);
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("canonize") {
+    }/* else if let Some(matches) = matches.subcommand_matches("canonize") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (gen_ctx,my_int,_) ) => {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
                 let process_name : String;
                 let search_all : bool;
@@ -205,7 +201,7 @@ pub fn hibou_cli() -> i32 {
                 }
             }
         }
-    }/* else if let Some(matches) = matches.subcommand_matches("merge") {
+    }*//* else if let Some(matches) = matches.subcommand_matches("merge") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
         match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
             Err(e) => {
@@ -237,13 +233,13 @@ pub fn hibou_cli() -> i32 {
         }
     }*/ else if let Some(matches) = matches.subcommand_matches("term_repr") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::None) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (gen_ctx,my_int,_) ) => {
                 let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
                 let output_name = format!("{}_repr", file_name);
                 // ***
@@ -255,36 +251,9 @@ pub fn hibou_cli() -> i32 {
                 to_term_repr(&output_name, &my_int, &gen_ctx);
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("explore_old") {
-        let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::Explore) {
-            Err(e) => {
-                ret_print.push( e.to_string() );
-                print_retval(ret_print);
-                return -1;
-            },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
-                // ***
-                ret_print.push( "".to_string());
-                ret_print.push( "EXPLORING SEMANTICS".to_string());
-                ret_print.push( format!("of interaction from file '{}'",hsf_file_path) );
-                ret_print.push( "".to_string());
-                // ***
-                let now = Instant::now();
-                let node_count = explore(my_int,
-                                         gen_ctx,
-                                         hoptions.pre_filters,
-                                         hoptions.strategy,
-                                         hoptions.frontier_priorities,
-                                         hoptions.loggers);
-                let elapsed_time = now.elapsed();
-                ret_print.push( format!("node count : {:?}", node_count ) );
-                ret_print.push( format!("elapsed (ms): {:?}", elapsed_time.as_millis() ) );
-            }
-        }
     } else if let Some(matches) = matches.subcommand_matches("explore") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::Explore) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
@@ -298,10 +267,10 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( "".to_string());
                 // ***
                 let mut manager = ExplorationProcessManager::new(gen_ctx,
-                                                             explo_filter_translate(hoptions.pre_filters),
-                                                             hoptions.strategy,
-                                                                 explo_priorities_translate(hoptions.frontier_priorities),
-                                                             hoptions.loggers);
+                                                                 hoptions.explore_options.strategy,
+                                                                 hoptions.explore_options.filters,
+                                                             hoptions.explore_options.priorities,
+                                                                 hoptions.explore_options.loggers);
                 // ***
                 let now = Instant::now();
                 let node_count = manager.explore(my_int);
@@ -310,53 +279,17 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("elapsed (ms): {:?}", elapsed_time.as_millis() ) );
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("analyze_old") {
-        let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::Analyze) {
-            Err(e) => {
-                ret_print.push( e.to_string() );
-                print_retval(ret_print);
-                return -1;
-            },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
-                let htf_file_path = matches.value_of("htf").unwrap();
-                match parse_htf_file(htf_file_path,&gen_ctx) {
-                    Err(e) => {
-                        ret_print.push( e.to_string() );
-                        print_retval(ret_print);
-                        return -1;
-                    },
-                    Ok( multi_trace ) => {
-                        ret_print.push( "ANALYZING TRACE".to_string());
-                        ret_print.push( format!("from file '{}'",htf_file_path) );
-                        ret_print.push( "W.R.T. INTERACTION".to_string());
-                        ret_print.push( format!("from file '{}'",hsf_file_path) );
-                        ret_print.push( "".to_string());
-
-                        let now = Instant::now();
-                        let (verdict,node_count) = analyze(my_int,
-                                                           multi_trace,
-                                                           gen_ctx,
-                                                           hoptions);
-                        let elapsed_time = now.elapsed();
-                        ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );
-                        ret_print.push( format!("node count : {:?}", node_count ) );
-                        ret_print.push( format!("elapsed (ms): {:?}", elapsed_time.as_millis() ) );
-                    }
-                }
-            }
-        }
     } else if let Some(matches) = matches.subcommand_matches("analyze") {
         let hsf_file_path = matches.value_of("hsf").unwrap();
-        match parse_hsf_file(hsf_file_path,&ProcessKind::Analyze) {
+        match parse_hsf_file(hsf_file_path) {
             Err(e) => {
                 ret_print.push( e.to_string() );
                 print_retval(ret_print);
                 return -1;
             },
-            Ok( (gen_ctx,my_int,hoptions) ) => {
+            Ok( (mut gen_ctx,my_int,hoptions) ) => {
                 let htf_file_path = matches.value_of("htf").unwrap();
-                match parse_htf_file(htf_file_path,&gen_ctx) {
+                match parse_htf_file(htf_file_path,&mut gen_ctx,false) {
                     Err(e) => {
                         ret_print.push( e.to_string() );
                         print_retval(ret_print);
@@ -365,18 +298,19 @@ pub fn hibou_cli() -> i32 {
                     Ok( multi_trace ) => {
                         ret_print.push( "ANALYZING TRACE".to_string());
                         ret_print.push( format!("from file '{}'",htf_file_path) );
+                        ret_print.push( format!("of length '{:?}'",multi_trace.length()) );
                         ret_print.push( "W.R.T. INTERACTION".to_string());
                         ret_print.push( format!("from file '{}'",hsf_file_path) );
                         ret_print.push( "".to_string());
                         // ***
                         let mut manager = AnalysisProcessManager::new(gen_ctx,
-                                                                         ana_filter_translate(hoptions.pre_filters),
-                                                                         hoptions.strategy,
-                                                                         ana_priorities_translate(hoptions.frontier_priorities),
-                                                                         hoptions.ana_kind.unwrap(),
-                                                                      hoptions.local_analysis.unwrap(),
-                                                                      hoptions.goal,
-                                                                      hoptions.loggers,);
+                                                                      hoptions.analyze_options.strategy,
+                                                                      hoptions.analyze_options.filters,
+                                                                      hoptions.analyze_options.priorities,
+                                                                      hoptions.analyze_options.loggers,
+                                                                      hoptions.analyze_options.ana_kind,
+                                                                      hoptions.analyze_options.local_analysis,
+                                                                      hoptions.analyze_options.goal);
                         let now = Instant::now();
                         let (verdict,node_count) = manager.analyze(my_int,multi_trace);
                         let elapsed_time = now.elapsed();
@@ -385,6 +319,35 @@ pub fn hibou_cli() -> i32 {
                         ret_print.push( format!("elapsed (ms): {:?}", elapsed_time.as_millis() ) );
                     }
                 }
+            }
+        }
+    } else if let Some(matches) = matches.subcommand_matches("slice") {
+        let htf_file_path = matches.value_of("htf").unwrap();
+        let mut gen_ctx = GeneralContext::new();
+        match parse_htf_file(htf_file_path,&mut gen_ctx,true) {
+            Err(e) => {
+                ret_print.push( e.to_string() );
+                print_retval(ret_print);
+                return -1;
+            },
+            Ok( multi_trace ) => {
+                ret_print.push( "SLICING TRACE".to_string());
+                ret_print.push( format!("from file '{}'",htf_file_path) );
+                ret_print.push( "".to_string());
+                // ***
+                let mu_name : &str = Path::new(htf_file_path).file_stem().unwrap().to_str().unwrap();
+                // ***
+                let parent_folder : Option<&str>;
+                match matches.value_of("parent_file") {
+                    None => {
+                        parent_folder = None;
+                    },
+                    Some( folder_name ) => {
+                        parent_folder = Some( folder_name );
+                    }
+                }
+                // ***
+                generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder);
             }
         }
     } else {

@@ -15,13 +15,12 @@ limitations under the License.
 */
 
 
-pub mod anakind;
-pub mod priorities;
-pub mod log;
-pub mod hibou_process;
-pub mod process_manager;
-pub mod verdicts;
-pub mod exploration;
-pub mod analysis;
+pub mod abstract_proc;
+pub mod explo_proc;
+pub mod ana_proc;
+//pub mod canon_proc;
+//pub mod canon_proc;
+//pub mod merge_proc;
+
 
 

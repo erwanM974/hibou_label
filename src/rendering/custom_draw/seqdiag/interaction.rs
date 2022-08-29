@@ -28,7 +28,7 @@ use image::RgbImage;
 use crate::core::syntax::interaction::*;
 use crate::core::general_context::GeneralContext;
 
-use crate::core::trace::{MultiTraceCanal,AnalysableMultiTrace};
+use crate::process::ana_proc::multitrace::{AnalysableMultiTraceCanal,AnalysableMultiTrace};
 
 use crate::rendering::textual::colored::colored_text::*;
 use crate::rendering::sd_drawing_conf::*;

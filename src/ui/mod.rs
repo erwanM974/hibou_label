@@ -15,3 +15,4 @@ limitations under the License.
 */
 
 pub mod hibou_cli;
+pub mod extensions;

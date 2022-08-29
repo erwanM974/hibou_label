@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // ***********************************************
-// generic label ; used for lifelines, messages, etc
 WHITESPACE = _{ " " | "\r\n" | "\n" | "\t" | "\r" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 HIBOU_LABEL = @{ LETTER ~ (LETTER | ASCII_DIGIT | "_")* }
 // ***********************************************
 // ***********************************************
@@ -79,7 +79,18 @@ GRAPHIC_LOGGER_vertical = { "vertical" }
 GRAPHIC_LOGGER_opt = _{ GRAPHIC_LOGGER_png | GRAPHIC_LOGGER_svg | GRAPHIC_LOGGER_horizontal | GRAPHIC_LOGGER_vertical }
 GRAPHIC_LOGGER_opts = { "[" ~ GRAPHIC_LOGGER_opt ~ ("," ~ GRAPHIC_LOGGER_opt)* ~ "]" }
 OPTION_GRAPHIC_LOGGER = { "graphic" ~ GRAPHIC_LOGGER_opts? }
-OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER }
+// ***
+TRACEGEN_LOGGER_exact = { "exact" }
+TRACEGEN_LOGGER_prefix = { "prefix" }
+TRACEGEN_LOGGER_partition_discrete = { "discrete" }
+TRACEGEN_LOGGER_partition_trivial = { "trivial" }
+TRACEGEN_LOGGER_partition_specific = { "{" ~ HIBOU_LABEL_LIST ~ ("," ~ HIBOU_LABEL_LIST)*  ~ "}" }
+TRACEGEN_LOGGER_partition = _{ "partition" ~ "=" ~ (TRACEGEN_LOGGER_partition_discrete | TRACEGEN_LOGGER_partition_trivial | TRACEGEN_LOGGER_partition_specific) }
+TRACEGEN_LOGGER_opt = _{ TRACEGEN_LOGGER_exact | TRACEGEN_LOGGER_prefix | TRACEGEN_LOGGER_partition }
+TRACEGEN_LOGGER_opts = { "[" ~ TRACEGEN_LOGGER_opt ~ ("," ~ TRACEGEN_LOGGER_opt)* ~ "]" }
+OPTION_TRACEGEN_LOGGER = { "tracegen" ~ TRACEGEN_LOGGER_opts? }
+// ***
+OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER | OPTION_TRACEGEN_LOGGER }
 OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
 // ***********************************************
 ARITH_INTEGER = { "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
@@ -89,8 +100,15 @@ OPTION_PRIORITY_reception = { "reception" }
 OPTION_PRIORITY_loop = { "loop" }
 OPTION_PRIORITY_hide = { "hide" }
 OPTION_PRIORITY_simu = { "simu" }
+OPTION_PRIORITY_multi_rdv = { "multi_rdv" }
 OPTION_PRIORITY_step = { "step" }
-OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission | OPTION_PRIORITY_reception | OPTION_PRIORITY_loop | OPTION_PRIORITY_step | OPTION_PRIORITY_hide | OPTION_PRIORITY_simu }
+OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission
+                            | OPTION_PRIORITY_reception
+                            | OPTION_PRIORITY_loop
+                            | OPTION_PRIORITY_step
+                            | OPTION_PRIORITY_multi_rdv
+                            | OPTION_PRIORITY_hide
+                            | OPTION_PRIORITY_simu }
 OPTION_PRIORITY_LEVEL = { ARITH_INTEGER | ("-" ~ ARITH_INTEGER ) }
 OPTION_PRIORITY = { OPTION_PRIORITY_KIND ~ "=" ~ OPTION_PRIORITY_LEVEL }
 // ***********************************************
@@ -99,17 +117,17 @@ OPTION_STRATEGY_DFS = { "DepthFS" }
 OPTION_STRATEGY_KIND = _{ OPTION_STRATEGY_BFS | OPTION_STRATEGY_DFS }
 OPTION_STRATEGY_DECL = { "strategy" ~ "=" ~ OPTION_STRATEGY_KIND }
 // ***********************************************
-OPTION_PREFILTER_MAX_DEPTH = { "max_depth" ~ "=" ~ ARITH_INTEGER }
-OPTION_PREFILTER_MAX_LOOP_DEPTH = { "max_loop_depth" ~ "=" ~ ARITH_INTEGER }
-OPTION_PREFILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
-OPTION_PREFILTER = _{ OPTION_PREFILTER_MAX_DEPTH | OPTION_PREFILTER_MAX_LOOP_DEPTH | OPTION_PREFILTER_MAX_NODE_NUMBER }
-OPTION_PREFILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_PREFILTER ~ ("," ~ OPTION_PREFILTER)* ~ "]" }
+OPTION_FILTER_MAX_DEPTH = { "max_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER_MAX_LOOP_DEPTH = { "max_loop_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER = _{ OPTION_FILTER_MAX_DEPTH | OPTION_FILTER_MAX_LOOP_DEPTH | OPTION_FILTER_MAX_NODE_NUMBER }
+OPTION_FILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_FILTER ~ ("," ~ OPTION_FILTER)* ~ "]" }
 // ***********************************************
 OPTION_FRONTIER_PRIORITIES_DECL = { "priorities" ~ "=" ~ "[" ~ OPTION_PRIORITY ~ ("," ~ OPTION_PRIORITY)* ~ "]" }
 // ***********************************************
 GENERAL_OPTION_DECL  = _{ OPTION_LOGGER_DECL
                           | OPTION_STRATEGY_DECL
-                          | OPTION_PREFILTERS_DECL
+                          | OPTION_FILTERS_DECL
                           | OPTION_FRONTIER_PRIORITIES_DECL }
 // ***********************************************
 EXPLORE_OPTION_DECL = _{ GENERAL_OPTION_DECL }
@@ -139,7 +157,10 @@ OPTION_LOCANA_yes = { "local_analysis" ~ "=" ~ "true" }
 OPTION_LOCANA_no = { "local_analysis" ~ "=" ~ "false" }
 OPTION_LOCANA = _{ OPTION_LOCANA_yes | OPTION_LOCANA_no }
 // ***********************************************
-ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL | OPTION_ANALYSIS_KIND_DECL | OPTION_GOAL_DECL | OPTION_LOCANA }
+ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL
+                            | OPTION_ANALYSIS_KIND_DECL
+                            | OPTION_GOAL_DECL
+                            | OPTION_LOCANA }
 ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
                                	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)*
                                    ~ "}"}
@@ -147,19 +168,28 @@ ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
 // ***********************************************
 // declarations
 HIBOU_MODEL_MS_DECL = { "@message" ~ "{" ~
-	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)*
-    ~ "}"}
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ (";")?
+    ~ "}"
+    }
 
 HIBOU_MODEL_LF_DECL = { "@lifeline" ~ "{" ~
-	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ "}"}
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ (";")?
+	~ "}"
+	}
 
 HIBOU_MODEL_GT_DECL = { "@gate" ~ "{" ~
-	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ "}"}
+	HIBOU_LABEL ~ (";" ~ HIBOU_LABEL)* ~ (";")?
+	~ "}"
+	}
 // ***********************************************
 // ***********************************************
 // setup & .hsf file
 
-SETUP_SECTION = _{ EXPLORE_OPTION_SECTION | ANALYZE_OPTION_SECTION | HIBOU_MODEL_MS_DECL | HIBOU_MODEL_LF_DECL | HIBOU_MODEL_GT_DECL }
+SETUP_SECTION = _{ EXPLORE_OPTION_SECTION
+                    | ANALYZE_OPTION_SECTION
+                    | HIBOU_MODEL_MS_DECL
+                    | HIBOU_MODEL_LF_DECL
+                    | HIBOU_MODEL_GT_DECL }
 HIBOU_MODEL_SETUP = { SETUP_SECTION* }
 HSF_PEST_FILE = { SOI ~
 		HIBOU_MODEL_SETUP ~ SD_INTERACTION ~
@@ -175,14 +205,17 @@ TRACE_EMISSION_SYMBOL = { "!" }
 TRACE_RECEPTION_SYMBOL = { "?" }
 
 TRACE_ACTION = { TRACE_LIFELINE ~ (TRACE_EMISSION_SYMBOL|TRACE_RECEPTION_SYMBOL) ~ TRACE_MESSAGE }
+TRACE_ACTION_SET = { "{" ~ TRACE_ACTION ~ ("," ~ TRACE_ACTION)+ ~ "}" }
+TRACE_SEQUENCE_elt = _{ TRACE_ACTION | TRACE_ACTION_SET }
+TRACE_SEQUENCE = { (TRACE_SEQUENCE_elt ~ ("." ~ TRACE_SEQUENCE_elt)*)? }
 // ***********************************************
-CANAL_LIFELINES = { TRACE_LIFELINE ~ ("," ~ TRACE_LIFELINE)* }
-CANAL_ANY = {"#any"}
-CANAL_ALL = {"#all"}
-TRACE_CANAL = _{ "[" ~ (CANAL_ANY | CANAL_ALL | CANAL_LIFELINES) ~ "]" }
-TRACE = { TRACE_CANAL ~ (TRACE_ACTION ~ ("." ~ TRACE_ACTION)*)? }
+CANAL_LIFELINES_spec = { TRACE_LIFELINE ~ ("," ~ TRACE_LIFELINE)* }
+CANAL_LIFELINES_any = {"#any"}
+CANAL_LIFELINES_all = {"#all"}
+CANAL_LIFELINES = _{ "[" ~ (CANAL_LIFELINES_any | CANAL_LIFELINES_all | CANAL_LIFELINES_spec) ~ "]" }
+CANAL_TRACE = { CANAL_LIFELINES ~ TRACE_SEQUENCE }
 // ***********************************************
-MULTI_TRACE = { "{" ~ (TRACE ~ (";" ~ TRACE)* )? ~ "}" }
+MULTI_TRACE = { "{" ~ (CANAL_TRACE ~ (";" ~ CANAL_TRACE)* )? ~ (";")? ~ "}" }
 // ***********************************************
-HTF_PEST_FILE = { SOI ~ (MULTI_TRACE|TRACE) ~ EOI }
+HTF_PEST_FILE = { SOI ~ (MULTI_TRACE|TRACE_SEQUENCE) ~ EOI }
 // ***********************************************

@@ -28,23 +28,34 @@ use crate::core::general_context::GeneralContext;
 
 
 use crate::from_hfiles::error::HibouParsingError;
-use crate::process::log::ProcessLogger;
 
 use crate::from_hfiles::parser::*;
 use crate::from_hfiles::interaction::parse_interaction;
-use crate::rendering::process::graphic_logger::GraphicProcessLogger;
-use crate::from_hfiles::hibou_options::*;
+use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
+use crate::from_hfiles::proc_options::opt_explore::{HibouExploreOptions, parse_explore_options};
+use crate::from_hfiles::proc_options::opt_analyze::{HibouAnalyzeOptions, parse_analyze_options};
+use crate::ui::extensions::HIBOU_MODEL_FILE_EXTENSION;
 
 
-pub static HIBOU_MODEL_FILE_EXTENSION : &'static str = "hsf";
-
-pub enum ProcessKind {
-    Explore,
-    Analyze,
-    None
+pub struct HibouOptions {
+    pub explore_options : HibouExploreOptions,
+    pub analyze_options : HibouAnalyzeOptions
 }
 
-pub fn parse_hsf_file(file_path : &str, process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
+impl HibouOptions{
+
+    pub fn new(explore_options : HibouExploreOptions,
+               analyze_options : HibouAnalyzeOptions) -> HibouOptions {
+        return HibouOptions{explore_options,analyze_options};
+    }
+
+    pub fn default() -> HibouOptions {
+        return HibouOptions::new(HibouExploreOptions::default(),HibouAnalyzeOptions::default());
+    }
+
+}
+
+pub fn parse_hsf_file(file_path : &str) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
     let path_object = Path::new(file_path);
     let file_extension : &str = path_object.extension().unwrap().to_str().unwrap();
     if file_extension != HIBOU_MODEL_FILE_EXTENSION {
@@ -53,7 +64,7 @@ pub fn parse_hsf_file(file_path : &str, process_kind : &ProcessKind) -> Result<(
     let file_name : &str = path_object.file_stem().unwrap().to_str().unwrap();
     match fs::read_to_string(file_path) {
         Ok( unparsed_hsf_str ) => {
-            return parse_hsf_string(unparsed_hsf_str, file_name, process_kind);
+            return parse_hsf_string(unparsed_hsf_str, file_name);
         },
         Err(e) => {
             return Err( HibouParsingError::FileError(e.to_string()) );
@@ -61,9 +72,8 @@ pub fn parse_hsf_file(file_path : &str, process_kind : &ProcessKind) -> Result<(
     }
 }
 
-pub fn parse_hsf_string(sd_string : String,
-                        name : &str,
-                        process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
+fn parse_hsf_string(sd_string : String,
+                        name : &str) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
     match SDParser::parse(Rule::HSF_PEST_FILE, &sd_string) {
         Ok( ref mut sd_cfg_pair ) => {
             let mut content = sd_cfg_pair.next().unwrap().into_inner();
@@ -71,10 +81,10 @@ pub fn parse_hsf_string(sd_string : String,
             match first_pair.as_rule() {
                 Rule::HIBOU_MODEL_SETUP => {
                     let second_pair = content.next().unwrap();
-                    return parse_sd(second_pair,Some(first_pair),name,process_kind);
+                    return parse_sd(second_pair,Some(first_pair),name);
                 },
                 Rule::SD_INTERACTION => {
-                    return parse_sd(first_pair, None,name,process_kind);
+                    return parse_sd(first_pair, None,name);
                 },
                 _ => {
                     unreachable!();
@@ -111,8 +121,7 @@ fn parse_gate_decl(gt_decl_pair : Pair<Rule>, gen_ctx : &mut GeneralContext ) {
 
 fn parse_setup(setup_pair : Pair<Rule>,
                gen_ctx : &mut GeneralContext,
-               file_name : &str,
-               process_kind : &ProcessKind) -> Result<HibouOptions,HibouParsingError> {
+               file_name : &str) -> Result<HibouOptions,HibouParsingError> {
     // ***
     let mut got_section_explore_options   : bool = false;
     let mut got_section_analyze_options   : bool = false;
@@ -121,7 +130,10 @@ fn parse_setup(setup_pair : Pair<Rule>,
     let mut got_section_gates : bool = false;
     // ***
     let mut contents = setup_pair.into_inner();
-    let mut hibou_options_opt : Option<HibouOptions> = None;
+    // ***
+    let mut explore_options = HibouExploreOptions::default();
+    let mut analyze_options = HibouAnalyzeOptions::default();
+    // ***
     while let Some(current_pair) = contents.next() {
         match current_pair.as_rule() {
             Rule::EXPLORE_OPTION_SECTION => {
@@ -129,18 +141,17 @@ fn parse_setup(setup_pair : Pair<Rule>,
                     return Err( HibouParsingError::HsfSetupError("several '@explore_option' sections declared".to_string()));
                 }
                 got_section_explore_options = true;
-                match process_kind {
-                    &ProcessKind::Explore => {
-                        match parse_hibou_options(current_pair,file_name, process_kind) {
-                            Err(e) => {
-                                return Err(e);
-                            },
-                            Ok( hoptions ) => {
-                                hibou_options_opt = Some(hoptions);
-                            }
-                        }
+                // ***
+                // todo( separate the general context declaration from other options )
+                // todo( at first lfs msgs decls and only then process options )
+                // todo( it may cause problems otherwise )
+                match parse_explore_options(&gen_ctx,current_pair,file_name) {
+                    Err(e) => {
+                        return Err(e);
                     },
-                    _ => {}
+                    Ok( exp_opts ) => {
+                        explore_options = exp_opts;
+                    }
                 }
             },
             Rule::ANALYZE_OPTION_SECTION => {
@@ -148,18 +159,14 @@ fn parse_setup(setup_pair : Pair<Rule>,
                     return Err( HibouParsingError::HsfSetupError("several '@analyze_option' sections declared".to_string()));
                 }
                 got_section_analyze_options = true;
-                match process_kind {
-                    &ProcessKind::Analyze => {
-                        match parse_hibou_options(current_pair,file_name, process_kind) {
-                            Err(e) => {
-                                return Err(e);
-                            },
-                            Ok( hoptions ) => {
-                                hibou_options_opt = Some(hoptions);
-                            }
-                        }
+                // ***
+                match parse_analyze_options(current_pair,file_name) {
+                    Err(e) => {
+                        return Err(e);
                     },
-                    _ => {}
+                    Ok( ana_opts ) => {
+                        analyze_options = ana_opts;
+                    }
                 }
             },
             Rule::HIBOU_MODEL_MS_DECL => {
@@ -188,42 +195,21 @@ fn parse_setup(setup_pair : Pair<Rule>,
             }
         }
     }
-    match hibou_options_opt {
-        None => {
-            match process_kind {
-                ProcessKind::Analyze => {
-                    return Ok( HibouOptions::default_analyze() );
-                },
-                _ => {
-                    return Ok( HibouOptions::default_explore() );
-                }
-            }
-        },
-        Some(hibou_options) => {
-            return Ok( hibou_options );
-        }
-    }
+    // ***
+    return Ok( HibouOptions{explore_options,analyze_options} );
 }
 
 fn parse_sd(interaction_pair : Pair<Rule>,
             setup_pair_opt : Option< Pair<Rule> >,
-            name : &str,
-            process_kind : &ProcessKind) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
+            name : &str) -> Result<(GeneralContext,Interaction,HibouOptions),HibouParsingError> {
     let mut gen_ctx = GeneralContext::new();
     let hibou_options : HibouOptions;
     match setup_pair_opt {
         None => {
-            match process_kind {
-                ProcessKind::Analyze => {
-                    hibou_options = HibouOptions::default_analyze();
-                },
-                _ => {
-                    hibou_options = HibouOptions::default_explore();
-                }
-            }
+            hibou_options = HibouOptions::default();
         },
         Some( setup_pair ) => {
-            match parse_setup(setup_pair, &mut gen_ctx, name, process_kind) {
+            match parse_setup(setup_pair, &mut gen_ctx, name) {
                 Err(e) => {
                     return Err(e);
                 },

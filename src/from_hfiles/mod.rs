@@ -20,6 +20,6 @@ mod parser;
 mod interaction;
 mod action;
 pub mod hsf_file;
-pub mod htf_file;
-pub mod hibou_options;
+pub mod proc_options;
+pub mod traces;
 

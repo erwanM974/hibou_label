@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+
 pub mod hibou_color_palette;
 pub mod sd_drawing_conf;
 pub mod textual;
 pub mod graphviz;
 pub mod custom_draw;
-pub mod process;
+
