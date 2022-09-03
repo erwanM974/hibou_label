@@ -17,4 +17,5 @@ limitations under the License.
 
 pub mod position;
 pub mod short_action;
+pub mod multi_trace;
 

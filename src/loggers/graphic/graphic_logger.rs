@@ -157,10 +157,11 @@ impl GraphicProcessLogger {
                              gen_ctx : &GeneralContext,
                              new_state_id : u32,
                              new_interaction : &Interaction,
-                             remaining_multi_trace : &Option<&AnalysableMultiTrace>) {
+                             remaining_multi_trace : &Option<&AnalysableMultiTrace>,
+                             is_simulation : bool) {
         // ***
         let int_img_path : String = format!("./temp/{:}_i{}.png",  self.log_name ,new_state_id);
-        draw_interaction(&int_img_path, new_interaction, gen_ctx, remaining_multi_trace);
+        draw_interaction(&int_img_path, new_interaction, gen_ctx, remaining_multi_trace, is_simulation);
         // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         node_gv_options.push( GraphvizNodeStyleItem::Image( int_img_path ) );
@@ -176,18 +177,15 @@ impl GraphicProcessLogger {
                         new_state_id : u32,
                         action_position : &Position,
                         executed_actions : &HashSet<TraceAction>,
-                        is_simulation : bool,
+                        consu_set : &HashSet<usize>,
                         sim_map : &HashMap<usize,SimulationStepKind>) {
         let firing_node_path : String = format!("./temp/{:}_f{}.png",  self.log_name ,new_state_id);
-        draw_firing(&firing_node_path, action_position, executed_actions, sim_map, gen_ctx);
+        draw_firing(&firing_node_path, action_position, executed_actions, consu_set, sim_map, gen_ctx);
         // ***
         let mut firing_gv_node_options : GraphvizNodeStyle = Vec::new();
         firing_gv_node_options.push( GraphvizNodeStyleItem::Image( firing_node_path ) );
         firing_gv_node_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
         firing_gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
-        if is_simulation {
-            firing_gv_node_options.push( GraphvizNodeStyleItem::Color(GraphvizColor::gray) );
-        }
         // ***
         let firing_node_name = format!("f{:}", new_state_id);
         self.write_node( firing_node_name.clone(), firing_gv_node_options);

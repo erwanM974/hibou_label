@@ -34,7 +34,9 @@ pub enum SimulationStepKind {
 
 pub enum AnalysisStepKind {
     Hide( HashSet<usize> ), // all the lifelines to hide
-    Simulate(FrontierElement,HashMap<usize,SimulationStepKind>) // for each lifeline on which simulation is done, which kind (the other lifelines, if participating in the action, consume events)
+    Simulate(FrontierElement,
+             HashSet<usize>, // co-localisations on which multi-trace action consumption must be done
+             HashMap<usize,SimulationStepKind>) // co-localisations on which simulation must be done and which kind
 }
 
 impl AbstractStepKind<AnalysisConfig> for AnalysisStepKind {
@@ -44,7 +46,7 @@ impl AbstractStepKind<AnalysisConfig> for AnalysisStepKind {
             AnalysisStepKind::Hide(_) => {
                 return 0;
             },
-            AnalysisStepKind::Simulate(frt_elt,sim_map) => {
+            AnalysisStepKind::Simulate(frt_elt,consu_set,sim_map) => {
                 let mut priority : i32 = 0;
                 match frt_elt.act_kind {
                     TraceActionKind::Emission => {

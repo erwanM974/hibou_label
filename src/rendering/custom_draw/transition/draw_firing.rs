@@ -56,35 +56,41 @@ use crate::process::ana_proc::interface::step::SimulationStepKind;
 
 
 
-
+fn write_lfs_texts(gen_ctx : &GeneralContext,coloc_id : &usize, color : Rgb<u8>,ttp : &mut Vec<TextToPrint>) {
+    ttp.push( TextToPrint{text:"[".to_string(),color} );
+    let coloc_lfs : &HashSet<usize> = gen_ctx.co_localizations.get(*coloc_id).unwrap();
+    let mut remaining_lfs = coloc_lfs.len();
+    for lf_id in coloc_lfs.iter().sorted() {
+        let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
+        ttp.push( TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)} );
+        remaining_lfs -= 1;
+        if remaining_lfs > 0 {
+            ttp.push( TextToPrint{text:",".to_string(),color} );
+        }
+    }
+    ttp.push( TextToPrint{text:"]".to_string(),color} );
+}
 
 pub fn draw_firing(path_str : &String,
                    action_position : &Position,
                    executed_actions : &HashSet<TraceAction>,
+                   consu_set : &HashSet<usize>,
                    sim_map : &HashMap<usize,SimulationStepKind>,
                    gen_ctx : &GeneralContext) {
     let path = Path::new( path_str );
     // ***
     let mut text_lines : Vec<Vec<TextToPrint>> = Vec::new();
     // ***
-    if sim_map.len() > 0 {
+    if consu_set.len() > 0 || sim_map.len() > 0 {
         let mut ttp: Vec<TextToPrint> = Vec::new();
-        ttp.push( TextToPrint{text:"SIMU ".to_string(),color:Rgb(HCP_LightGray)} );
+        for coloc_id in consu_set {
+            ttp.push( TextToPrint{text:"C".to_string(),color:Rgb(HC_Grammar_Symbol)} );
+            write_lfs_texts(gen_ctx,coloc_id,Rgb(HC_Grammar_Symbol),&mut ttp);
+            ttp.push( TextToPrint{text:" ".to_string(),color:Rgb(HCP_Black)} );
+        }
         for (coloc_id,sim_kind) in sim_map {
-            // ***
-            ttp.push( TextToPrint{text:"[".to_string(),color:Rgb(HCP_LightGray)} );
-            let coloc_lfs : &HashSet<usize> = gen_ctx.co_localizations.get(*coloc_id).unwrap();
-            let mut remaining_lfs = coloc_lfs.len();
-            for lf_id in coloc_lfs.iter().sorted() {
-                let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
-                ttp.push( TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)} );
-                remaining_lfs -= 1;
-                if remaining_lfs > 0 {
-                    ttp.push( TextToPrint{text:",".to_string(),color:Rgb(HCP_LightGray)} );
-                }
-            }
-            ttp.push( TextToPrint{text:"]".to_string(),color:Rgb(HCP_LightGray)} );
-            // ***
+            ttp.push( TextToPrint{text:"S".to_string(),color:Rgb(HCP_LightGray)} );
+            write_lfs_texts(gen_ctx,coloc_id,Rgb(HCP_LightGray),&mut ttp);
             match sim_kind {
                 SimulationStepKind::BeforeStart => {
                     ttp.push( TextToPrint{text:"↑".to_string(),color:Rgb(HCP_LightGray)} );

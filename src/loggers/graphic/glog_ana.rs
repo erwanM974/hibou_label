@@ -35,9 +35,10 @@ impl AnalysisLogger for GraphicProcessLogger {
     fn log_init(&mut self,
                 gen_ctx: &GeneralContext,
                 interaction: &Interaction,
-                remaining_multi_trace: &AnalysableMultiTrace) {
+                remaining_multi_trace: &AnalysableMultiTrace,
+                is_simulation : bool) {
         self.initiate();
-        self.write_interaction(gen_ctx,1, interaction, &Some(remaining_multi_trace));
+        self.write_interaction(gen_ctx,1, interaction, &Some(remaining_multi_trace), is_simulation);
     }
 
     fn log_term(&mut self,
@@ -51,31 +52,25 @@ impl AnalysisLogger for GraphicProcessLogger {
                      new_state_id: u32,
                      action_position: &Position,
                      executed_actions: &HashSet<TraceAction>,
+                     consu_set : &HashSet<usize>,
                      sim_map: &HashMap<usize, SimulationStepKind>,
                      new_interaction: &Interaction,
-                     remaining_multi_trace: &AnalysableMultiTrace) {
-        // *** Parent Interaction Node
-        let is_simulation = sim_map.len() > 0;
+                     remaining_multi_trace: &AnalysableMultiTrace,
+                     is_simulation : bool) {
         // ***
-        self.write_firing(gen_ctx,new_state_id,action_position,executed_actions,is_simulation,sim_map);
+        self.write_firing(gen_ctx,new_state_id,action_position,executed_actions,consu_set,sim_map);
         // *** Transition To Firing
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            if is_simulation {
-                tran_gv_options.push( GraphvizEdgeStyleItem::Color(GraphvizColor::gray) );
-            }
             self.write_edge(format!("i{:}", parent_state_id), format!("f{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, new_interaction, &Some(remaining_multi_trace));
+        self.write_interaction(gen_ctx, new_state_id, new_interaction, &Some(remaining_multi_trace),is_simulation);
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            if is_simulation {
-                tran_gv_options.push( GraphvizEdgeStyleItem::Color(GraphvizColor::gray) );
-            }
             self.write_edge(format!("f{:}", new_state_id), format!("i{:}", new_state_id), tran_gv_options);
         }
     }
@@ -99,7 +94,7 @@ impl AnalysisLogger for GraphicProcessLogger {
             self.write_edge(parent_interaction_node_name, format!("h{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, hidden_interaction, &Some(remaining_multi_trace) );
+        self.write_interaction(gen_ctx, new_state_id, hidden_interaction, &Some(remaining_multi_trace), false );
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

@@ -60,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.7.6   "#);
+    my_vec.push(r#"  V-label-0.7.7   "#);
     return my_vec;
 }
 
@@ -117,7 +117,7 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("from file '{}'",hsf_file_path) );
                 ret_print.push( format!("on file : {}",spec_output_file) );
                 ret_print.push( "".to_string());
-                draw_interaction(&spec_output_file, &my_int,&gen_ctx,&None);
+                draw_interaction(&spec_output_file, &my_int,&gen_ctx,&None, false);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("puml_sd") {

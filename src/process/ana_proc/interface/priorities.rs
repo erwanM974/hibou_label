@@ -50,7 +50,7 @@ impl AbstractPriorities for AnalysisPriorities {
         my_str.push_str( &format!("emission={:},",self.emission) );
         my_str.push_str( &format!("reception={:},",self.reception) );
         my_str.push_str( &format!("multi-rdv={:},",self.multi_rdv) );
-        my_str.push_str( &format!("in_loop={:},",self.in_loop) );
+        my_str.push_str( &format!("loop={:},",self.in_loop) );
         my_str.push_str( &format!("hide={:},",self.hide) );
         my_str.push_str( &format!("simu={:}",self.simu) );
         return my_str;

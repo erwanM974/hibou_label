@@ -39,13 +39,15 @@ use crate::process::ana_proc::interface::step::{AnalysisStepKind, SimulationStep
 use crate::process::ana_proc::interface::node::AnalysisNodeKind;
 use crate::process::ana_proc::interface::priorities::AnalysisPriorities;
 use crate::process::ana_proc::verdicts::{CoverageVerdict, GlobalVerdict, update_global_verdict_from_new_coverage_verdict};
+use crate::rendering::textual::monochrome::multi_trace::multi_trace_as_text;
 
 
 pub struct AnalysisProcessManager {
     manager: GenericProcessManager<AnalysisConfig>,
     ana_kind : AnalysisKind,
     use_locana : UseLocalAnalysis,
-    goal : Option<GlobalVerdict>
+    goal : Option<GlobalVerdict>,
+    is_simulation : bool
 }
 
 impl AnalysisProcessManager {
@@ -64,15 +66,31 @@ impl AnalysisProcessManager {
             priorities,
             loggers
         );
-        return AnalysisProcessManager{manager,ana_kind,use_locana,goal};
+        let is_simulation : bool;
+        match &ana_kind {
+            &AnalysisKind::Simulate(_) => {
+                is_simulation = true;
+            },
+            _ => {
+                is_simulation = false;
+            }
+        }
+        return AnalysisProcessManager{manager,ana_kind,use_locana,goal,is_simulation};
     }
 
     pub fn analyze(&mut self,
                    interaction : Interaction,
-                   multi_trace : AnalysableMultiTrace) -> (GlobalVerdict,u32) {
+                   got_multi_trace : AnalysableMultiTrace) -> (GlobalVerdict,u32) {
+        // ***
+        let mut multi_trace = got_multi_trace;
+        match &self.ana_kind {
+            AnalysisKind::Simulate(_) => {
+                multi_trace.remaining_loop_instantiations_in_simulation = interaction.max_nested_loop_depth();
+            },
+            _ => {}
+        }
+        // ***
         self.init_loggers(&interaction,&multi_trace);
-        let mut multi_trace = multi_trace;
-        multi_trace.remaining_loop_instantiations_in_simulation = interaction.max_nested_loop_depth();
         // ***
         let mut next_state_id : u32 = 1;
         let mut node_counter : u32 = 0;
@@ -81,8 +99,10 @@ impl AnalysisProcessManager {
         // ***
         let pursue_analysis : bool;
         match self.enqueue_next_node_in_analysis(next_state_id,
-                                                 interaction,multi_trace,
-                                                 0,0) {
+                                                 interaction,
+                                                 multi_trace,
+                                                 0,
+                                                 0) {
             None => {
                 pursue_analysis = true;
             },
@@ -177,10 +197,10 @@ impl AnalysisProcessManager {
             // ***
             match &self.ana_kind {
                 &AnalysisKind::Accept => {
-                    add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                    add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                 },
                 &AnalysisKind::Prefix => {
-                    add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                    add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                 },
                 &AnalysisKind::Hide => {
                     let mut to_hide : HashSet<usize> = HashSet::new();
@@ -196,7 +216,7 @@ impl AnalysisProcessManager {
                         let generic_step = GenericStep{parent_id,id_as_child:id_as_child,kind:AnalysisStepKind::Hide( to_hide )};
                         to_enqueue.push( generic_step );
                     } else {
-                        add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                        add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                     }
                 },
                 &AnalysisKind::Simulate(sim_before) => {
@@ -249,7 +269,7 @@ impl AnalysisProcessManager {
                     }
                 }
             },
-            &AnalysisStepKind::Simulate( ref frt_elt, ref sim_map ) => {
+            &AnalysisStepKind::Simulate( ref frt_elt, ref consu_set, ref sim_map ) => {
                 let new_depth = parent_state.depth + 1;
                 let target_loop_depth = (parent_state.kind.interaction).get_loop_depth_at_pos(&frt_elt.position);
                 let new_loop_depth = parent_state.kind.loop_depth + target_loop_depth;
@@ -262,10 +282,12 @@ impl AnalysisProcessManager {
                                                              &frt_elt.target_lf_ids,
                                                              true);
                         let rem_sim_depth : u32;
-                        if sim_map.len() > 0 {
-                            rem_sim_depth = parent_state.kind.multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth;
-                        } else {
+                        if consu_set.len() > 0 {
                             rem_sim_depth = exe_result.interaction.max_nested_loop_depth();
+                        } else {
+                            let new_max_ld = exe_result.interaction.max_nested_loop_depth();
+                            let removed = parent_state.kind.multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth;
+                            rem_sim_depth = new_max_ld.min(removed);
                         }
                         let new_multi_trace = parent_state.kind.multi_trace.update_on_simulation(&self.manager.gen_ctx,
                                                                                                  sim_map,
@@ -275,6 +297,7 @@ impl AnalysisProcessManager {
                         // ***
                         self.execution_loggers(&frt_elt.position,
                                                &frt_elt.target_actions,
+                                               consu_set,
                                                sim_map,
                                                &exe_result.interaction,
                                                to_process.parent_id,
@@ -389,7 +412,7 @@ impl AnalysisProcessManager {
 
     fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &AnalysableMultiTrace) {
         for logger in self.manager.loggers.iter_mut() {
-            (*logger).log_init( &self.manager.gen_ctx, interaction,remaining_multi_trace);
+            (*logger).log_init( &self.manager.gen_ctx, interaction,remaining_multi_trace,self.is_simulation);
         }
     }
 
@@ -446,6 +469,7 @@ impl AnalysisProcessManager {
     fn execution_loggers(&mut self,
                          action_position : &Position,
                          executed_actions : &HashSet<TraceAction>,
+                         consu_set : &HashSet<usize>,
                          sim_map : &HashMap<usize,SimulationStepKind>,
                          new_interaction : &Interaction,
                          parent_state_id : u32,
@@ -457,9 +481,11 @@ impl AnalysisProcessManager {
                                  new_state_id,
                                  action_position,
                                  executed_actions,
+                                 consu_set,
                                  sim_map,
                                  new_interaction,
-                                 remaining_multi_trace);
+                                 remaining_multi_trace,
+                                 self.is_simulation);
         }
     }
 

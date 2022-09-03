@@ -31,7 +31,8 @@ pub trait AnalysisLogger {
     fn log_init(&mut self,
                 gen_ctx : &GeneralContext,
                 interaction : &Interaction,
-                remaining_multi_trace : &AnalysableMultiTrace);
+                remaining_multi_trace : &AnalysableMultiTrace,
+                is_simulation : bool);
 
     fn log_term(&mut self,
                 options_as_str : &Vec<String>);
@@ -42,9 +43,11 @@ pub trait AnalysisLogger {
                      new_state_id : u32,
                      action_position : &Position,
                      executed_actions : &HashSet<TraceAction>,
+                     consu_set : &HashSet<usize>,
                      sim_map : &HashMap<usize,SimulationStepKind>,
                      new_interaction : &Interaction,
-                     remaining_multi_trace : &AnalysableMultiTrace);
+                     remaining_multi_trace : &AnalysableMultiTrace,
+                     is_simulation : bool);
 
     fn log_hide(&mut self,
                 gen_ctx : &GeneralContext,

@@ -58,18 +58,6 @@ fn perform_local_analysis(gen_ctx : &GeneralContext,
                           canal : &AnalysableMultiTraceCanal) -> GlobalVerdict {
     if canal.flag_dirty4local && canal.trace.len() > 0 {
         // ***
-        match parent_analysis_kind {
-            AnalysisKind::Simulate( sim_before ) => {
-                if *sim_before && (canal.consumed == 0) {
-                    // here we allow the simulation of actions before the start of
-                    // the given component trace
-                    // hence we shouldn't discard the node
-                    return GlobalVerdict::Pass;
-                }
-            },
-            _ => {}
-        }
-        // ***
         let local_interaction : Interaction;
         {
             let mut lfs_to_remove = gen_ctx.get_all_lfs_ids();
@@ -92,12 +80,29 @@ fn perform_local_analysis(gen_ctx : &GeneralContext,
             local_mu = AnalysableMultiTrace::new(canals,0);
         }
         // ***
-        let mut local_analysis_manager = AnalysisProcessManager::new(gen_ctx.clone(),
+        let local_analysis_kind : AnalysisKind;
+        match parent_analysis_kind {
+            AnalysisKind::Simulate( sim_before ) => {
+                if *sim_before {
+                    local_analysis_kind = AnalysisKind::Simulate(true);
+                } else {
+                    local_analysis_kind = AnalysisKind::Prefix;
+                }
+            },
+            _ => {
+                local_analysis_kind = AnalysisKind::Prefix;
+            }
+        }
+        // ***
+        let mut new_gen_ctx= gen_ctx.clone();
+        new_gen_ctx.co_localizations = vec![ gen_ctx.co_localizations.get(canal_id).unwrap().clone() ];
+        // ***
+        let mut local_analysis_manager = AnalysisProcessManager::new(new_gen_ctx,
                                                                  HibouSearchStrategy::DFS,
                                                                      vec![],
                                                                  AnalysisPriorities::default(),
                                                                      vec![],
-                                                                 AnalysisKind::Prefix,
+                                                                     local_analysis_kind,
                                                                      UseLocalAnalysis::No,
                                                                      Some(GlobalVerdict::WeakPass)
                                                                  );
