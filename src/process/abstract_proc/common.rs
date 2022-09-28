@@ -42,18 +42,22 @@ impl std::string::ToString for FilterEliminationKind {
 
 
 pub enum HibouSearchStrategy {
-    BFS,
-    DFS
+    BFS, // breadth first search
+    DFS, // depth first search
+    HCS  // high coverage search
 }
 
 impl std::string::ToString for HibouSearchStrategy {
     fn to_string(&self) -> String {
         match self {
             HibouSearchStrategy::BFS => {
-                return "BreadthFS".to_string();
+                return "BreadthFirstSearch".to_string();
             },
             HibouSearchStrategy::DFS => {
-                return "DepthFS".to_string();
+                return "DepthFirstSearch".to_string();
+            },
+            HibouSearchStrategy::HCS => {
+                return "HighCoverageSearch".to_string();
             }
         }
     }

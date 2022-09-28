@@ -18,12 +18,18 @@ limitations under the License.
 
 use crate::process::abstract_proc::generic::AbstractPriorities;
 
+
+
+
 pub struct ExplorationPriorities {
     pub emission : i32,
     pub reception : i32,
     pub multi_rdv : i32,
     pub in_loop : i32
 }
+
+
+
 
 impl ExplorationPriorities {
 

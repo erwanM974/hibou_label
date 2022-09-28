@@ -34,20 +34,14 @@ impl CoverageVerdict {
             CoverageVerdict::Slice => {
                 return GraphvizColor::darkorchid3; // 154 50 205
             },
-            CoverageVerdict::Inconc => {
+            CoverageVerdict::Inconc(_) => {
                 return GraphvizColor::deeppink3; // 205 16 118
             },
-            CoverageVerdict::LackObs => {
-                return GraphvizColor::orangered3; // 205 55 0
-            },
-            CoverageVerdict::Dead => {
-                return GraphvizColor::firebrick; // 178 34 34
-            },
-            CoverageVerdict::Out => {
+            CoverageVerdict::Out(_) => {
                 return GraphvizColor::red3; // 205 0 0
             },
-            CoverageVerdict::UnCov => {
-                return GraphvizColor::red3;
+            CoverageVerdict::OutSim(_) => {
+                return GraphvizColor::crimson;
             }
         }
     }

@@ -96,6 +96,9 @@ pub fn parse_tracegen_logger(gen_ctx : &GeneralContext,
             let mut co_localizations = gen_ctx.get_trivial_partition();
             for opt_pair in tracegen_logger_opts.into_inner() {
                 match opt_pair.as_rule() {
+                    Rule::TRACEGEN_LOGGER_terminal => {
+                        generation = TracegenProcessLoggerGeneration::terminal;
+                    },
                     Rule::TRACEGEN_LOGGER_exact => {
                         generation = TracegenProcessLoggerGeneration::exact;
                     },

@@ -14,8 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// TODO: use this to refactor the current implementation of multitraces:
+// TODO: decouple the multi-trace content's with the various flags and stuff for the analysis
+// TODO: also in the graphical representation do not draw the multi-trace in the same drawing but rather draw two different and compose with Graphviz, it's cleaner I guess
 
-mod exhaustive;
-mod random;
-pub mod generate;
+use std::collections::HashSet;
+use crate::core::trace::TraceAction;
 
+pub struct MultiTraceCanal {
+    pub co_localization : HashSet<usize>,
+    pub trace : Vec<HashSet<TraceAction>>
+}
+
+pub type MultiTrace = Vec<MultiTraceCanal>;

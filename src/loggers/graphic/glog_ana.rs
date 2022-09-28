@@ -36,9 +36,11 @@ impl AnalysisLogger for GraphicProcessLogger {
                 gen_ctx: &GeneralContext,
                 interaction: &Interaction,
                 remaining_multi_trace: &AnalysableMultiTrace,
-                is_simulation : bool) {
+                is_simulation : bool,
+                sim_crit_loop : bool,
+                sim_crit_act : bool) {
         self.initiate();
-        self.write_interaction(gen_ctx,1, interaction, &Some(remaining_multi_trace), is_simulation);
+        self.write_interaction(gen_ctx,1, interaction, &Some(remaining_multi_trace), is_simulation, sim_crit_loop, sim_crit_act);
     }
 
     fn log_term(&mut self,
@@ -56,7 +58,9 @@ impl AnalysisLogger for GraphicProcessLogger {
                      sim_map: &HashMap<usize, SimulationStepKind>,
                      new_interaction: &Interaction,
                      remaining_multi_trace: &AnalysableMultiTrace,
-                     is_simulation : bool) {
+                     is_simulation : bool,
+                     sim_crit_loop : bool,
+                     sim_crit_act : bool) {
         // ***
         self.write_firing(gen_ctx,new_state_id,action_position,executed_actions,consu_set,sim_map);
         // *** Transition To Firing
@@ -66,7 +70,7 @@ impl AnalysisLogger for GraphicProcessLogger {
             self.write_edge(format!("i{:}", parent_state_id), format!("f{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, new_interaction, &Some(remaining_multi_trace),is_simulation);
+        self.write_interaction(gen_ctx, new_state_id, new_interaction, &Some(remaining_multi_trace),is_simulation,sim_crit_loop,sim_crit_act);
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
@@ -94,7 +98,7 @@ impl AnalysisLogger for GraphicProcessLogger {
             self.write_edge(parent_interaction_node_name, format!("h{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, hidden_interaction, &Some(remaining_multi_trace), false );
+        self.write_interaction(gen_ctx, new_state_id, hidden_interaction, &Some(remaining_multi_trace), false,false,false );
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

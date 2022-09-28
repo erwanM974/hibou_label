@@ -128,16 +128,16 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return frontier_on_reception(rc_act, loop_depth);
         },
         Interaction::Strict(ref i1, ref i2) => {
-            let mut front = push_frontier_left( global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
             if i1.express_empty() {
-                front.append( &mut push_frontier_right( global_frontier_rec(i2,loop_depth)) );
+                front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
             }
             return front;
         },
         Interaction::Seq(ref i1, ref i2) => {
-            let mut front = push_frontier_left( global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
             // ***
-            for frt_elt2 in push_frontier_right( global_frontier_rec(i2,loop_depth)) {
+            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) {
                 if i1.avoids_all_of(&frt_elt2.target_lf_ids) {
                     front.push(frt_elt2);
                 }
@@ -145,9 +145,9 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::CoReg(ref cr, ref i1, ref i2) => {
-            let mut front = push_frontier_left( global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
             // ***
-            for frt_elt2 in push_frontier_right( global_frontier_rec(i2,loop_depth)) {
+            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) {
                 let mut reqs_lf_ids = frt_elt2.target_lf_ids.clone();
                 for cr_lf_id in cr {
                     reqs_lf_ids.remove(cr_lf_id);
@@ -159,17 +159,17 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::Alt(ref i1, ref i2) => {
-            let mut front = push_frontier_left( global_frontier_rec(i1,loop_depth) );
-            front.append( &mut push_frontier_right( global_frontier_rec(i2,loop_depth)) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
             return front;
         },
         Interaction::Par(ref i1, ref i2) => {
-            let mut front = push_frontier_left( global_frontier_rec(i1,loop_depth) );
-            front.append( &mut push_frontier_right( global_frontier_rec(i2,loop_depth)) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
             return front;
         },
         Interaction::Loop(_, ref i1) => {
-            return push_frontier_left( global_frontier_rec(i1,loop_depth+1) );
+            return push_frontier_left( &mut global_frontier_rec(i1,loop_depth+1) );
         },
         _ => {
             panic!("non-conform interaction");
@@ -179,30 +179,18 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
 
 
 
-fn push_frontier_left(frontier : Vec<FrontierElement>) -> Vec<FrontierElement> {
-    let mut new_frontier : Vec<FrontierElement> = Vec::new();
-    // ***
-    for frt_elt in frontier {
-        new_frontier.push( FrontierElement::new(Position::Left( Box::new(frt_elt.position ) ),
-                                                frt_elt.target_lf_ids,
-                                                frt_elt.target_actions,
-                                                frt_elt.act_kind,
-                                                frt_elt.loop_depth ) );
-    }
-    // ***
-    return new_frontier;
+fn push_frontier_left(frontier : &mut Vec<FrontierElement>) -> Vec<FrontierElement> {
+    return frontier.drain(..).map(|frt_elt| FrontierElement::new(Position::Left( Box::new(frt_elt.position ) ),
+                                                                       frt_elt.target_lf_ids,
+                                                                       frt_elt.target_actions,
+                                                                       frt_elt.act_kind,
+                                                                       frt_elt.loop_depth ) ).collect();
 }
 
-fn push_frontier_right(frontier : Vec<FrontierElement>) -> Vec<FrontierElement> {
-    let mut new_frontier : Vec<FrontierElement> = Vec::new();
-    // ***
-    for frt_elt in frontier {
-        new_frontier.push( FrontierElement::new(Position::Right( Box::new(frt_elt.position ) ),
-                                                frt_elt.target_lf_ids,
-                                                frt_elt.target_actions,
-                                                frt_elt.act_kind,
-                                                frt_elt.loop_depth ) );
-    }
-    // ***
-    return new_frontier;
+fn push_frontier_right(frontier : &mut Vec<FrontierElement>) -> Vec<FrontierElement> {
+    return frontier.drain(..).map(|frt_elt| FrontierElement::new(Position::Right( Box::new(frt_elt.position ) ),
+                                                                 frt_elt.target_lf_ids,
+                                                                 frt_elt.target_actions,
+                                                                 frt_elt.act_kind,
+                                                                 frt_elt.loop_depth) ).collect();
 }

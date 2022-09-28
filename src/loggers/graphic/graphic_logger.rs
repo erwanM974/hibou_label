@@ -158,10 +158,12 @@ impl GraphicProcessLogger {
                              new_state_id : u32,
                              new_interaction : &Interaction,
                              remaining_multi_trace : &Option<&AnalysableMultiTrace>,
-                             is_simulation : bool) {
+                             is_simulation : bool,
+                             sim_crit_loop : bool,
+                             sim_crit_act : bool) {
         // ***
         let int_img_path : String = format!("./temp/{:}_i{}.png",  self.log_name ,new_state_id);
-        draw_interaction(&int_img_path, new_interaction, gen_ctx, remaining_multi_trace, is_simulation);
+        draw_interaction(&int_img_path, new_interaction, gen_ctx, remaining_multi_trace, is_simulation, sim_crit_loop, sim_crit_act);
         // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         node_gv_options.push( GraphvizNodeStyleItem::Image( int_img_path ) );

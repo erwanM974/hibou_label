@@ -1,6 +1,6 @@
 [package]
 name = "hibou_label"
-version = "0.7.7"
+version = "0.7.8"
 authors = ["Erwan Mahe"]
 edition = "2018"
 
@@ -20,3 +20,4 @@ pest_derive = "2.1.0"                           # ...
 clap = {version="3.0.6",features=["yaml"]}      # for the command line interface
 maplit = "1.0.2"                                # for !hashset macro etc
 itertools = "0.10.2"                            # for .sorted() etc
+rand = "0.8.4"                                  # random number generation e.g. for traversal heuristics for interaction semantics exploration and/or multitrace analysis

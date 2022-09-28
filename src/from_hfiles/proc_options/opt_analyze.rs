@@ -37,7 +37,8 @@ use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
 
 use crate::from_hfiles::proc_options::loggers::parse_graphic_logger;
 use crate::process::abstract_proc::common::HibouSearchStrategy;
-use crate::process::ana_proc::anakind::{AnalysisKind, UseLocalAnalysis};
+use crate::process::abstract_proc::manager::GenericProcessPriorities;
+use crate::process::ana_proc::anakind::{AnalysisKind, SimulationActionCriterion, SimulationConfiguration, SimulationLoopCriterion, UseLocalAnalysis};
 use crate::process::ana_proc::interface::conf::AnalysisConfig;
 use crate::process::ana_proc::interface::filter::AnalysisFilter;
 use crate::process::ana_proc::interface::logger::AnalysisLogger;
@@ -50,7 +51,7 @@ pub struct HibouAnalyzeOptions {
     pub loggers : Vec<Box< dyn AnalysisLogger>>,
     pub strategy : HibouSearchStrategy,
     pub filters : Vec<AnalysisFilter>,
-    pub priorities : AnalysisPriorities,
+    pub priorities : GenericProcessPriorities<AnalysisConfig>,
     pub ana_kind : AnalysisKind,
     pub local_analysis : UseLocalAnalysis,
     pub goal : Option<GlobalVerdict>
@@ -60,7 +61,7 @@ impl HibouAnalyzeOptions {
     pub fn new(loggers : Vec<Box< dyn AnalysisLogger>>,
                strategy : HibouSearchStrategy,
                filters : Vec<AnalysisFilter>,
-               priorities : AnalysisPriorities,
+               priorities : GenericProcessPriorities<AnalysisConfig>,
                ana_kind : AnalysisKind,
                local_analysis : UseLocalAnalysis,
                goal : Option<GlobalVerdict>) -> HibouAnalyzeOptions {
@@ -72,16 +73,16 @@ impl HibouAnalyzeOptions {
             loggers:Vec::new(),
             strategy:HibouSearchStrategy::DFS,
             filters:Vec::new(),
-            priorities:AnalysisPriorities::default(),
+            priorities:GenericProcessPriorities::Specific(AnalysisPriorities::default()),
             ana_kind:AnalysisKind::Prefix,
-            local_analysis:UseLocalAnalysis::Yes,
+            local_analysis:UseLocalAnalysis::Yes(false),
             goal:Some(GlobalVerdict::WeakPass)
         };
     }
 
     /* to be used recursively in global analyses when checking that its component local analysis are ok
        important to keep "local_analysis:UseLocalAnalysis::No" so we don't infinitely recurse!! */
-    pub fn local_analyze() -> HibouAnalyzeOptions {
+    /*pub fn local_analyze() -> HibouAnalyzeOptions {
         return HibouAnalyzeOptions{
             loggers:Vec::new(),
             strategy:HibouSearchStrategy::DFS, // of course DFS is better here
@@ -91,7 +92,7 @@ impl HibouAnalyzeOptions {
             local_analysis:UseLocalAnalysis::No, // No so we don't infinitely recurse
             goal:Some(GlobalVerdict::WeakPass), // it suffices to have a prefix
             };
-    }
+    }*/
 
 }
 
@@ -126,7 +127,7 @@ fn parse_filters(filters_decl_pair : Pair<Rule>) -> Result<Vec<AnalysisFilter>,H
     return Ok(filters);
 }
 
-fn parse_priorities(priorities_decl_pair : Pair<Rule>) -> Result<AnalysisPriorities,HibouParsingError> {
+fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<AnalysisPriorities,HibouParsingError> {
     let mut emission : i32 = 0;
     let mut reception : i32 = 0;
     let mut multi_rdv : i32 = 0;
@@ -176,9 +177,9 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
     let mut loggers : Vec<Box<dyn AnalysisLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
     let mut filters : Vec<AnalysisFilter> = Vec::new();
-    let mut priorities = AnalysisPriorities::default();
+    let mut priorities : GenericProcessPriorities<AnalysisConfig> = GenericProcessPriorities::Specific(AnalysisPriorities::default());
     let mut ana_kind = AnalysisKind::Prefix;
-    let mut local_analysis = UseLocalAnalysis::Yes;
+    let mut local_analysis = UseLocalAnalysis::Yes(false);
     let mut goal = Some(GlobalVerdict::WeakPass);
     // ***
     for option_decl_pair in option_pair.into_inner() {
@@ -207,6 +208,9 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                     Rule::OPTION_STRATEGY_DFS => {
                         strategy = HibouSearchStrategy::DFS;
                     },
+                    Rule::OPTION_STRATEGY_HCS => {
+                        strategy = HibouSearchStrategy::HCS;
+                    },
                     _ => {
                         panic!("what rule then ? : {:?}", strategy_pair.as_rule() );
                     }
@@ -222,13 +226,24 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                     }
                 }
             },
-            Rule::OPTION_FRONTIER_PRIORITIES_DECL => {
-                match parse_priorities(option_decl_pair) {
-                    Ok( got_priorities) => {
-                        priorities = got_priorities;
+            Rule::OPTION_PRIORITIES_DECL => {
+                let inner : Pair<Rule> = option_decl_pair.into_inner().next().unwrap();
+                match inner.as_rule() {
+                    Rule::OPTION_PRIORITY_SPECIFIC => {
+                        match parse_specific_priorities(inner) {
+                            Ok( got_priorities) => {
+                                priorities = GenericProcessPriorities::Specific(got_priorities);
+                            },
+                            Err(e) => {
+                                return Err(e);
+                            }
+                        }
                     },
-                    Err(e) => {
-                        return Err(e);
+                    Rule::OPTION_PRIORITY_RANDOM => {
+                        priorities = GenericProcessPriorities::Random;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", inner.as_rule() );
                     }
                 }
             },
@@ -244,11 +259,26 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                     Rule::OPTION_ANA_KIND_hide => {
                         ana_kind = AnalysisKind::Hide;
                     },
-                    Rule::OPTION_ANA_KIND_simulate_prefix => {
-                        ana_kind = AnalysisKind::Simulate(false);
-                    },
-                    Rule::OPTION_ANA_KIND_simulate_slice => {
-                        ana_kind = AnalysisKind::Simulate(true);
+                    Rule::OPTION_ANA_KIND_simulate => {
+                        let mut inner = ana_kind_pair.into_inner();
+                        match inner.next() {
+                            None => {
+                                ana_kind = AnalysisKind::Simulate(
+                                    SimulationConfiguration{sim_before:false,
+                                                            loop_crit:SimulationLoopCriterion::MaxDepth,
+                                                            act_crit:SimulationActionCriterion::None});
+                            },
+                            Some( sim_config_decl_pair) => {
+                                match parse_simulation_config(sim_config_decl_pair) {
+                                    Ok( config) => {
+                                        ana_kind = AnalysisKind::Simulate(config);
+                                    },
+                                    Err(e) => {
+                                        return Err(e);
+                                    }
+                                }
+                            }
+                        }
                     },
                     _ => {
                         panic!("what rule then ? : {:?}", ana_kind_pair.as_rule() );
@@ -256,7 +286,10 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                 }
             },
             Rule::OPTION_LOCANA_yes => {
-                local_analysis = UseLocalAnalysis::Yes;
+                local_analysis = UseLocalAnalysis::Yes(false);
+            },
+            Rule::OPTION_LOCANA_onlyfront => {
+                local_analysis = UseLocalAnalysis::Yes(true);
             },
             Rule::OPTION_LOCANA_no => {
                 local_analysis = UseLocalAnalysis::No;
@@ -286,4 +319,65 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
     // ***
     let hoptions = HibouAnalyzeOptions{loggers,strategy,filters,priorities,ana_kind,local_analysis,goal};
     return Ok(hoptions);
+}
+
+
+fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<SimulationConfiguration,HibouParsingError> {
+    let mut sim_before = false;
+    let mut loop_crit = SimulationLoopCriterion::MaxDepth;
+    let mut act_crit = SimulationActionCriterion::None;
+    // ***
+    for config_opt_pair in simu_config_decl_pair.into_inner() {
+        match config_opt_pair.as_rule() {
+            Rule::OPTION_ANA_SIMULATE_CONFIG_simbefore => {
+                sim_before = true;
+            },
+            Rule::OPTION_ANA_SIMULATE_CONFIG_act => {
+                let inner : Pair<Rule> = config_opt_pair.into_inner().next().unwrap();
+                match inner.as_rule() {
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_num => {
+                        let content : Pair<Rule> = inner.into_inner().next().unwrap();
+                        let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                        let my_val : u32 = content_str.parse::<u32>().unwrap();
+                        act_crit = SimulationActionCriterion::SpecificNum(my_val);
+                    },
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_none => {
+                        act_crit = SimulationActionCriterion::None;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", inner.as_rule() );
+                    }
+                }
+            },
+            Rule::OPTION_ANA_SIMULATE_CONFIG_loop => {
+                let inner : Pair<Rule> = config_opt_pair.into_inner().next().unwrap();
+                match inner.as_rule() {
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_num => {
+                        let content : Pair<Rule> = inner.into_inner().next().unwrap();
+                        let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                        let my_val : u32 = content_str.parse::<u32>().unwrap();
+                        loop_crit = SimulationLoopCriterion::SpecificNum(my_val);
+                    },
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_maxnum => {
+                        loop_crit = SimulationLoopCriterion::MaxNum;
+                    },
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth => {
+                        loop_crit = SimulationLoopCriterion::MaxDepth;
+                    },
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_none => {
+                        loop_crit = SimulationLoopCriterion::None;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", inner.as_rule() );
+                    }
+                }
+            },
+            _ => {
+                panic!("what rule then ? : {:?}", config_opt_pair.as_rule() );
+            }
+        }
+    }
+    // ***
+    let config = SimulationConfiguration{sim_before,loop_crit,act_crit};
+    return Ok(config);
 }

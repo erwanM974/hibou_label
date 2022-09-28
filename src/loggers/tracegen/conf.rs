@@ -20,6 +20,8 @@ pub enum TracegenProcessLoggerGeneration {
                 //   i.e. at each new node verify express empty and if it is the case generate
     prefixes,   // generate a trace file for each global prefixes
                 //   i.e. at each new node generate
+    terminal    // generate a trace file only when reaching a terminal node i.e. a node that has no child
+                // this can be due to e.g. a stopping criterion etc.
     /*
     multipref,  // generate a trace file for all multiprefixes
                 //   works as "exact" but then, reload traces and generate prefixes

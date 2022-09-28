@@ -20,6 +20,7 @@ use std::collections::{HashMap, HashSet};
 use crate::core::general_context::GeneralContext;
 use crate::core::syntax::interaction::Interaction;
 use crate::core::trace::TraceAction;
+use crate::process::ana_proc::anakind::{SimulationActionCriterion, SimulationConfiguration, SimulationLoopCriterion};
 use crate::process::ana_proc::interface::step::SimulationStepKind;
 
 
@@ -47,7 +48,8 @@ impl AnalysableMultiTraceCanal {
 #[derive(Clone, PartialEq, Debug)]
 pub struct AnalysableMultiTrace {
     pub canals : Vec<AnalysableMultiTraceCanal>,
-    pub remaining_loop_instantiations_in_simulation : u32
+    pub rem_loop_in_sim : u32,
+    pub rem_act_in_sim : u32
 }
 
 pub enum WasMultiTraceConsumedWithSimulation {
@@ -58,8 +60,10 @@ pub enum WasMultiTraceConsumedWithSimulation {
 
 impl AnalysableMultiTrace {
 
-    pub fn new(canals:Vec<AnalysableMultiTraceCanal>,remaining_loop_instantiations_in_simulation : u32) -> AnalysableMultiTrace {
-        return AnalysableMultiTrace{canals,remaining_loop_instantiations_in_simulation};
+    pub fn new(canals:Vec<AnalysableMultiTraceCanal>,
+               rem_loop_in_sim : u32,
+               rem_act_in_sim : u32) -> AnalysableMultiTrace {
+        return AnalysableMultiTrace{canals,rem_loop_in_sim,rem_act_in_sim};
     }
 
     pub fn head_actions(&self) -> HashSet<&TraceAction> {
@@ -117,11 +121,11 @@ impl AnalysableMultiTrace {
     }
 
     pub fn update_on_execution(&self,
+                               sim_config : &SimulationConfiguration,
                                gen_ctx : &GeneralContext,
                                target_lf_ids : &HashSet<usize>,
                                affected_lfs : &HashSet<usize>,
                                new_interaction : &Interaction) -> AnalysableMultiTrace {
-        let remaining_loop_instantiations_in_simulation = new_interaction.max_nested_loop_depth();
         let mut new_canals : Vec<AnalysableMultiTraceCanal> = Vec::new();
         // ***
         for coloc_id in 0..self.canals.len() {
@@ -140,8 +144,13 @@ impl AnalysableMultiTrace {
             new_canals.push( updated_canal );
         }
         // ***
-        return AnalysableMultiTrace::new(new_canals,remaining_loop_instantiations_in_simulation);
+        let rem_loop_in_sim= sim_config.get_reset_rem_loop(new_interaction);
+        let rem_act_in_sim = sim_config.get_reset_rem_act(new_interaction);
+        // ***
+        return AnalysableMultiTrace::new(new_canals,rem_loop_in_sim,rem_act_in_sim);
     }
+
+
 
     pub fn update_on_hide(&self, gen_ctx : &GeneralContext, lfs_to_hide : &HashSet<usize>) -> AnalysableMultiTrace {
         let mut new_canals : Vec<AnalysableMultiTraceCanal> = Vec::new();
@@ -155,15 +164,18 @@ impl AnalysableMultiTrace {
             new_canals.push( updated_canal );
         }
         // ***
-        return AnalysableMultiTrace::new(new_canals,0);
+        return AnalysableMultiTrace::new(new_canals,0,0);
     }
 
     pub fn update_on_simulation(&self,
-                                gen_ctx : &GeneralContext,
+                                sim_config : &SimulationConfiguration,
+                                consu_set : &HashSet<usize>,
                                 sim_map : &HashMap<usize,SimulationStepKind>, // id of canal on which simulation step is done, kind of simulation step
+                                gen_ctx : &GeneralContext,
                                 target_lf_ids : &HashSet<usize>,
                                 affected_lfs : &HashSet<usize>,
-                                rem_sim_depth : u32) -> AnalysableMultiTrace {
+                                loop_depth : u32,
+                                new_interaction : &Interaction) -> AnalysableMultiTrace {
         // ***
         let mut new_canals : Vec<AnalysableMultiTraceCanal> = Vec::new();
         // ***
@@ -197,7 +209,57 @@ impl AnalysableMultiTrace {
             new_canals.push( updated_canal );
         }
         // ***
-        return AnalysableMultiTrace::new(new_canals,rem_sim_depth);
+        let rem_loop_in_sim : u32;
+        match sim_config.loop_crit {
+            SimulationLoopCriterion::MaxDepth => {
+                if consu_set.len() > 0 {
+                    rem_loop_in_sim = new_interaction.max_nested_loop_depth();
+                } else {
+                    let on_crit = new_interaction.max_nested_loop_depth();
+                    let removed = self.rem_loop_in_sim - loop_depth;
+                    rem_loop_in_sim = on_crit.min(removed);
+                }
+            },
+            SimulationLoopCriterion::MaxNum => {
+                if consu_set.len() > 0 {
+                    rem_loop_in_sim = new_interaction.total_loop_num();
+                } else {
+                    let on_crit = new_interaction.total_loop_num();
+                    let removed = self.rem_loop_in_sim - loop_depth;
+                    rem_loop_in_sim = on_crit.min(removed);
+                }
+            },
+            SimulationLoopCriterion::SpecificNum( sn ) => {
+                if consu_set.len() > 0 {
+                    rem_loop_in_sim = sn;
+                } else {
+                    let on_crit = sn;
+                    let removed = self.rem_loop_in_sim - loop_depth;
+                    rem_loop_in_sim = on_crit.min(removed);
+                }
+            },
+            SimulationLoopCriterion::None => {
+                rem_loop_in_sim = 0;
+            }
+        }
+        // ***
+        let rem_act_in_sim : u32;
+        match sim_config.act_crit {
+            SimulationActionCriterion::SpecificNum( sn ) => {
+                if consu_set.len() > 0 {
+                    rem_act_in_sim = sn;
+                } else {
+                    let on_crit = sn;
+                    let removed = self.rem_act_in_sim - 1;
+                    rem_act_in_sim = on_crit.min(removed);
+                }
+            },
+            SimulationActionCriterion::None => {
+                rem_act_in_sim = 0;
+            }
+        }
+        // ***
+        return AnalysableMultiTrace::new(new_canals,rem_loop_in_sim,rem_act_in_sim);
     }
 }
 

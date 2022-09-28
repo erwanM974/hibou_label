@@ -55,6 +55,9 @@ impl ExplorationLogger for TraceGenProcessLogger {
             },
             TracegenProcessLoggerGeneration::prefixes => {
                 generate_trace_file = true;
+            },
+            TracegenProcessLoggerGeneration::terminal => {
+                generate_trace_file = false;
             }
         }
         // ***
@@ -67,7 +70,22 @@ impl ExplorationLogger for TraceGenProcessLogger {
         // ***
     }
 
-    fn log_notified_lastchild_explored(&mut self, parent_id: u32) {
+    fn log_notified_lastchild_explored(&mut self,
+                                       gen_ctx: &GeneralContext,
+                                       parent_id: u32) {
         self.trace_map.remove(&parent_id);
+    }
+
+    fn log_notified_terminal_node_explored(&mut self,
+                                       gen_ctx: &GeneralContext,
+                                       parent_id: u32) {
+        match self.generation {
+            TracegenProcessLoggerGeneration::terminal => {
+                self.generate_trace_file(gen_ctx,parent_id);
+            },
+            _ => {
+                // nothing
+            }
+        }
     }
 }

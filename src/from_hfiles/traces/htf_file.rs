@@ -88,7 +88,7 @@ pub fn multitrace_from_text(multitrace_str : &String,
                             gen_ctx.set_partition(vec![lifelines]);
                             let unique_canal = AnalysableMultiTraceCanal::new(got_trace,false,false,0,0,0);
                             let mut canals : Vec<AnalysableMultiTraceCanal> = vec![unique_canal];
-                            return Ok( AnalysableMultiTrace::new(canals,0) );
+                            return Ok( AnalysableMultiTrace::new(canals,0,0) );
                         }
                     }
                 },
@@ -117,7 +117,7 @@ pub fn multitrace_from_text(multitrace_str : &String,
                         }
                     }
                     complete_canals_up_to_defined_lifelines(&mut canals,gen_ctx);
-                    return Ok( AnalysableMultiTrace::new(canals,0) );
+                    return Ok( AnalysableMultiTrace::new(canals,0,0) );
                 },
                 _ => {
                     panic!("what rule then ? : {:?}", first_pair.as_rule() );

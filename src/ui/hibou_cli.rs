@@ -42,7 +42,7 @@ use crate::from_hfiles::traces::htf_file::parse_htf_file;
 use crate::plantuml::sequence::to_plant_uml_sd;
 use crate::plantuml::automata_product::to_plant_uml_ap;
 use crate::rendering::custom_draw::term::term_repr_out::to_term_repr;
-use crate::slice::generate_slices;
+use crate::slice::generate::*;
 //use crate::canonize::process::canon_process_interaction_term;
 //use crate::merge_gates::process::merge_process_interaction_term;
 
@@ -60,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.7.7   "#);
+    my_vec.push(r#"  V-label-0.7.8   "#);
     return my_vec;
 }
 
@@ -117,7 +117,7 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("from file '{}'",hsf_file_path) );
                 ret_print.push( format!("on file : {}",spec_output_file) );
                 ret_print.push( "".to_string());
-                draw_interaction(&spec_output_file, &my_int,&gen_ctx,&None, false);
+                draw_interaction(&spec_output_file, &my_int,&gen_ctx,&None, false,false,false);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("puml_sd") {
@@ -288,6 +288,14 @@ pub fn hibou_cli() -> i32 {
                 return -1;
             },
             Ok( (mut gen_ctx,my_int,hoptions) ) => {
+                let int_characs = my_int.get_characteristics();
+                // ***
+                if int_characs.has_ands {
+                    ret_print.push( "Interaction term has 'And's -> Analysis Not Implemented".to_string() );
+                    print_retval(ret_print);
+                    return -1;
+                }
+                // ***
                 let htf_file_path = matches.value_of("htf").unwrap();
                 match parse_htf_file(htf_file_path,&mut gen_ctx,false) {
                     Err(e) => {
@@ -312,7 +320,7 @@ pub fn hibou_cli() -> i32 {
                                                                       hoptions.analyze_options.local_analysis,
                                                                       hoptions.analyze_options.goal);
                         let now = Instant::now();
-                        let (verdict,node_count) = manager.analyze(my_int,multi_trace);
+                        let (verdict,node_count) = manager.analyze(my_int,int_characs,multi_trace);
                         let elapsed_time = now.elapsed();
                         ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );
                         ret_print.push( format!("node count : {:?}", node_count ) );
@@ -347,7 +355,15 @@ pub fn hibou_cli() -> i32 {
                     }
                 }
                 // ***
-                generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder);
+                if matches.is_present("random") {
+                    let extracted = matches.value_of("random").unwrap();
+                    let content_str : String = extracted.chars().filter(|c| !c.is_whitespace()).collect();
+                    let my_val : u32 = content_str.parse::<u32>().unwrap();
+                    generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder,SliceGenerationConfiguration::Random(my_val));
+                } else {
+                    generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder,SliceGenerationConfiguration::Exhaustive);
+                }
+
             }
         }
     } else {

@@ -47,7 +47,12 @@ pub trait ExplorationLogger {
                     elim_kind : &FilterEliminationKind);
 
     fn log_notified_lastchild_explored(&mut self,
-                    parent_id : u32);
+                                       gen_ctx: &GeneralContext,
+                                       parent_id : u32);
+
+    fn log_notified_terminal_node_explored(&mut self,
+                                       gen_ctx: &GeneralContext,
+                                       parent_id : u32);
 
 }
 

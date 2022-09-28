@@ -14,6 +14,48 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum InconcReason {
+    LackObs,
+    HideWithColocs,
+    FilteredNodes
+}
+
+impl InconcReason {
+
+    pub fn get_explanation_string(&self) -> String {
+        match self {
+            InconcReason::LackObs => {
+                return "due to a lack of observation in the multi-trace (events not at the end globally may be missing) -> rather use hiding or simulation".to_string();
+            },
+            InconcReason::HideWithColocs => {
+                return "due to having non-singleton co-localizations on the multi-trace while using the hiding-based algorithm. WeakPasses may be false positives because using hide may remove strict orderings between events occurring on distinct lifelines".to_string();
+            },
+            InconcReason::FilteredNodes => {
+                return "due to having set a filter which forcefully limited exploration of the graph : Fails may be false negative".to_string();
+            }
+        }
+    }
+
+}
+
+impl std::string::ToString for InconcReason {
+
+    fn to_string(&self) -> String {
+        match self {
+            InconcReason::LackObs => {
+                return "LackObs".to_string();
+            },
+            InconcReason::HideWithColocs => {
+                return "HideWithColocs".to_string();
+            },
+            InconcReason::FilteredNodes => {
+                return "FilteredNodes".to_string();
+            }
+        }
+    }
+
+}
 
 
 pub enum CoverageVerdict{
@@ -21,11 +63,9 @@ pub enum CoverageVerdict{
     TooShort,
     MultiPref,
     Slice,
-    Inconc,
-    LackObs,
-    Dead,
-    UnCov,
-    Out
+    Inconc(InconcReason),
+    Out(bool),   // bool for if it's known via local analysis
+    OutSim(bool) // bool for if it's known via local analysis
 }
 
 impl std::string::ToString for CoverageVerdict {
@@ -44,20 +84,22 @@ impl std::string::ToString for CoverageVerdict {
             CoverageVerdict::Slice => {
                 return "Slice".to_string();
             },
-            CoverageVerdict::Inconc => {
-                return "Inconc".to_string();
+            CoverageVerdict::Inconc(reason) => {
+                return format!("Inconc {:}", reason.to_string());
             },
-            CoverageVerdict::LackObs => {
-                return "LackObs".to_string();
+            CoverageVerdict::Out(ref loc) => {
+                if *loc {
+                    return "Out-l".to_string();
+                } else {
+                    return "Out".to_string();
+                }
             },
-            CoverageVerdict::UnCov => {
-                return "UnCov".to_string();
-            },
-            CoverageVerdict::Dead => {
-                return "Dead".to_string();
-            },
-            CoverageVerdict::Out => {
-                return "Out".to_string();
+            CoverageVerdict::OutSim(ref loc) => {
+                if *loc {
+                    return "OutSim-l".to_string();
+                } else {
+                    return "OutSim".to_string();
+                }
             }
         }
     }
@@ -67,7 +109,8 @@ impl std::string::ToString for CoverageVerdict {
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum GlobalVerdict {
     Fail,
-    Inconc,
+    WeakFail,
+    Inconc(InconcReason),
     WeakPass,
     Pass
 }
@@ -81,8 +124,11 @@ impl std::string::ToString for GlobalVerdict {
             GlobalVerdict::WeakPass => {
                 return "WeakPass".to_string();
             },
-            GlobalVerdict::Inconc => {
-                return "Inconc".to_string();
+            GlobalVerdict::Inconc(reason) => {
+                return format!("Inconc {:}", reason.to_string());
+            },
+            GlobalVerdict::WeakFail => {
+                return "WeakFail".to_string();
             },
             GlobalVerdict::Fail => {
                 return "Fail".to_string();
@@ -106,7 +152,7 @@ pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:Cov
                 }
             }
         },
-        GlobalVerdict::Inconc => {
+        GlobalVerdict::Inconc(glo_reason) => {
             match cov {
                 CoverageVerdict::Cov => {
                     return GlobalVerdict::Pass;
@@ -122,7 +168,30 @@ pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:Cov
                     return GlobalVerdict::WeakPass;
                 },
                 _ => {
-                    return GlobalVerdict::Inconc;
+                    return GlobalVerdict::Inconc(glo_reason);
+                }
+            }
+        },
+        GlobalVerdict::WeakFail => {
+            match cov {
+                CoverageVerdict::Cov => {
+                    return GlobalVerdict::Pass;
+                },
+                // ***
+                CoverageVerdict::TooShort => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::MultiPref => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::Slice => {
+                    return GlobalVerdict::WeakPass;
+                },
+                CoverageVerdict::Inconc(reason) => {
+                    return GlobalVerdict::Inconc(reason);
+                },
+                _ => {
+                    return GlobalVerdict::WeakFail;
                 }
             }
         },
@@ -142,11 +211,11 @@ pub fn update_global_verdict_from_new_coverage_verdict(glo:GlobalVerdict,cov:Cov
                     return GlobalVerdict::WeakPass;
                 },
                 // ***
-                CoverageVerdict::Inconc => {
-                    return GlobalVerdict::Inconc;
+                CoverageVerdict::Inconc(reason) => {
+                    return GlobalVerdict::Inconc(reason);
                 },
-                CoverageVerdict::LackObs => {
-                    return GlobalVerdict::Inconc;
+                CoverageVerdict::OutSim(_) => {
+                    return GlobalVerdict::WeakFail;
                 },
                 _ => {
                     return GlobalVerdict::Fail;

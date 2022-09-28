@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use std::cmp::max;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
@@ -59,6 +60,69 @@ impl Interaction {
         }
     }
 
+    pub fn max_number_of_atomic_actions_outside_loops(&self) -> u32 {
+        match self {
+            &Interaction::Empty => {
+                return 0;
+            },
+            &Interaction::Emission(ref em_act) => {
+                match &em_act.synchronicity {
+                    CommunicationSynchronicity::Synchronous => {
+                        return 1;
+                    },
+                    CommunicationSynchronicity::Asynchronous => {
+                        let mut num_act = 1;
+                        for target in &em_act.targets {
+                            match target {
+                                EmissionTargetRef::Lifeline(_) => {
+                                    num_act += 1;
+                                },
+                                _ => {}
+                            }
+                        }
+                        return num_act;
+                    }
+                }
+            },
+            &Interaction::Reception(ref rc_act) => {
+                if rc_act.recipients.len() == 0 {
+                    return 0;
+                } else {
+                    match &rc_act.synchronicity {
+                        CommunicationSynchronicity::Synchronous => {
+                            return 1;
+                        },
+                        CommunicationSynchronicity::Asynchronous => {
+                            return rc_act.recipients.len() as u32;
+                        }
+                    }
+                }
+            },
+            &Interaction::Strict(ref i1, ref i2) => {
+                return i1.max_number_of_atomic_actions_outside_loops() + i2.max_number_of_atomic_actions_outside_loops();
+            },
+            &Interaction::Seq(ref i1, ref i2) => {
+                return i1.max_number_of_atomic_actions_outside_loops() + i2.max_number_of_atomic_actions_outside_loops();
+            },
+            &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.max_number_of_atomic_actions_outside_loops() + i2.max_number_of_atomic_actions_outside_loops();
+            },
+            &Interaction::Par(ref i1, ref i2) => {
+                return i1.max_number_of_atomic_actions_outside_loops() + i2.max_number_of_atomic_actions_outside_loops();
+            },
+            &Interaction::Alt(ref i1, ref i2) => {
+                let num1 = i1.max_number_of_atomic_actions_outside_loops();
+                let num2 = i2.max_number_of_atomic_actions_outside_loops();
+                return max(num1,num2);
+            },
+            &Interaction::Loop(_, _) => {
+                return 0;
+            },
+            _ => {
+                panic!("non-conform interaction");
+            }
+        }
+    }
 
     pub fn express_empty(&self) -> bool {
         match self {
@@ -357,7 +421,32 @@ impl Interaction {
         }
     }
 
-
+    pub fn total_loop_num(&self) -> u32 {
+        match self {
+            &Interaction::Empty => {
+                return 0;
+            }, &Interaction::Emission(_) => {
+                return 0;
+            }, &Interaction::Reception(_) => {
+                return 0;
+            }, &Interaction::Strict(ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
+            }, &Interaction::Seq(ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
+            }, &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
+            }, &Interaction::Par(ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
+            }, &Interaction::Alt(ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
+            }, &Interaction::Loop(_, ref i1) => {
+                return 1 + i1.total_loop_num();
+            },
+            _ => {
+                panic!("non-conform interaction");
+            }
+        }
+    }
 
 
     pub fn hide(&self, lfs_to_remove : &HashSet<usize>) -> Interaction {

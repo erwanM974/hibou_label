@@ -37,6 +37,7 @@ use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
 
 use crate::from_hfiles::proc_options::loggers::{parse_graphic_logger, parse_tracegen_logger};
 use crate::process::abstract_proc::common::HibouSearchStrategy;
+use crate::process::abstract_proc::manager::GenericProcessPriorities;
 
 use crate::process::explo_proc::interface::conf::ExplorationConfig;
 use crate::process::explo_proc::interface::filter::ExplorationFilter;
@@ -48,7 +49,7 @@ pub struct HibouExploreOptions {
     pub loggers : Vec<Box<dyn ExplorationLogger>>,
     pub strategy : HibouSearchStrategy,
     pub filters : Vec<ExplorationFilter>,
-    pub priorities : ExplorationPriorities
+    pub priorities : GenericProcessPriorities<ExplorationConfig>
 }
 
 
@@ -57,7 +58,7 @@ impl HibouExploreOptions {
     pub fn new(loggers : Vec<Box<dyn ExplorationLogger>>,
                strategy : HibouSearchStrategy,
                filters : Vec<ExplorationFilter>,
-               priorities : ExplorationPriorities) -> HibouExploreOptions {
+               priorities : GenericProcessPriorities<ExplorationConfig>) -> HibouExploreOptions {
         return HibouExploreOptions{loggers,strategy,filters,priorities};
     }
 
@@ -65,7 +66,7 @@ impl HibouExploreOptions {
         return HibouExploreOptions::new(Vec::new(),
             HibouSearchStrategy::BFS,
             vec![ExplorationFilter::MaxLoopInstanciation(1)],
-                                        ExplorationPriorities::default());
+                                        GenericProcessPriorities::Specific(ExplorationPriorities::default()));
     }
 
 }
@@ -103,7 +104,10 @@ fn parse_filters(filters_decl_pair : Pair<Rule>) -> Result<Vec<ExplorationFilter
     return Ok(filters);
 }
 
-fn parse_priorities(priorities_decl_pair : Pair<Rule>) -> Result<ExplorationPriorities,HibouParsingError> {
+
+
+
+fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<ExplorationPriorities,HibouParsingError> {
     let mut emission : i32 = 0;
     let mut reception : i32 = 0;
     let mut multi_rdv : i32 = 0;
@@ -146,7 +150,7 @@ pub fn parse_explore_options(gen_ctx: &GeneralContext,
     let mut loggers : Vec<Box<dyn ExplorationLogger>> = Vec::new();
     let mut strategy : HibouSearchStrategy = HibouSearchStrategy::BFS;
     let mut filters : Vec<ExplorationFilter> = Vec::new();
-    let mut priorities = ExplorationPriorities::default();
+    let mut priorities : GenericProcessPriorities<ExplorationConfig> = GenericProcessPriorities::Specific(ExplorationPriorities::default());
     // ***
     for option_decl_pair in option_pair.into_inner() {
         match option_decl_pair.as_rule() {
@@ -184,6 +188,9 @@ pub fn parse_explore_options(gen_ctx: &GeneralContext,
                     Rule::OPTION_STRATEGY_DFS => {
                         strategy = HibouSearchStrategy::DFS;
                     },
+                    Rule::OPTION_STRATEGY_HCS => {
+                        strategy = HibouSearchStrategy::HCS;
+                    },
                     _ => {
                         panic!("what rule then ? : {:?}", strategy_pair.as_rule() );
                     }
@@ -199,13 +206,24 @@ pub fn parse_explore_options(gen_ctx: &GeneralContext,
                     }
                 }
             },
-            Rule::OPTION_FRONTIER_PRIORITIES_DECL => {
-                match parse_priorities(option_decl_pair) {
-                    Ok( got_priorities) => {
-                        priorities = got_priorities;
+            Rule::OPTION_PRIORITIES_DECL => {
+                let inner : Pair<Rule> = option_decl_pair.into_inner().next().unwrap();
+                match inner.as_rule() {
+                    Rule::OPTION_PRIORITY_SPECIFIC => {
+                        match parse_specific_priorities(inner) {
+                            Ok( got_priorities) => {
+                                priorities = GenericProcessPriorities::Specific(got_priorities);
+                            },
+                            Err(e) => {
+                                return Err(e);
+                            }
+                        }
                     },
-                    Err(e) => {
-                        return Err(e);
+                    Rule::OPTION_PRIORITY_RANDOM => {
+                        priorities = GenericProcessPriorities::Random;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", inner.as_rule() );
                     }
                 }
             },

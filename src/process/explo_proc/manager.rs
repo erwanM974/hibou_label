@@ -24,20 +24,41 @@ use crate::core::semantics::frontier::global_frontier;
 use crate::core::syntax::interaction::Interaction;
 use crate::core::syntax::position::Position;
 use crate::core::trace::TraceAction;
-use crate::process::abstract_proc::common::FilterEliminationKind;
-use crate::process::abstract_proc::generic::{GenericNode, GenericProcessManager, GenericStep};
+use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
+use crate::process::abstract_proc::generic::*;
+use crate::process::abstract_proc::manager::*;
 use crate::process::explo_proc::interface::conf::ExplorationConfig;
-use crate::process::explo_proc::interface::filter::ExplorationFilterCriterion;
+use crate::process::explo_proc::interface::filter::{ExplorationFilter, ExplorationFilterCriterion};
+use crate::process::explo_proc::interface::logger::ExplorationLogger;
 use crate::process::explo_proc::interface::node::ExplorationNodeKind;
 use crate::process::explo_proc::interface::step::ExplorationStepKind;
 
 
 
-pub type ExplorationProcessManager = GenericProcessManager<ExplorationConfig>;
+pub struct ExplorationProcessManager {
+    pub(crate) manager: GenericProcessManager<ExplorationConfig>,
+    pub(crate) node_has_child_interaction : HashSet<u32>
+}
 
 impl ExplorationProcessManager {
 
-    pub fn explore(&mut self,interaction : Interaction) -> u32 {
+    pub fn new(gen_ctx : GeneralContext,
+               strategy : HibouSearchStrategy,
+               filters : Vec<ExplorationFilter>,
+               priorities : GenericProcessPriorities<ExplorationConfig>,
+               loggers : Vec<Box< dyn ExplorationLogger>>) -> ExplorationProcessManager {
+        let manager = GenericProcessManager::new(
+            gen_ctx,
+            strategy,
+            filters,
+            priorities,
+            loggers
+        );
+        return ExplorationProcessManager{manager,node_has_child_interaction:HashSet::new()};
+    }
+
+    pub fn explore(&mut self,
+                   interaction : Interaction) -> u32 {
         self.init_loggers(&interaction);
         // ***
         let mut next_state_id : u32 = 1;
@@ -47,11 +68,11 @@ impl ExplorationProcessManager {
         node_counter = node_counter +1;
         // ***
         // ***
-        while let Some(next_to_process) = self.extract_from_queue() {
+        while let Some(next_to_process) = self.manager.extract_from_queue() {
             let new_state_id = next_state_id;
             next_state_id = next_state_id + 1;
             // ***
-            let mut parent_state = self.pick_memorized_state(next_to_process.parent_id);
+            let mut parent_state = self.manager.pick_memorized_state(next_to_process.parent_id);
             // ***
             match self.process_step(&parent_state,
                                     &next_to_process,
@@ -59,6 +80,7 @@ impl ExplorationProcessManager {
                                     node_counter) {
                 None => {},
                 Some( (new_interaction,new_depth,new_loop_depth) ) => {
+                    self.node_has_child_interaction.insert(next_to_process.parent_id);
                     node_counter = node_counter + 1;
                     self.enqueue_next_node_in_exploration(new_state_id,
                                                           new_interaction,
@@ -69,8 +91,12 @@ impl ExplorationProcessManager {
             // ***
             parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
             if parent_state.remaining_ids_to_process.len() > 0 {
-                self.remember_state(next_to_process.parent_id,parent_state);
+                self.manager.remember_state(next_to_process.parent_id,parent_state);
             } else {
+                let parent_has_child_interaction = self.node_has_child_interaction.remove(&next_to_process.parent_id);
+                if !parent_has_child_interaction {
+                    self.notify_terminal_node_explored(next_to_process.parent_id);
+                }
                 self.notify_lastchild_explored_loggers(next_to_process.parent_id);
             }
             // ***
@@ -87,20 +113,26 @@ impl ExplorationProcessManager {
                                         depth       : u32,
                                         loop_depth  : u32) {
         // ***
+        let mut glob_front = global_frontier(&interaction,&None);
+        // reverse so that when one pops from right to left the actions appear from the top to the bottom
+        glob_front.reverse();
+        // ***
         let mut id_as_child : u32 = 0;
         // ***
         let mut to_enqueue : Vec<GenericStep<ExplorationConfig>> = Vec::new();
-        for front_pos in global_frontier(&interaction,&None) {
+        for front_pos in glob_front {
+            id_as_child = id_as_child + 1;
             let generic_step = GenericStep{parent_id,id_as_child,kind:ExplorationStepKind::Execute(front_pos)};
-            id_as_child = id_as_child +1;
             to_enqueue.push( generic_step );
         }
         // ***
         if id_as_child > 0 {
             let remaining_ids_to_process : HashSet<u32> = HashSet::from_iter((1..(id_as_child+1)).collect::<Vec<u32>>().iter().cloned() );
             let generic_node = GenericNode{kind:ExplorationNodeKind{interaction,loop_depth},remaining_ids_to_process,depth};
-            self.remember_state( parent_id, generic_node );
-            self.enqueue_new_steps( parent_id, to_enqueue, depth );
+            self.manager.remember_state( parent_id, generic_node );
+            self.manager.enqueue_new_steps( parent_id, to_enqueue, depth );
+        } else {
+            self.notify_terminal_node_explored(parent_id);
         }
     }
 
@@ -114,7 +146,7 @@ impl ExplorationProcessManager {
                 let new_depth = parent_state.depth + 1;
                 let new_loop_depth = parent_state.kind.loop_depth + (parent_state.kind.interaction).get_loop_depth_at_pos(&frt_elt.position);
                 // ***
-                match self.apply_filters(new_depth,node_counter,&ExplorationFilterCriterion{loop_depth:new_loop_depth}) {
+                match self.manager.apply_filters(new_depth,node_counter,&ExplorationFilterCriterion{loop_depth:new_loop_depth}) {
                     None => {
                         // ***
                         let exe_result = execute_interaction(&parent_state.kind.interaction,
@@ -142,22 +174,31 @@ impl ExplorationProcessManager {
     }
 
     fn init_loggers(&mut self, interaction : &Interaction) {
-        for logger in self.loggers.iter_mut() {
-            (*logger).log_init(interaction, &self.gen_ctx);
+        for logger in self.manager.loggers.iter_mut() {
+            (*logger).log_init(interaction, &self.manager.gen_ctx);
         }
     }
 
     fn term_loggers(&mut self) {
-        let mut options_as_strs = (&self).get_basic_options_as_strings();
+        let mut options_as_strs = (&self).manager.get_basic_options_as_strings();
         options_as_strs.insert(0, "process=exploration".to_string());
-        for logger in self.loggers.iter_mut() {
+        for logger in self.manager.loggers.iter_mut() {
             (*logger).log_term(&options_as_strs);
         }
     }
 
     fn notify_lastchild_explored_loggers(&mut self, parent_id : u32) {
-        for logger in self.loggers.iter_mut() {
-            (*logger).log_notified_lastchild_explored(parent_id);
+        for logger in self.manager.loggers.iter_mut() {
+            (*logger).log_notified_lastchild_explored(&self.manager.gen_ctx,parent_id);
+        }
+    }
+
+    fn notify_terminal_node_explored(&mut self, parent_id : u32) {
+        // for the HCS queue to know the node id'ed by parent_id is terminal
+        self.manager.queue_set_last_reached_has_no_child();
+        // ***
+        for logger in self.manager.loggers.iter_mut() {
+            (*logger).log_notified_terminal_node_explored(&self.manager.gen_ctx,parent_id);
         }
     }
 
@@ -165,7 +206,7 @@ impl ExplorationProcessManager {
                         parent_state_id : u32,
                         new_state_id : u32,
                         elim_kind : &FilterEliminationKind) {
-        for logger in self.loggers.iter_mut() {
+        for logger in self.manager.loggers.iter_mut() {
             logger.log_filtered(parent_state_id,
                                 new_state_id,
                                 elim_kind);
@@ -178,8 +219,8 @@ impl ExplorationProcessManager {
                          new_interaction : &Interaction,
                          parent_state_id : u32,
                          new_state_id :u32) {
-        for logger in self.loggers.iter_mut() {
-            logger.log_explore(&self.gen_ctx,
+        for logger in self.manager.loggers.iter_mut() {
+            logger.log_explore(&self.manager.gen_ctx,
                                  parent_state_id,
                                  new_state_id,
                                  action_position,

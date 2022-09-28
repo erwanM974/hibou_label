@@ -93,7 +93,9 @@ fn extract_texts_on_canal_visible(gen_ctx : &GeneralContext,
 
 pub fn extract_texts_on_multi_trace(gen_ctx : &GeneralContext,
                                     multi_trace : &AnalysableMultiTrace,
-                                    is_simulation : bool) -> Vec<Vec<TextToPrint>> {
+                                    is_simulation : bool,
+                                    sim_crit_loop : bool,
+                                    sim_crit_act : bool) -> Vec<Vec<TextToPrint>> {
     let mut all_texts : Vec<Vec<TextToPrint>> = Vec::new();
     for i in 0..gen_ctx.co_localizations.len() {
         let lifelines = gen_ctx.co_localizations.get(i).unwrap();
@@ -106,8 +108,23 @@ pub fn extract_texts_on_multi_trace(gen_ctx : &GeneralContext,
         }
     }
     if is_simulation {
-        all_texts.push( vec![ TextToPrint{text:" ".to_string(), color:Rgb(HCP_Black)} ] );
-        all_texts.push( vec![ TextToPrint{text:format!("⌕{:}", multi_trace.remaining_loop_instantiations_in_simulation), color:Rgb(HC_Grammar_Symbol)} ] );
+        let mut simu_vec: Vec<TextToPrint> = vec![];
+        // ***
+        simu_vec.push( TextToPrint{text:" ⌕ ".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+        if (!sim_crit_loop) && (!sim_crit_act) {
+            simu_vec.push( TextToPrint{text:"*".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+        } else {
+            if sim_crit_loop {
+                simu_vec.push( TextToPrint{text:format!("L{:} ",multi_trace.rem_loop_in_sim),
+                    color:Rgb(HC_Grammar_Symbol)} );
+            }
+            if sim_crit_act {
+                simu_vec.push( TextToPrint{text:format!("A{:}",multi_trace.rem_act_in_sim),
+                    color:Rgb(HC_Grammar_Symbol)} );
+            }
+        }
+        // ***
+        all_texts.push(simu_vec);
     }
     //
     return all_texts;

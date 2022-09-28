@@ -25,36 +25,38 @@ use crate::core::semantics::execute::execute_interaction;
 use crate::core::semantics::frontier::global_frontier;
 use crate::core::syntax::interaction::Interaction;
 use crate::core::syntax::position::Position;
+use crate::core::syntax::util::check_interaction::InteractionCharacteristics;
 use crate::core::trace::{TraceAction};
 use crate::process::ana_proc::multitrace::{AnalysableMultiTraceCanal, AnalysableMultiTrace, WasMultiTraceConsumedWithSimulation};
-use crate::process::abstract_proc::generic::{GenericNode, GenericProcessManager, GenericStep};
+use crate::process::abstract_proc::generic::*;
+use crate::process::abstract_proc::manager::*;
 use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
-use crate::process::ana_proc::anakind::{AnalysisKind, UseLocalAnalysis};
+use crate::process::ana_proc::anakind::{AnalysisKind, SimulationActionCriterion, SimulationLoopCriterion, UseLocalAnalysis};
 use crate::process::ana_proc::interface::conf::AnalysisConfig;
 use crate::process::ana_proc::interface::filter::{AnalysisFilter, AnalysisFilterCriterion};
 use crate::process::ana_proc::interface::logger::AnalysisLogger;
 use crate::process::ana_proc::local_analysis::is_dead_local_analysis;
-use crate::process::ana_proc::matches::{add_action_matches_in_analysis, add_simulation_matches_in_analysis};
+use crate::process::ana_proc::matches::*;
 use crate::process::ana_proc::interface::step::{AnalysisStepKind, SimulationStepKind};
 use crate::process::ana_proc::interface::node::AnalysisNodeKind;
 use crate::process::ana_proc::interface::priorities::AnalysisPriorities;
-use crate::process::ana_proc::verdicts::{CoverageVerdict, GlobalVerdict, update_global_verdict_from_new_coverage_verdict};
+use crate::process::ana_proc::verdicts::{CoverageVerdict, GlobalVerdict, InconcReason, update_global_verdict_from_new_coverage_verdict};
 use crate::rendering::textual::monochrome::multi_trace::multi_trace_as_text;
 
 
 pub struct AnalysisProcessManager {
-    manager: GenericProcessManager<AnalysisConfig>,
-    ana_kind : AnalysisKind,
-    use_locana : UseLocalAnalysis,
-    goal : Option<GlobalVerdict>,
-    is_simulation : bool
+    pub(crate) manager: GenericProcessManager<AnalysisConfig>,
+    pub(crate) ana_kind : AnalysisKind,
+    pub(crate) use_locana : UseLocalAnalysis,
+    pub(crate) goal : Option<GlobalVerdict>,
+    pub(crate) has_filtered_nodes : bool
 }
 
 impl AnalysisProcessManager {
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
                filters : Vec<AnalysisFilter>,
-               priorities : AnalysisPriorities,
+               priorities : GenericProcessPriorities<AnalysisConfig>,
                loggers : Vec<Box< dyn AnalysisLogger>>,
                ana_kind : AnalysisKind,
                use_locana : UseLocalAnalysis,
@@ -66,26 +68,21 @@ impl AnalysisProcessManager {
             priorities,
             loggers
         );
-        let is_simulation : bool;
-        match &ana_kind {
-            &AnalysisKind::Simulate(_) => {
-                is_simulation = true;
-            },
-            _ => {
-                is_simulation = false;
-            }
-        }
-        return AnalysisProcessManager{manager,ana_kind,use_locana,goal,is_simulation};
+        return AnalysisProcessManager{manager,ana_kind,use_locana,goal,has_filtered_nodes:false};
     }
 
     pub fn analyze(&mut self,
                    interaction : Interaction,
+                   int_characs : InteractionCharacteristics,
                    got_multi_trace : AnalysableMultiTrace) -> (GlobalVerdict,u32) {
         // ***
         let mut multi_trace = got_multi_trace;
         match &self.ana_kind {
-            AnalysisKind::Simulate(_) => {
-                multi_trace.remaining_loop_instantiations_in_simulation = interaction.max_nested_loop_depth();
+            AnalysisKind::Simulate( sim_config ) => {
+                let rem_loop_in_sim = sim_config.get_reset_rem_loop(&interaction);
+                let rem_act_in_sim = sim_config.get_reset_rem_act(&interaction);
+                multi_trace.rem_loop_in_sim = rem_loop_in_sim;
+                multi_trace.rem_act_in_sim = rem_act_in_sim;
             },
             _ => {}
         }
@@ -99,7 +96,7 @@ impl AnalysisProcessManager {
         // ***
         let pursue_analysis : bool;
         match self.enqueue_next_node_in_analysis(next_state_id,
-                                                 interaction,
+                                                 interaction,&int_characs,
                                                  multi_trace,
                                                  0,
                                                  0) {
@@ -142,6 +139,7 @@ impl AnalysisProcessManager {
                         node_counter = node_counter + 1;
                         match self.enqueue_next_node_in_analysis(new_state_id,
                                                                  new_interaction,
+                                                                 &int_characs,
                                                                  new_multi_trace,
                                                                  new_depth,
                                                                  new_loop_depth) {
@@ -169,6 +167,10 @@ impl AnalysisProcessManager {
             }
         }
         // ***
+        if global_verdict == GlobalVerdict::Fail && self.has_filtered_nodes {
+            global_verdict = GlobalVerdict::Inconc(InconcReason::FilteredNodes);
+        }
+        // ***
         self.term_loggers(&global_verdict);
         // ***
         return (global_verdict,node_counter);
@@ -177,6 +179,7 @@ impl AnalysisProcessManager {
     fn enqueue_next_node_in_analysis(&mut self,
                                      parent_id    : u32,
                                      interaction : Interaction,
+                                     initial_int_characs : &InteractionCharacteristics,
                                      mut multi_trace : AnalysableMultiTrace,
                                      depth       : u32,
                                      loop_depth  : u32) -> Option<CoverageVerdict> {
@@ -187,7 +190,12 @@ impl AnalysisProcessManager {
         if multi_trace.length() > 0 {
             // ***
             if is_dead_local_analysis(&self.manager.gen_ctx, &self.ana_kind,&self.use_locana,&interaction,&mut multi_trace) {
-                let verdict = CoverageVerdict::Dead;
+                let verdict : CoverageVerdict;
+                if self.ana_kind.has_simulation() {
+                    verdict = CoverageVerdict::OutSim(true);
+                } else {
+                    verdict = CoverageVerdict::Out(true);
+                }
                 self.verdict_loggers(&verdict,parent_id);
                 return Some( verdict );
             }
@@ -197,10 +205,10 @@ impl AnalysisProcessManager {
             // ***
             match &self.ana_kind {
                 &AnalysisKind::Accept => {
-                    add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                    self.add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                 },
                 &AnalysisKind::Prefix => {
-                    add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                    self.add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                 },
                 &AnalysisKind::Hide => {
                     let mut to_hide : HashSet<usize> = HashSet::new();
@@ -216,11 +224,11 @@ impl AnalysisProcessManager {
                         let generic_step = GenericStep{parent_id,id_as_child:id_as_child,kind:AnalysisStepKind::Hide( to_hide )};
                         to_enqueue.push( generic_step );
                     } else {
-                        add_action_matches_in_analysis(&self.manager.gen_ctx,parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
+                        self.add_action_matches_in_analysis(parent_id,&interaction,&head_actions,&mut id_as_child, &mut to_enqueue);
                     }
                 },
-                &AnalysisKind::Simulate(sim_before) => {
-                    add_simulation_matches_in_analysis(&self.manager.gen_ctx, parent_id,&interaction,&multi_trace,sim_before,&mut id_as_child, &mut to_enqueue);
+                &AnalysisKind::Simulate(_) => {
+                    self.add_simulation_matches_in_analysis(parent_id, &interaction, &multi_trace,&mut id_as_child, &mut to_enqueue);
                 }
             }
         }
@@ -232,7 +240,12 @@ impl AnalysisProcessManager {
             self.manager.enqueue_new_steps( parent_id, to_enqueue, depth );
             return None;
         } else {
-            let verdict = self.get_coverage_verdict(&interaction,&multi_trace);
+            // here enqueue the empty to_enqueue so that the queue for the HCS search strategy
+            // knows that the last node had no child and hence
+            // selects the highest parent in the next step instead of continuing on as in DFS
+            self.manager.enqueue_new_steps( parent_id, to_enqueue, depth );
+            // ***
+            let verdict = self.get_coverage_verdict(initial_int_characs,&interaction,&multi_trace);
             self.verdict_loggers(&verdict,parent_id);
             return Some( verdict );
         }
@@ -281,19 +294,14 @@ impl AnalysisProcessManager {
                                                              &frt_elt.position,
                                                              &frt_elt.target_lf_ids,
                                                              true);
-                        let rem_sim_depth : u32;
-                        if consu_set.len() > 0 {
-                            rem_sim_depth = exe_result.interaction.max_nested_loop_depth();
-                        } else {
-                            let new_max_ld = exe_result.interaction.max_nested_loop_depth();
-                            let removed = parent_state.kind.multi_trace.remaining_loop_instantiations_in_simulation - target_loop_depth;
-                            rem_sim_depth = new_max_ld.min(removed);
-                        }
-                        let new_multi_trace = parent_state.kind.multi_trace.update_on_simulation(&self.manager.gen_ctx,
+                        let new_multi_trace = parent_state.kind.multi_trace.update_on_simulation(self.ana_kind.get_sim_config().unwrap(),
+                                                                                                 consu_set,
                                                                                                  sim_map,
+                                                                                                 &self.manager.gen_ctx,
                                                                                                  &frt_elt.target_lf_ids,
                                                                                                  &exe_result.affected_lifelines,
-                                                                                                 rem_sim_depth);
+                                                                                                 target_loop_depth,
+                                                                                                 &exe_result.interaction);
                         // ***
                         self.execution_loggers(&frt_elt.position,
                                                &frt_elt.target_actions,
@@ -318,8 +326,9 @@ impl AnalysisProcessManager {
     }
 
     pub fn get_coverage_verdict(&self,
-                                interaction:&Interaction,
-                                multi_trace:&AnalysableMultiTrace) -> CoverageVerdict {
+                                initial_int_characs : &InteractionCharacteristics,
+                                interaction : &Interaction,
+                                multi_trace : &AnalysableMultiTrace) -> CoverageVerdict {
         if multi_trace.length() == 0 {
             if interaction.express_empty() {
                 match self.ana_kind {
@@ -334,7 +343,7 @@ impl AnalysisProcessManager {
                             if self.manager.gen_ctx.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
                             } else {
-                                return CoverageVerdict::Inconc;
+                                return CoverageVerdict::Inconc(InconcReason::HideWithColocs);
                             }
                         } else {
                             return CoverageVerdict::Cov;
@@ -354,10 +363,10 @@ impl AnalysisProcessManager {
                         }
                     }
                 }
-            } else {
+            } else { /* multi-trace empty but interaction does not express empty */
                 match self.ana_kind {
                     AnalysisKind::Accept => {
-                        return CoverageVerdict::UnCov;
+                        return CoverageVerdict::Out(false);
                     },
                     AnalysisKind::Prefix => {
                         return CoverageVerdict::TooShort;
@@ -367,7 +376,7 @@ impl AnalysisProcessManager {
                             if self.manager.gen_ctx.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
                             } else {
-                                return CoverageVerdict::Inconc;
+                                return CoverageVerdict::Inconc(InconcReason::HideWithColocs);
                             }
                         } else {
                             return CoverageVerdict::TooShort;
@@ -388,31 +397,32 @@ impl AnalysisProcessManager {
                     }
                 }
             }
-        } else {
+        } else { /* multi-trace not emptied */
             match self.ana_kind {
                 AnalysisKind::Accept => {
-                    return CoverageVerdict::UnCov;
+                    return CoverageVerdict::Out(false);
                 },
                 AnalysisKind::Prefix => {
                     if multi_trace.is_any_component_empty() {
-                        return CoverageVerdict::LackObs;
+                        return CoverageVerdict::Inconc(InconcReason::LackObs);
                     } else {
-                        return CoverageVerdict::Out;
+                        return CoverageVerdict::Out(false);
                     }
                 },
                 AnalysisKind::Hide => {
-                    return CoverageVerdict::Out;
+                    return CoverageVerdict::Out(false);
                 },
                 AnalysisKind::Simulate(_) => {
-                    return CoverageVerdict::Out;
-                },
+                    return CoverageVerdict::OutSim(false);
+                }
             }
         }
     }
 
     fn init_loggers(&mut self, interaction : &Interaction,remaining_multi_trace : &AnalysableMultiTrace) {
+        let (is_simulation,sim_crit_loop,sim_crit_act) = self.ana_kind.get_sim_crits();
         for logger in self.manager.loggers.iter_mut() {
-            (*logger).log_init( &self.manager.gen_ctx, interaction,remaining_multi_trace,self.is_simulation);
+            (*logger).log_init( &self.manager.gen_ctx, interaction,remaining_multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
         }
     }
 
@@ -429,17 +439,7 @@ impl AnalysisProcessManager {
         let mut options_as_strs = (&self).manager.get_basic_options_as_strings();
         options_as_strs.insert(0, "process=analysis".to_string());
         options_as_strs.push( format!("analysis kind={}", self.ana_kind.to_string()) );
-        match self.use_locana {
-            UseLocalAnalysis::No => {
-                options_as_strs.push("local_analysis=false".to_string());
-            },
-            UseLocalAnalysis::Yes => {
-                options_as_strs.push("local_analysis=true".to_string());
-            },
-            _ => {
-                panic!("TODO: implement")
-            }
-        }
+        options_as_strs.push( format!("local analysis={}", self.use_locana.to_string()) );
         match self.goal.as_ref() {
             None => {
                 options_as_strs.push( "goal=None".to_string() );
@@ -459,6 +459,7 @@ impl AnalysisProcessManager {
                         parent_state_id : u32,
                         new_state_id : u32,
                         elim_kind : &FilterEliminationKind) {
+        self.has_filtered_nodes = true;
         for logger in self.manager.loggers.iter_mut() {
             logger.log_filtered(parent_state_id,
                                 new_state_id,
@@ -475,6 +476,7 @@ impl AnalysisProcessManager {
                          parent_state_id : u32,
                          new_state_id :u32,
                          remaining_multi_trace : &AnalysableMultiTrace) {
+        let (is_simulation,sim_crit_loop,sim_crit_act) = self.ana_kind.get_sim_crits();
         for logger in self.manager.loggers.iter_mut() {
             logger.log_execution(&self.manager.gen_ctx,
                                  parent_state_id,
@@ -485,7 +487,7 @@ impl AnalysisProcessManager {
                                  sim_map,
                                  new_interaction,
                                  remaining_multi_trace,
-                                 self.is_simulation);
+                                 is_simulation,sim_crit_loop,sim_crit_act);
         }
     }
 

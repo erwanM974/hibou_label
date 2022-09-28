@@ -36,6 +36,8 @@ extern crate clap;
 #[macro_use]
 extern crate maplit;
 
+extern crate rand;
+
 // **********
 
 pub mod core;
