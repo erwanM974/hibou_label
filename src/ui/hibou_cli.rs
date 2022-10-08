@@ -117,7 +117,7 @@ pub fn hibou_cli() -> i32 {
                 ret_print.push( format!("from file '{}'",hsf_file_path) );
                 ret_print.push( format!("on file : {}",spec_output_file) );
                 ret_print.push( "".to_string());
-                draw_interaction(&spec_output_file, &my_int,&gen_ctx,&None, false,false,false);
+                draw_interaction(&gen_ctx,&spec_output_file, &my_int);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("puml_sd") {
@@ -355,15 +355,26 @@ pub fn hibou_cli() -> i32 {
                     }
                 }
                 // ***
+                let wide_only : bool;
+                if matches.is_present("wide") {
+                    wide_only = true;
+                } else {
+                    wide_only = false;
+                }
+                // ***
+                let selection_kind : SliceGenerationSelection;
                 if matches.is_present("random") {
                     let extracted = matches.value_of("random").unwrap();
                     let content_str : String = extracted.chars().filter(|c| !c.is_whitespace()).collect();
                     let my_val : u32 = content_str.parse::<u32>().unwrap();
-                    generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder,SliceGenerationConfiguration::Random(my_val));
+                    selection_kind = SliceGenerationSelection::Random(my_val);
                 } else {
-                    generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder,SliceGenerationConfiguration::Exhaustive);
+                    selection_kind = SliceGenerationSelection::Exhaustive;
                 }
-
+                // ***
+                let gen_conf = SliceGenerationConfiguration::new(wide_only,selection_kind);
+                // ***
+                generate_slices(&gen_ctx,mu_name,&multi_trace,parent_folder,gen_conf);
             }
         }
     } else {

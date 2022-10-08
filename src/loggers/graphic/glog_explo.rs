@@ -28,7 +28,7 @@ impl ExplorationLogger for GraphicProcessLogger {
 
     fn log_init(&mut self, interaction: &Interaction, gen_ctx: &GeneralContext) {
         self.initiate();
-        self.write_interaction(gen_ctx,1, interaction, &None, false, false, false);
+        self.write_interaction(gen_ctx,1, interaction);
     }
 
     fn log_term(&mut self, options_as_str: &Vec<String>) {
@@ -51,7 +51,7 @@ impl ExplorationLogger for GraphicProcessLogger {
             self.write_edge(format!("i{:}", parent_state_id), format!("f{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, new_interaction, &None, false, false, false);
+        self.write_interaction(gen_ctx, new_state_id, new_interaction);
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

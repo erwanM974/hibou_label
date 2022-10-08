@@ -30,17 +30,25 @@ use crate::rendering::graphviz::edge_style::{GraphvizEdgeStyle, GraphvizEdgeStyl
 use crate::rendering::graphviz::node_style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
 use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
 
+
+
 impl AnalysisLogger for GraphicProcessLogger {
 
     fn log_init(&mut self,
                 gen_ctx: &GeneralContext,
                 interaction: &Interaction,
-                remaining_multi_trace: &AnalysableMultiTrace,
+                multi_trace: &AnalysableMultiTrace,
                 is_simulation : bool,
                 sim_crit_loop : bool,
                 sim_crit_act : bool) {
         self.initiate();
-        self.write_interaction(gen_ctx,1, interaction, &Some(remaining_multi_trace), is_simulation, sim_crit_loop, sim_crit_act);
+        self.write_analysis_node(gen_ctx,
+                               1,
+                               interaction,
+                                 &multi_trace,
+                                 is_simulation,
+                                 sim_crit_loop,
+                                 sim_crit_act);
     }
 
     fn log_term(&mut self,
@@ -62,19 +70,26 @@ impl AnalysisLogger for GraphicProcessLogger {
                      sim_crit_loop : bool,
                      sim_crit_act : bool) {
         // ***
-        self.write_firing(gen_ctx,new_state_id,action_position,executed_actions,consu_set,sim_map);
+        self.write_firing(gen_ctx,
+                          new_state_id,
+                          action_position,
+                          executed_actions,
+                          consu_set,
+                          sim_map);
         // *** Transition To Firing
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_i{}",parent_state_id) ) );
             self.write_edge(format!("i{:}", parent_state_id), format!("f{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, new_interaction, &Some(remaining_multi_trace),is_simulation,sim_crit_loop,sim_crit_act);
+        self.write_analysis_node(gen_ctx, new_state_id, new_interaction, &remaining_multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_i{}",new_state_id) ) );
             self.write_edge(format!("f{:}", new_state_id), format!("i{:}", new_state_id), tran_gv_options);
         }
     }
@@ -95,15 +110,17 @@ impl AnalysisLogger for GraphicProcessLogger {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
             tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_i{}",parent_state_id) ) );
             self.write_edge(parent_interaction_node_name, format!("h{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_interaction(gen_ctx, new_state_id, hidden_interaction, &Some(remaining_multi_trace), false,false,false );
+        self.write_analysis_node(gen_ctx, new_state_id, hidden_interaction, remaining_multi_trace, false,false,false );
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
             tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
+            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_i{}",new_state_id) ) );
             self.write_edge( format!("h{:}", new_state_id), format!("i{:}", new_state_id), tran_gv_options);
         }
     }
@@ -135,6 +152,7 @@ impl AnalysisLogger for GraphicProcessLogger {
         // ***
         let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
         tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+        tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_i{}",parent_state_id) ) );
         tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
         // *****
         self.write_node(verdict_node_name.clone(), node_gv_options);

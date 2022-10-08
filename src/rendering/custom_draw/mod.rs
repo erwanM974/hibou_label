@@ -16,6 +16,7 @@ limitations under the License.
 
 
 mod utils;
+pub mod multitrace;
 pub mod seqdiag;
 pub mod transition;
 pub mod term;

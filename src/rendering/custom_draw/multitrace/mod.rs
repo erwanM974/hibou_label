@@ -15,9 +15,6 @@ limitations under the License.
 */
 
 
-pub struct DrawingLifelineCoords {
-    pub x_start : f32,
-    pub x_span_outer : f32,
-    pub x_span_inner : f32,
-    pub x_middle : f32
-}
+pub mod draw_mu;
+mod ext_mu;
+

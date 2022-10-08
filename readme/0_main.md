@@ -7,8 +7,8 @@
 We propose a short documentation organized as follows:
 - a section about [interaction models and their encoding](https://github.com/erwanM974/hibou_label/blob/master/readme/1_interaction.md).
 - a section about [the execution and animation of interaction models](https://github.com/erwanM974/hibou_label/blob/master/readme/2_execution.md).
-- a section about [the exploration of an interaction's semantics with HIBOU](https://github.com/erwanM974/hibou_label/blob/master/readme/3_tool_sem_explo.md).
-- a section about [the notions of trace and multi-trace](https://github.com/erwanM974/hibou_label/blob/master/readme/4_traces.md).
+- a section about [the notions of trace and multi-trace](https://github.com/erwanM974/hibou_label/blob/master/readme/3_traces.md).
+- a section about [the exploration of an interaction's semantics with HIBOU](https://github.com/erwanM974/hibou_label/blob/master/readme/4_sem_explo.md).
 - a section about [(multi-)trace analysis in full observation with HIBOU](https://github.com/erwanM974/hibou_label/blob/master/readme/5_mu_ana.md).
 - a section about [(multi-)trace analysis in partial observation with HIBOU](https://github.com/erwanM974/hibou_label/blob/master/readme/6_partial.md).
 

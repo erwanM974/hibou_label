@@ -75,6 +75,11 @@ subcommands:
               short: r
               takes_value: true
               help: random selection of a number of slices instead of exhaustive generation
+          - wide:
+              required: false
+              short: w
+              takes_value: false
+              help: keep only wider slices (each component length at least one third of the original)
     - puml_sd:
             about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
             version: "0.7.8"

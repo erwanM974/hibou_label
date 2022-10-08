@@ -41,6 +41,9 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
                     GlobalVerdict::Fail => {
                         return true;
                     },
+                    GlobalVerdict::WeakFail => {
+                        return true;
+                    },
                     _ => {
                         canal.flag_dirty4local = false;
                     }
@@ -77,9 +80,9 @@ fn perform_local_analysis(gen_ctx : &GeneralContext,
                                               canal.trace.clone(),
                                               false,
                                               false,
-                                              0,
-                                              0,
-                                              0) );
+                                              canal.consumed,
+                                              canal.simulated_before,
+                                              canal.simulated_after) );
             local_mu = AnalysableMultiTrace::new(canals,0,0);
         }
         // ***

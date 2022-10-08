@@ -21,9 +21,20 @@ use crate::slice::exhaustive::get_all_slices_rec;
 use crate::slice::random::get_random_slices;
 
 
-pub enum SliceGenerationConfiguration {
+pub enum SliceGenerationSelection {
     Exhaustive, // all the slices
     Random(u32) // a number 'x' of random slices
+}
+
+pub struct SliceGenerationConfiguration {
+    pub wide_only : bool,
+    selection_kind : SliceGenerationSelection
+}
+
+impl SliceGenerationConfiguration {
+    pub fn new(wide_only : bool, selection_kind : SliceGenerationSelection) -> SliceGenerationConfiguration {
+        return SliceGenerationConfiguration{wide_only,selection_kind};
+    }
 }
 
 
@@ -53,15 +64,29 @@ pub fn generate_slices(gen_ctx : &GeneralContext,
     // creates directory
     fs::create_dir_all(&dir_name).unwrap();
     // ***
-    match conf {
-        SliceGenerationConfiguration::Exhaustive => {
-            get_all_slices_rec(gen_ctx,&dir_name, &mut 1, &vec![], &mut multi_trace.canals.iter());
+    match conf.selection_kind {
+        SliceGenerationSelection::Exhaustive => {
+            get_all_slices_rec(gen_ctx,
+                               &dir_name,
+                               &mut 1,
+                               conf.wide_only,
+                               &vec![],
+                               &mut multi_trace.canals.iter());
         },
-        SliceGenerationConfiguration::Random( mut num_slices ) => {
+        SliceGenerationSelection::Random( mut num_slices ) => {
             if num_slices >= get_total_num_slices(&multi_trace) {
-                get_all_slices_rec(gen_ctx,&dir_name, &mut 1, &vec![], &mut multi_trace.canals.iter());
+                get_all_slices_rec(gen_ctx,
+                                   &dir_name,
+                                   &mut 1,
+                                   conf.wide_only,
+                                   &vec![],
+                                   &mut multi_trace.canals.iter());
             } else {
-                get_random_slices(gen_ctx,&dir_name,&mut num_slices,&multi_trace);
+                get_random_slices(gen_ctx,
+                                  &dir_name,
+                                  &mut num_slices,
+                                  &multi_trace,
+                                  conf.wide_only);
             }
         }
     }
@@ -71,9 +96,11 @@ fn get_total_num_slices(multi_trace : &AnalysableMultiTrace) -> u32 {
     let mut prod : u32 = 1;
     for canal in &multi_trace.canals {
         let canal_len = canal.trace.len();
-        if canal_len > 0 {
-            let num_slices_of_canal : u32 = (1..canal_len as u32).sum();
+        if canal_len > 1 {
+            let num_slices_of_canal : u32 = 1 + ( (1..canal_len as u32).sum::<u32>() );
             prod = prod * num_slices_of_canal;
+        } else if canal_len == 1 {
+            prod = prod * 2;
         }
     }
     return prod;

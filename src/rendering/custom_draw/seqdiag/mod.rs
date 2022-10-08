@@ -20,4 +20,3 @@ mod action;
 mod img_content;
 mod img_frame;
 pub mod interaction;
-mod ext_multi_trace;

@@ -25,33 +25,22 @@ In the following, we will give some insights on the different elements of our la
 
 ## Basic building blocks
 
-Execution of an atomic emission:
+|                  | Initial Encoding  | Animation |
+|------------------|-------------------|-----------|
+| atomic emission              | <pre>@message{message}<br>@lifeline{lifeline}<br>lifeline -- message ->&#124;</pre>  | <img src="./images/2/basic/emission.svg" alt="execution of an emission" width="150"> |
+| atomic reception             | <pre>@message{message}<br>@lifeline{lifeline}<br>message -> lifeline</pre>  | <img src="./images/2/basic/reception.svg" alt="execution of a reception" width="150"> |
+| asynchronous message passing | <pre>@message{message}<br>@lifeline{l1;l2}<br>l1 -- message -> l2</pre>  | <img src="./images/2/basic/asynch_passing.svg" alt="execution of an asynchronous message passing" width="150"> |
+| synchronous message passing  | <pre>@message{m}<br>@lifeline{l1;l2}<br>l1 -- <synch>m -> l2</pre>  | <img src="./images/2/basic/synch_passing.svg" alt="execution of a synchronous message passing" width="150"> |
+| asynchronous broadcast       | <pre>@message{m}<br>@lifeline{lo;lt1;lt2}<br>lo -- m -> (lt1,lt2)</pre>  | <img src="./images/2/basic/asynch_broadcast.svg" alt="execution of an asynchronous broadcast" width="275"> |
+| synchronous broadcast        | <pre>@message{m}<br>@lifeline{lo;lt1;lt2}<br>lo -- <synch>m -> (lt1,lt2)</pre>  | <img src="./images/2/basic/synch_broadcast.svg" alt="execution of a synchronous broadcast" width="260"> |
 
-<img src="./images/2/basic/emission.svg" alt="execution of an emission" width="150">
 
-Execution of an atomic reception:
-
-<img src="./images/2/basic/reception.svg" alt="execution of a reception" width="150">
-
-Execution of an asynchronous message passing:
-
-<img src="./images/2/basic/asynch_passing.svg" alt="execution of an asynchronous message passing" width="150">
-
-Execution of a synchronous message passing:
-
-<img src="./images/2/basic/synch_passing.svg" alt="execution of a synchronous message passing" width="150">
-
-Execution of an asynchronous broadcast:
-
-<img src="./images/2/basic/asynch_broadcast.svg" alt="execution of an asynchronous broadcast" width="275">
-
-Execution of a synchronous broadcast:
-
-<img src="./images/2/basic/synch_broadcast.svg" alt="execution of a synchronous broadcast" width="150">
 
 
 
 ## Alt
+
+Alternatives propose non-deterministic choice between several exclusive alternatives.
 
 <img src="./images/2/alt.svg" alt="execution of actions within an alternative" width="275">
 

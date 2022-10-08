@@ -27,6 +27,7 @@ use crate::util::slicer::Slicer;
 pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
                       dir_name : &str,
                       id : &mut u32,
+                      wide : bool,
                       ok_canals : &Vec< Vec<HashSet<TraceAction>> >,
                       rem_canals : &mut (impl Iterator<Item = &'a AnalysableMultiTraceCanal> + Clone)) {
     match rem_canals.next() {
@@ -36,12 +37,18 @@ pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
             write_multi_trace_into_file(&file_path, gen_ctx, Some(&gen_ctx.co_localizations),ok_canals);
         },
         Some( rem_canal ) => {
+            let orig_length = rem_canal.trace.len();
             let mut slicer = Slicer::new(&rem_canal.trace);
             while let Some(got_slice) = slicer.next() {
+                if wide {
+                    if got_slice.len() < orig_length/3 {
+                        continue;
+                    }
+                }
                 let mut new_trace = got_slice.iter().cloned().collect::<Vec<HashSet<TraceAction>>>();
                 let mut new_ok_canals = ok_canals.clone();
                 new_ok_canals.push(new_trace);
-                get_all_slices_rec(gen_ctx,dir_name,id,&new_ok_canals,&mut rem_canals.clone());
+                get_all_slices_rec(gen_ctx,dir_name,id,wide,&new_ok_canals,&mut rem_canals.clone());
             }
         }
     }

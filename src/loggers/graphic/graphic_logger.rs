@@ -47,6 +47,7 @@ use crate::process::ana_proc::interface::step::SimulationStepKind;
 // ***
 
 use crate::loggers::graphic::conf::{GraphicProcessLoggerInteractionRepresentation, GraphicProcessLoggerLayout, GraphicProcessLoggerOutputKind};
+use crate::rendering::custom_draw::multitrace::draw_mu::draw_multitrace;
 
 
 pub struct GraphicProcessLogger {
@@ -87,6 +88,7 @@ impl GraphicProcessLogger {
         fs::create_dir_all("./temp").unwrap();
         // ***
         self.file.write("digraph G {\n".as_bytes() );
+        self.file.write("compound=true;\n".as_bytes() );
         // ***
         match self.layout {
             GraphicProcessLoggerLayout::horizontal => {
@@ -99,13 +101,18 @@ impl GraphicProcessLogger {
         // ***
     }
 
-    pub fn write_node(&mut self, node_name : String, style : GraphvizNodeStyle) {
+    pub fn write_node(&mut self,
+                      node_name : String,
+                      style : GraphvizNodeStyle) {
         let gv_node = GraphVizNode{id : node_name, style : style};
         self.file.write( gv_node.to_dot_string().as_bytes() );
         self.file.write("\n".as_bytes() );
     }
 
-    pub fn write_edge(&mut self, origin_id : String, target_id : String, style : GraphvizEdgeStyle) {
+    pub fn write_edge(&mut self,
+                      origin_id : String,
+                      target_id : String,
+                      style : GraphvizEdgeStyle) {
         let gv_edge = GraphVizEdge{origin_id, target_id, style};
         self.file.write( gv_edge.to_dot_string().as_bytes() );
         self.file.write("\n".as_bytes() );
@@ -153,17 +160,33 @@ impl GraphicProcessLogger {
         }
     }
 
-    pub fn write_interaction(&mut self,
-                             gen_ctx : &GeneralContext,
-                             new_state_id : u32,
-                             new_interaction : &Interaction,
-                             remaining_multi_trace : &Option<&AnalysableMultiTrace>,
-                             is_simulation : bool,
-                             sim_crit_loop : bool,
-                             sim_crit_act : bool) {
+    pub fn write_multitrace(&mut self,
+                        gen_ctx : &GeneralContext,
+                        new_state_id : u32,
+                        multi_trace : &AnalysableMultiTrace,
+                        is_simulation : bool,
+                        sim_crit_loop : bool,
+                        sim_crit_act : bool) {
+
         // ***
+        let mu_img_path : String = format!("./temp/{:}_m{}.png",  self.log_name ,new_state_id);
+        draw_multitrace(gen_ctx,&mu_img_path, multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
+        // ***
+        let mut node_gv_options : GraphvizNodeStyle = Vec::new();
+        node_gv_options.push( GraphvizNodeStyleItem::Image( mu_img_path ) );
+        node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+        node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+        // ***
+        let current_node_name = format!("m{:}", new_state_id);
+        self.write_node(current_node_name, node_gv_options);
+    }
+
+    pub fn write_interaction(&mut self,
+                               gen_ctx : &GeneralContext,
+                               new_state_id : u32,
+                               new_interaction : &Interaction) {
         let int_img_path : String = format!("./temp/{:}_i{}.png",  self.log_name ,new_state_id);
-        draw_interaction(&int_img_path, new_interaction, gen_ctx, remaining_multi_trace, is_simulation, sim_crit_loop, sim_crit_act);
+        draw_interaction(gen_ctx,&int_img_path, new_interaction);
         // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         node_gv_options.push( GraphvizNodeStyleItem::Image( int_img_path ) );
@@ -235,6 +258,25 @@ impl GraphicProcessLogger {
         // ***
         self.write_edge( parent_interaction_node_name, elim_node_name, tran_gv_options);
     }
+
+
+    pub fn write_analysis_node(&mut self,
+                               gen_ctx : &GeneralContext,
+                               new_state_id : u32,
+                               new_interaction : &Interaction,
+                               multi_trace : &AnalysableMultiTrace,
+                               is_simulation : bool,
+                               sim_crit_loop : bool,
+                               sim_crit_act : bool) {
+        self.file.write(format!("subgraph cluster_i{} {{\n",new_state_id).as_bytes() );
+        self.file.write("style=filled;color=lightgrey;\n".as_bytes() );
+        // first node
+        self.write_multitrace(gen_ctx,new_state_id,multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
+        self.write_interaction(gen_ctx,new_state_id,new_interaction);
+        //
+        self.file.write("}\n".as_bytes() );
+    }
+
 }
 
 

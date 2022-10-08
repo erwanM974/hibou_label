@@ -21,15 +21,25 @@ in collaboration with the
 
 ## Publications 
 
-We described our approach in the following papers: 
+Associated publications (in chronological order): 
 - "[Revisiting Semantics of Interactions for Trace Validity Analysis](https://link.springer.com/chapter/10.1007%2F978-3-030-45234-6_24)"
 - "[A small-step approach to multi-trace checking against interactions](https://dl.acm.org/doi/abs/10.1145/3412841.3442054)"
+- "[Equivalence of Denotational and Operational Semantics for Interaction Languages](https://link.springer.com/chapter/10.1007/978-3-031-10363-6_8)"
 
 ## Coq proofs
 
 The theoretical background of this present tool has been checked with some automated proofs written in Coq:
 - [proof of correctness for the semantics](https://erwanm974.github.io/coq_hibou_label_semantics_equivalence/)
 - [proof of correctness for the multi-trace analysis algorithm](https://erwanm974.github.io/coq_hibou_label_multi_trace_analysis/)
+
+## Experiments
+
+Experiments on various features of the tools are publicly available:
+- [solving 3SAT problems wth HIBOU](https://github.com/erwanM974/hibou_3sat_benchmark_experiment)
+- [recognizing slices of correct behavior via simulation](https://github.com/erwanM974/hibou_slice_recognition_experiment)
+
+
+
 
 # Documentation
 

@@ -18,6 +18,7 @@ limitations under the License.
 
 use std::cmp::{min,max};
 use rand::Rng;
+use rand::rngs::ThreadRng;
 use rand::distributions::{Distribution, Uniform};
 
 use std::collections::HashSet;
@@ -31,10 +32,38 @@ use crate::util::slicer::Slicer;
 
 
 
+fn get_any_cut(rng : &mut ThreadRng, length : usize) -> (usize,usize) {
+    if length == 0 {
+        return (0,0);
+    }
+    let rng_indices = Uniform::from(0..length );
+    let id1 = rng_indices.sample(rng);
+    let id2 = rng_indices.sample(rng);
+    let min_id = min(id1,id2);
+    let max_id = max(id1,id2);
+    return (min_id,max_id);
+}
+
+fn get_wider_cut(rng : &mut ThreadRng, length : usize) -> (usize,usize) {
+    if length <= 4 {
+        return get_any_cut(rng,length);
+    }
+    let third = length/3;
+    // ***
+    let rng_indices = Uniform::from(0..(third + 1) );
+    let id1 = rng_indices.sample(rng);
+    let id2 = length - rng_indices.sample(rng);
+    // ***
+    assert!(id2 > id1);
+    return (id1,id2);
+}
+
+
 pub fn get_random_slices(gen_ctx : &GeneralContext,
                               dir_name : &str,
                               num_slices : &mut u32,
-                              multi_trace : &AnalysableMultiTrace) {
+                              multi_trace : &AnalysableMultiTrace,
+                         wide : bool) {
     let mut slices : HashSet< Vec<(usize,usize)> > = hashset!{};
     let mut rng = rand::thread_rng();
     while *num_slices > 0 {
@@ -42,14 +71,17 @@ pub fn get_random_slices(gen_ctx : &GeneralContext,
         let mut new_canals : Vec<Vec<HashSet<TraceAction>>> = vec![];
         // ***
         for canal in &multi_trace.canals {
-            let rng_indices = Uniform::from(0..canal.trace.len());
-            let id1 = rng_indices.sample(&mut rng);
-            let id2 = rng_indices.sample(&mut rng);
-            let min_id = min(id1,id2);
-            let max_id = max(id1,id2);
-            let new_trace : Vec<HashSet<TraceAction>> = canal.trace[min_id..max_id].iter().cloned().collect();
+            // ***
+            let ids : (usize,usize);
+            if wide {
+                ids = get_wider_cut(&mut rng,canal.trace.len());
+            } else {
+                ids = get_any_cut(&mut rng,canal.trace.len());
+            }
+            // ***
+            let new_trace : Vec<HashSet<TraceAction>> = canal.trace[ids.0..ids.1].iter().cloned().collect();
             new_canals.push(new_trace);
-            new_canals_ids.push( (min_id,max_id) );
+            new_canals_ids.push( ids );
         }
         // ***
         let file_path = format!("{:}/s{:}", dir_name, num_slices);

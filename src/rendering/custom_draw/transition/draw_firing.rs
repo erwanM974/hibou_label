@@ -46,7 +46,7 @@ use crate::rendering::textual::colored::short_action::diagram_repr_trace_action;
 
 use crate::rendering::hibou_color_palette::*;
 use crate::rendering::textual::monochrome::position::position_to_text;
-use crate::rendering::custom_draw::utils::colored_text::draw_colored_text;
+use crate::rendering::custom_draw::utils::colored_text::{draw_colored_text, DrawnColoredTextAlignment, new_image_with_colored_text};
 
 use crate::core::trace::{TraceAction,TraceActionKind};
 use crate::process::ana_proc::interface::step::SimulationStepKind;
@@ -122,20 +122,8 @@ pub fn draw_firing(path_str : &String,
     // ***
     let img_width : f32 = 2.0*MARGIN + (max_x_shift as f32)*FONT_WIDTH/2.0;
     let img_height : f32 = MARGIN + (text_lines.len() as f32)*(MARGIN + VERTICAL_SIZE);
-
-    // Draw Frame
-    let mut image = RgbImage::new( img_width as u32, img_height as u32);
-    draw_filled_rect_mut(&mut image, Rect::at(0,0).of_size(img_width as u32,img_height as u32), Rgb(HCP_White));
-    // Draw Fragments
-    let mut yshift : u32 = 0;
-    for text in text_lines {
-        let msg_x_pos = img_width/2.0 - (TextToPrint::char_count(&text) as f32)*FONT_WIDTH/4.0;
-        let msg_y_pos = MARGIN + (yshift as f32)*VERTICAL_SIZE;
-        draw_colored_text(&mut image,&text,msg_x_pos,msg_y_pos);
-        yshift = yshift + 2;
-    }
     // ***
-    image.save(path).unwrap();
+    new_image_with_colored_text(path,&DrawnColoredTextAlignment::Center,img_width,img_height,text_lines)
 }
 
 

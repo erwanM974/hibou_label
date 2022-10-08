@@ -39,16 +39,11 @@ use crate::rendering::custom_draw::seqdiag::lf_coords::DrawingLifelineCoords;
 use crate::rendering::hibou_color_palette::*;
 
 use crate::rendering::custom_draw::utils::colored_text::draw_colored_text;
-use crate::rendering::custom_draw::seqdiag::ext_multi_trace::extract_texts_on_multi_trace;
 // **********
 
-pub fn draw_interaction(path_str : &String,
-                        interaction : &Interaction,
-                        gen_ctx : &GeneralContext,
-                        remaining_multi_trace : &Option<&AnalysableMultiTrace>,
-                        is_simulation : bool,
-                        sim_crit_loop : bool,
-                        sim_crit_act : bool) {
+pub fn draw_interaction(gen_ctx : &GeneralContext,
+                        path_str : &String,
+                        interaction : &Interaction) {
     let path = Path::new( path_str );
     // ***
     let mut lf_x_widths : HashMap<usize,DrawingLifelineCoords> = HashMap::new();
@@ -70,28 +65,8 @@ pub fn draw_interaction(path_str : &String,
     // ***
     let max_y_shift = get_interaction_max_yshift(interaction);
     let mut inner_height : f32 = (max_y_shift as f32)*VERTICAL_SIZE;
-
-    let img_width : f32;
-    let multi_trace_txttoprint : Option<(Vec<Vec<TextToPrint>>,f32)>;
-    match remaining_multi_trace {
-        None => {
-            img_width = current_x;
-            multi_trace_txttoprint = None;
-        }
-        Some( multi_trace ) => {
-            let mt_ttp = extract_texts_on_multi_trace( gen_ctx, multi_trace, is_simulation, sim_crit_loop, sim_crit_act);
-            let mut max_char_count = 0;
-            for ttp in &mt_ttp {
-                max_char_count = max_char_count.max(TextToPrint::char_count(ttp) );
-            }
-            let mt_print_width = (max_char_count as f32)*FONT_WIDTH/2.0;
-            img_width = current_x + mt_print_width;
-            // ***
-            inner_height = inner_height.max( ((2*mt_ttp.len()) as f32)*VERTICAL_SIZE );
-            // ***
-            multi_trace_txttoprint = Some( (mt_ttp,mt_print_width) );
-        }
-    }
+    // ***
+    let img_width : f32 = current_x;
     let img_height : f32 = inner_height + 2.0*MARGIN;
 
     // Draw Frame
@@ -104,21 +79,7 @@ pub fn draw_interaction(path_str : &String,
     // Draw Fragments
     let mut nest_shift : u32 = 1; // shift to display nested fragments
     let mut yshift : u32 = 3;
-
     draw_interaction_rec(&mut image,  gen_ctx, interaction, &lf_x_widths, gen_ctx.get_lf_num(), &mut nest_shift, &mut yshift);
-
-    match multi_trace_txttoprint {
-        None => {},
-        Some( (mt_ttp,mt_print_width) ) => {
-            let mut yshift : u32 = 0;
-            for text in mt_ttp {
-                let msg_x_pos = img_width - mt_print_width - MARGIN/2.0;
-                let msg_y_pos = MARGIN + (yshift as f32)*VERTICAL_SIZE;
-                draw_colored_text(&mut image,&text,msg_x_pos,msg_y_pos);
-                yshift = yshift +2;
-            }
-        }
-    }
-
+    // ***
     image.save(path).unwrap();
 }

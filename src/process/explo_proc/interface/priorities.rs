@@ -49,10 +49,10 @@ impl AbstractPriorities for ExplorationPriorities {
 
     fn print_as_string(&self) -> String {
         let mut my_str = String::new();
-        my_str.push_str( &format!("emission={:},",self.emission) );
+        my_str.push_str( &format!("[emission={:},",self.emission) );
         my_str.push_str( &format!("reception={:},",self.reception) );
         my_str.push_str( &format!("multi-rdv={:},",self.multi_rdv) );
-        my_str.push_str( &format!("loop={:}",self.in_loop) );
+        my_str.push_str( &format!("loop={:}]",self.in_loop) );
         return my_str;
     }
 

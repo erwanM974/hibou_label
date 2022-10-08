@@ -9,36 +9,57 @@ The "explore" command of HIBOU can generate execution trees (drawings) which ill
 Below is given an example exploration drawing that you can obtain by typing
 "hibou_label.exe explore ex_readme.hsf" with the files from "examples" folder.
 
-<img src="./images/3/ex_readme_explo.svg" alt="exploration" width="950">
+<img src="./images/4/ex_readme_explo.svg" alt="exploration" width="950">
 
 In the header of a ".hsf" file, we can configure a number of options that will then be used if the ".hsf" file is exploited
 with the "explore command". Those options are set within an "@explore_option" section. Here we used the following options for the exploration:
 
 ```
 @explore_option{
-    loggers = [graphic[svg,vertical]];
-    strategy = DepthFS;
-    filters = [ max_depth = 3,
-                max_loop_depth = 1,
-                max_node_number = 7 ];
-	priorities = [	loop=0, 
-					emission=0, 
-					reception = 0]
+  loggers = [graphic[svg,vertical]];
+  strategy = DepthFS;
+  ilters = [ max_depth = 3,
+             max_loop_depth = 1,
+             max_node_number = 7 ];
+  priorities = [ loop=0, 
+                 emission=0, 
+                 reception = 0]
 }
 ```
 
 ## Loggers 
 
-We can specify that we want the exploration of this ".hsf" file to be logged with the "loggers" attribute.
-In this build only a "graphic" logger exists.
-It will create an image file (with the same name as the ".hsf" file) describing the exploration.
+We can specify that we want the exploration of this ".hsf" file to be logged in a certain manner with the "loggers" attribute.
+
+### Graphic logger
+
+We can configure a "graphic" logger to create an image file (with the same name as the ".hsf" file)
+describing the exploration.
 The generation of this image requires the graphviz tool to be installed ([https://www.graphviz.org/download/](https://www.graphviz.org/download/)),
 and the "dot" command to be in the "PATH" environment variable.
+
 The output of the graphic logger can be configured by certain options as such ``graphic[options]``.
 Here we have ``graphic[svg,vertical]``, which means the output will be a .svg file (requires cairo to be installed)
 and the graph will have a vertical layout.
 With ``graphic[png]``, the output would be a .png file.
 And with ``graphic[horizontal]``, the layout of the graph would be horizontal.
+
+### Trace generation logger
+
+We can configure a "trace generation" logger that will create ".htf" files for traces corresponding
+to paths of the part of the execution tree that is uncovered during its exploration.
+
+The trace generation logger can be declared and configured via ``tracegen[options]``:
+- an option specifies under which circumstances a trace file can be created: 
+  - ``tracegen[exact]`` only allows the creation of a trace when reaching an interaction
+  which can express the empty trace (hence all generated traces are exactly accepted by the initial interaction).
+  - ``tracegen[prefix]`` creates trace files for all interactions that are reached and hence will
+  create trace files for all prefixes of accepted traces
+  - ``tracegen[terminal]`` only creates trace file on terminal nodes of the explored tree.
+  Nodes can be terminal either because there are no more actions to be executed or because of
+  an set limitation on the exploration. In any case, this allows generating fewer trace files,
+  with no trace being a prefix of another.
+
 
 ## Search strategy 
 

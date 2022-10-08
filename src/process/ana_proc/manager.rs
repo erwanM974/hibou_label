@@ -162,7 +162,10 @@ impl AnalysisProcessManager {
                 parent_state.remaining_ids_to_process.remove(&next_to_process.id_as_child);
                 if parent_state.remaining_ids_to_process.len() > 0 {
                     self.manager.remember_state(next_to_process.parent_id,parent_state);
+                }/* else {
+                    // here maybe do stuff to check if node is terminal etc etc
                 }
+                */
                 // ***
             }
         }
@@ -240,10 +243,11 @@ impl AnalysisProcessManager {
             self.manager.enqueue_new_steps( parent_id, to_enqueue, depth );
             return None;
         } else {
-            // here enqueue the empty to_enqueue so that the queue for the HCS search strategy
+            // here informs the queue
             // knows that the last node had no child and hence
+            // for the HCS search strategy
             // selects the highest parent in the next step instead of continuing on as in DFS
-            self.manager.enqueue_new_steps( parent_id, to_enqueue, depth );
+            self.manager.queue_set_last_reached_has_no_child();
             // ***
             let verdict = self.get_coverage_verdict(initial_int_characs,&interaction,&multi_trace);
             self.verdict_loggers(&verdict,parent_id);
