@@ -60,7 +60,7 @@ fn get_ascii_left() -> Vec<&'static str> {
     my_vec.push(r#"-"-"-  Oracle     "#);
     my_vec.push(r#" \_/   Utility    "#);
     my_vec.push(r#"                  "#);
-    my_vec.push(r#"  V-label-0.7.8   "#);
+    my_vec.push(r#"  V-label-0.7.9   "#);
     return my_vec;
 }
 
