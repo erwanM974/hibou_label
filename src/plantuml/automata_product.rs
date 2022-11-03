@@ -16,14 +16,12 @@ limitations under the License.
 
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{Read,BufReader,BufRead,BufWriter,Write};
-
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::util::get_recursive_frag::*;
-use crate::core::syntax::action::*;
+use std::io::Write;
 
 use crate::core::general_context::GeneralContext;
-
+use crate::core::language::hide::hideable::LifelineHideable;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::language::syntax::util::get_recursive_frag::*;
 
 pub fn to_plant_uml_ap(output_path : &String,
                        title : &str,

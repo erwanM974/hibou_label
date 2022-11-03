@@ -25,8 +25,7 @@ use crate::core::error::HibouCoreError;
 pub struct GeneralContext {
     lf_names : Vec<String>,
     ms_names : Vec<String>,
-    gt_names : Vec<String>,
-    pub co_localizations : Vec<HashSet<usize>>
+    gt_names : Vec<String>
 }
 
 
@@ -37,48 +36,8 @@ impl GeneralContext {
         return GeneralContext {
             lf_names: Vec::new(),
             ms_names: Vec::new(),
-            gt_names: Vec::new(),
-            co_localizations : Vec::new()
+            gt_names: Vec::new()
         }
-    }
-
-    // ********** ********** ********** ********** ********** ********** **********
-    // ********** ********** ********** ********** ********** ********** **********
-    // ********** ********** ********** ********** ********** ********** **********
-
-    pub fn get_lf_coloc_id(&self, lf_id : usize) -> Option<usize> {
-        for (coloc_id,coloc) in self.co_localizations.iter().enumerate() {
-            if coloc.contains(&lf_id) {
-                return Some(coloc_id);
-            }
-        }
-        return None;
-    }
-
-    pub fn are_colocalizations_singletons(&self) -> bool {
-        for coloc in &self.co_localizations {
-            if coloc.len() > 1 {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    pub fn set_partition(&mut self, co_localizations : Vec<HashSet<usize>>) {
-        self.co_localizations = co_localizations;
-    }
-
-    pub fn get_trivial_partition(&self) -> Vec<HashSet<usize>> {
-        let mut all_lfs : HashSet<usize> = HashSet::from_iter((0..self.get_lf_num()).collect::<Vec<usize>>().iter().cloned());
-        return vec![all_lfs];
-    }
-
-    pub fn get_discrete_partition(&self) -> Vec<HashSet<usize>> {
-        let mut colocs = vec![];
-        for lf_id in 0..self.get_lf_num() {
-            colocs.push( hashset!{lf_id} )
-        }
-        return colocs;
     }
 
     // ********** ********** ********** ********** ********** ********** **********

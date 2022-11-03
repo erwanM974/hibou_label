@@ -18,8 +18,8 @@ limitations under the License.
 
 
 use std::collections::{HashMap, HashSet};
-use crate::core::semantics::frontier::FrontierElement;
-use crate::core::trace::TraceActionKind;
+use crate::core::execution::semantics::frontier::FrontierElement;
+use crate::core::execution::trace::trace::TraceActionKind;
 use crate::process::abstract_proc::generic::AbstractStepKind;
 use crate::process::ana_proc::interface::conf::AnalysisConfig;
 use crate::process::ana_proc::interface::priorities::AnalysisPriorities;
@@ -33,8 +33,8 @@ pub enum SimulationStepKind {
 
 
 pub enum AnalysisStepKind {
-    Hide( HashSet<usize> ), // all the lifelines to hide
-    Simulate(FrontierElement,
+    Hide(HashSet<usize>), // all the ids of all the co-localizations to hide
+    Execute(FrontierElement, // frontier element to execute
              HashSet<usize>, // co-localisations on which multi-trace action consumption must be done
              HashMap<usize,SimulationStepKind>) // co-localisations on which simulation must be done and which kind
 }
@@ -46,7 +46,7 @@ impl AbstractStepKind<AnalysisConfig> for AnalysisStepKind {
             AnalysisStepKind::Hide(_) => {
                 return 0;
             },
-            AnalysisStepKind::Simulate(frt_elt,consu_set,sim_map) => {
+            AnalysisStepKind::Execute(frt_elt,consu_set,sim_map) => {
                 let mut priority : i32 = 0;
                 match frt_elt.act_kind {
                     TraceActionKind::Emission => {

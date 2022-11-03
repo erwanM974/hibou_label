@@ -16,36 +16,40 @@ limitations under the License.
 
 
 use std::collections::{HashMap, HashSet};
+use crate::core::colocalizations::CoLocalizations;
+use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::general_context::GeneralContext;
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-use crate::core::trace::TraceAction;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::language::position::position::Position;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 use crate::process::ana_proc::interface::logger::AnalysisLogger;
 use crate::process::ana_proc::interface::step::SimulationStepKind;
-use crate::process::ana_proc::multitrace::AnalysableMultiTrace;
-use crate::process::ana_proc::verdicts::CoverageVerdict;
-use crate::rendering::graphviz::common::GraphvizColor;
-use crate::rendering::graphviz::edge_style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle, GvEdgeLineStyle};
-use crate::rendering::graphviz::node_style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
+use crate::output::rendering::graphviz::common::GraphvizColor;
+use crate::output::rendering::graphviz::edge_style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle, GvEdgeLineStyle};
+use crate::output::rendering::graphviz::node_style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
 use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
-
+use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
 
 
 impl AnalysisLogger for GraphicProcessLogger {
 
     fn log_init(&mut self,
-                gen_ctx: &GeneralContext,
-                interaction: &Interaction,
-                multi_trace: &AnalysableMultiTrace,
+                gen_ctx : &GeneralContext,
+                co_localizations : &CoLocalizations,
+                multi_trace : &MultiTrace,
+                interaction : &Interaction,
+                flags : &MultiTraceAnalysisFlags,
                 is_simulation : bool,
                 sim_crit_loop : bool,
                 sim_crit_act : bool) {
         self.initiate();
-        self.write_analysis_node(gen_ctx,
+        self.write_analysis_node(gen_ctx,co_localizations,
                                1,
                                interaction,
-                                 &multi_trace,
+                                 multi_trace,
+                                 flags,
                                  is_simulation,
                                  sim_crit_loop,
                                  sim_crit_act);
@@ -57,20 +61,23 @@ impl AnalysisLogger for GraphicProcessLogger {
     }
 
     fn log_execution(&mut self,
-                     gen_ctx: &GeneralContext,
-                     parent_state_id: u32,
-                     new_state_id: u32,
-                     action_position: &Position,
-                     executed_actions: &HashSet<TraceAction>,
+                     gen_ctx : &GeneralContext,
+                     co_localizations : &CoLocalizations,
+                     multi_trace : &MultiTrace,
+                     parent_state_id : u32,
+                     new_state_id : u32,
+                     action_position : &Position,
+                     executed_actions : &HashSet<TraceAction>,
                      consu_set : &HashSet<usize>,
-                     sim_map: &HashMap<usize, SimulationStepKind>,
-                     new_interaction: &Interaction,
-                     remaining_multi_trace: &AnalysableMultiTrace,
+                     sim_map : &HashMap<usize,SimulationStepKind>,
+                     new_interaction : &Interaction,
+                     new_flags : &MultiTraceAnalysisFlags,
                      is_simulation : bool,
                      sim_crit_loop : bool,
                      sim_crit_act : bool) {
         // ***
-        self.write_firing(gen_ctx,
+        self.write_firing_analysis(gen_ctx,
+                          co_localizations,
                           new_state_id,
                           action_position,
                           executed_actions,
@@ -84,7 +91,7 @@ impl AnalysisLogger for GraphicProcessLogger {
             self.write_edge(format!("i{:}", parent_state_id), format!("f{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_analysis_node(gen_ctx, new_state_id, new_interaction, &remaining_multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
+        self.write_analysis_node(gen_ctx, co_localizations,new_state_id, new_interaction, &multi_trace,new_flags,is_simulation,sim_crit_loop,sim_crit_act);
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
@@ -95,12 +102,14 @@ impl AnalysisLogger for GraphicProcessLogger {
     }
 
     fn log_hide(&mut self,
-                gen_ctx: &GeneralContext,
-                parent_state_id: u32,
-                new_state_id: u32,
-                lfs_to_hide: &HashSet<usize>,
-                hidden_interaction: &Interaction,
-                remaining_multi_trace: &AnalysableMultiTrace) {
+                gen_ctx : &GeneralContext,
+                co_localizations : &CoLocalizations,
+                multi_trace : &MultiTrace,
+                parent_state_id : u32,
+                new_state_id : u32,
+                lfs_to_hide : &HashSet<usize>,
+                hidden_interaction : &Interaction,
+                new_flags : &MultiTraceAnalysisFlags) {
         // *** Parent Interaction Node
         let parent_interaction_node_name = format!("i{:}", parent_state_id);
         // *** Hiding Node
@@ -114,7 +123,7 @@ impl AnalysisLogger for GraphicProcessLogger {
             self.write_edge(parent_interaction_node_name, format!("h{:}", new_state_id), tran_gv_options);
         }
         // *** Resulting Interaction Node
-        self.write_analysis_node(gen_ctx, new_state_id, hidden_interaction, remaining_multi_trace, false,false,false );
+        self.write_analysis_node(gen_ctx, co_localizations,new_state_id, hidden_interaction, multi_trace, new_flags,false,false,false );
         // *** Transition To Interaction Node
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

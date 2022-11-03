@@ -16,11 +16,9 @@ limitations under the License.
 
 
 
-use std::collections::{HashMap, HashSet};
-use std::ops::DerefMut;
-use crate::core::general_context::GeneralContext;
-use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
+use std::collections::HashSet;
 
+use crate::process::abstract_proc::common::FilterEliminationKind;
 
 pub trait AbstractConfiguration : Sized {
     type NodeKind : AbstractNodeKind;

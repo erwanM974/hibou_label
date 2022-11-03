@@ -14,16 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::iter::FromIterator;
+
 use crate::core::general_context::GeneralContext;
-
-
-use crate::core::semantics::execute::execute_interaction;
-use crate::core::semantics::frontier::global_frontier;
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-use crate::core::trace::TraceAction;
+use crate::core::execution::semantics::execute::execute_interaction;
+use crate::core::execution::semantics::frontier::global_frontier;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::language::position::position::Position;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
 use crate::process::abstract_proc::generic::*;
 use crate::process::abstract_proc::manager::*;
@@ -32,8 +31,6 @@ use crate::process::explo_proc::interface::filter::{ExplorationFilter, Explorati
 use crate::process::explo_proc::interface::logger::ExplorationLogger;
 use crate::process::explo_proc::interface::node::ExplorationNodeKind;
 use crate::process::explo_proc::interface::step::ExplorationStepKind;
-
-
 
 pub struct ExplorationProcessManager {
     pub(crate) manager: GenericProcessManager<ExplorationConfig>,

@@ -18,7 +18,7 @@ limitations under the License.
 
 
 
-use crate::core::syntax::interaction::Interaction;
+use crate::core::language::syntax::interaction::Interaction;
 use crate::process::abstract_proc::generic::AbstractNodeKind;
 
 pub struct ExplorationNodeKind {

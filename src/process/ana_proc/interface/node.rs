@@ -18,14 +18,22 @@ limitations under the License.
 
 
 
-use crate::core::syntax::interaction::Interaction;
+use crate::core::language::syntax::interaction::Interaction;
 use crate::process::abstract_proc::generic::AbstractNodeKind;
-use crate::process::ana_proc::multitrace::AnalysableMultiTrace;
+use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
 
 pub struct AnalysisNodeKind {
     pub interaction : Interaction,
-    pub multi_trace : AnalysableMultiTrace,
-    pub loop_depth : u32
+    pub flags : MultiTraceAnalysisFlags,
+    pub ana_loop_depth : u32
+}
+
+impl AnalysisNodeKind {
+    pub fn new(interaction : Interaction,
+               flags : MultiTraceAnalysisFlags,
+               ana_loop_depth : u32) -> AnalysisNodeKind {
+        return AnalysisNodeKind{interaction,flags,ana_loop_depth}
+    }
 }
 
 impl AbstractNodeKind for AnalysisNodeKind {}

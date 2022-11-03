@@ -17,7 +17,7 @@ limitations under the License.
 
 
 use std::iter::*;
-use std::slice::Windows;
+
 use itertools::Itertools;
 
 fn get_windows_indexes(min : usize, max : usize) -> Vec<(usize,usize)> {

@@ -16,12 +16,12 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use crate::core::general_context::GeneralContext;
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-use crate::core::trace::TraceAction;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::language::position::position::Position;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 use crate::process::explo_proc::interface::logger::ExplorationLogger;
-use crate::rendering::graphviz::edge_style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
+use crate::output::rendering::graphviz::edge_style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
 use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
 
 impl ExplorationLogger for GraphicProcessLogger {
@@ -43,7 +43,7 @@ impl ExplorationLogger for GraphicProcessLogger {
                    executed_actions: &HashSet<TraceAction>,
                    new_interaction: &Interaction) {
         // ***
-        self.write_firing(gen_ctx,new_state_id,action_position,executed_actions,&HashSet::new(),&HashMap::new());
+        self.write_firing_simple(gen_ctx,new_state_id,action_position,executed_actions);
         // *** Transition To Firing
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();

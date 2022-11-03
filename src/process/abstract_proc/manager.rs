@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use rand::thread_rng;
-use std::cmp::Reverse;
 use std::collections::HashMap;
+
 use rand::seq::SliceRandom;
+use rand::thread_rng;
+
 use crate::core::general_context::GeneralContext;
 use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
 use crate::process::abstract_proc::generic::*;
 use crate::process::abstract_proc::queue::*;
-
 
 pub enum GenericProcessPriorities<Config : AbstractConfiguration> {
     Random,

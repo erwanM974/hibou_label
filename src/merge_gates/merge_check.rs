@@ -16,9 +16,9 @@ limitations under the License.
 
 
 use std::collections::{HashMap, HashSet};
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::action::*;
-use crate::core::trace::{TraceAction, TraceActionKind};
+use crate::core::language::syntax::interaction::{Interaction};
+use crate::core::language::syntax::action::*;
+use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 
 
 

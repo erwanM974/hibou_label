@@ -15,40 +15,33 @@ limitations under the License.
 */
 
 
-use std::collections::{HashSet,HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::File;
-use std::io::{Read,BufReader,BufRead,BufWriter,Write};
-
-// ***
+use std::io::Write;
 use std::process::Command;
-
-// ***
+use crate::core::colocalizations::CoLocalizations;
+use crate::core::execution::trace::multitrace::MultiTrace;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
-use crate::core::syntax::position::*;
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::action::*;
-
-
-use crate::rendering::textual::monochrome::position::position_to_text;
-use crate::rendering::graphviz::graph::*;
-use crate::rendering::graphviz::node_style::*;
-use crate::rendering::graphviz::edge_style::*;
-use crate::rendering::graphviz::common::*;
-use crate::rendering::custom_draw::seqdiag::interaction::draw_interaction;
-use crate::rendering::custom_draw::transition::draw_firing::draw_firing;
-use crate::rendering::custom_draw::transition::draw_hiding::draw_hiding;
-use crate::process::ana_proc::verdicts::CoverageVerdict;
-use crate::core::trace::{TraceAction,TraceActionKind};
-use crate::process::ana_proc::multitrace::{AnalysableMultiTraceCanal,AnalysableMultiTrace};
-use crate::process::abstract_proc::common::FilterEliminationKind;
-use crate::process::ana_proc::interface::step::SimulationStepKind;
-
-// ***
+use crate::core::language::position::position::Position;
+use crate::core::language::syntax::interaction::Interaction;
 
 use crate::loggers::graphic::conf::{GraphicProcessLoggerInteractionRepresentation, GraphicProcessLoggerLayout, GraphicProcessLoggerOutputKind};
-use crate::rendering::custom_draw::multitrace::draw_mu::draw_multitrace;
 
+use crate::output::rendering::custom_draw::multitrace::draw_mu::draw_multitrace;
+use crate::output::rendering::custom_draw::seqdiag::interaction::draw_interaction;
+use crate::output::rendering::custom_draw::transition::draw_firing::{draw_firing_simple,draw_firing_analysis};
+use crate::output::rendering::custom_draw::transition::draw_hiding::draw_hiding;
+use crate::output::rendering::graphviz::common::*;
+use crate::output::rendering::graphviz::edge_style::*;
+use crate::output::rendering::graphviz::graph::*;
+use crate::output::rendering::graphviz::node_style::*;
+use crate::process::abstract_proc::common::FilterEliminationKind;
+use crate::process::ana_proc::interface::step::SimulationStepKind;
+use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
+
+// ***
 
 pub struct GraphicProcessLogger {
     log_name : String,
@@ -162,15 +155,24 @@ impl GraphicProcessLogger {
 
     pub fn write_multitrace(&mut self,
                         gen_ctx : &GeneralContext,
+                            co_localizations : &CoLocalizations,
                         new_state_id : u32,
-                        multi_trace : &AnalysableMultiTrace,
+                        multi_trace : &MultiTrace,
+                        flags : &MultiTraceAnalysisFlags,
                         is_simulation : bool,
                         sim_crit_loop : bool,
                         sim_crit_act : bool) {
 
         // ***
         let mu_img_path : String = format!("./temp/{:}_m{}.png",  self.log_name ,new_state_id);
-        draw_multitrace(gen_ctx,&mu_img_path, multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
+        draw_multitrace(gen_ctx,
+                        co_localizations,
+                        &mu_img_path,
+                        multi_trace,
+                        flags,
+                        is_simulation,
+                        sim_crit_loop,
+                        sim_crit_act);
         // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
         node_gv_options.push( GraphvizNodeStyleItem::Image( mu_img_path ) );
@@ -185,27 +187,58 @@ impl GraphicProcessLogger {
                                gen_ctx : &GeneralContext,
                                new_state_id : u32,
                                new_interaction : &Interaction) {
-        let int_img_path : String = format!("./temp/{:}_i{}.png",  self.log_name ,new_state_id);
-        draw_interaction(gen_ctx,&int_img_path, new_interaction);
-        // ***
         let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-        node_gv_options.push( GraphvizNodeStyleItem::Image( int_img_path ) );
-        node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+        if new_interaction != &Interaction::Empty {
+            let int_img_path : String = format!("./temp/{:}_i{}.png",  self.log_name ,new_state_id);
+            draw_interaction(gen_ctx,&int_img_path, new_interaction);
+            node_gv_options.push( GraphvizNodeStyleItem::Image( int_img_path ) );
+            node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+        } else {
+            node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+            node_gv_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
+        }
         node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
         // ***
         let current_node_name = format!("i{:}", new_state_id);
         self.write_node(current_node_name, node_gv_options);
     }
 
-    pub fn write_firing(&mut self,
+    pub fn write_firing_simple(&mut self,
                         gen_ctx : &GeneralContext,
+                        new_state_id : u32,
+                        action_position : &Position,
+                        executed_actions : &HashSet<TraceAction>,) {
+        let firing_node_path : String = format!("./temp/{:}_f{}.png",  self.log_name ,new_state_id);
+        draw_firing_simple(&firing_node_path,
+                    gen_ctx,
+                    action_position,
+                    executed_actions);
+        // ***
+        let mut firing_gv_node_options : GraphvizNodeStyle = Vec::new();
+        firing_gv_node_options.push( GraphvizNodeStyleItem::Image( firing_node_path ) );
+        firing_gv_node_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+        firing_gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+        // ***
+        let firing_node_name = format!("f{:}", new_state_id);
+        self.write_node( firing_node_name.clone(), firing_gv_node_options);
+    }
+
+    pub fn write_firing_analysis(&mut self,
+                        gen_ctx : &GeneralContext,
+                        co_localizations : &CoLocalizations,
                         new_state_id : u32,
                         action_position : &Position,
                         executed_actions : &HashSet<TraceAction>,
                         consu_set : &HashSet<usize>,
                         sim_map : &HashMap<usize,SimulationStepKind>) {
         let firing_node_path : String = format!("./temp/{:}_f{}.png",  self.log_name ,new_state_id);
-        draw_firing(&firing_node_path, action_position, executed_actions, consu_set, sim_map, gen_ctx);
+        draw_firing_analysis(&firing_node_path,
+                    gen_ctx,
+                    co_localizations,
+                    action_position,
+                    executed_actions,
+                    consu_set,
+                    sim_map);
         // ***
         let mut firing_gv_node_options : GraphvizNodeStyle = Vec::new();
         firing_gv_node_options.push( GraphvizNodeStyleItem::Image( firing_node_path ) );
@@ -221,7 +254,7 @@ impl GraphicProcessLogger {
                         new_state_id : u32,
                         lfs_to_hide: &HashSet<usize>) {
         let hiding_node_path : String = format!("./temp/{:}_h{}.png",  self.log_name ,new_state_id);
-        draw_hiding(&hiding_node_path,lfs_to_hide,gen_ctx);
+        draw_hiding(&hiding_node_path,gen_ctx,lfs_to_hide);
         // ***
         let mut hiding_gv_node_options : GraphvizNodeStyle = Vec::new();
         hiding_gv_node_options.push( GraphvizNodeStyleItem::Image( hiding_node_path ) );
@@ -262,16 +295,25 @@ impl GraphicProcessLogger {
 
     pub fn write_analysis_node(&mut self,
                                gen_ctx : &GeneralContext,
+                               co_localizations : &CoLocalizations,
                                new_state_id : u32,
                                new_interaction : &Interaction,
-                               multi_trace : &AnalysableMultiTrace,
+                               multi_trace : &MultiTrace,
+                               flags : &MultiTraceAnalysisFlags,
                                is_simulation : bool,
                                sim_crit_loop : bool,
                                sim_crit_act : bool) {
         self.file.write(format!("subgraph cluster_i{} {{\n",new_state_id).as_bytes() );
         self.file.write("style=filled;color=lightgrey;\n".as_bytes() );
         // first node
-        self.write_multitrace(gen_ctx,new_state_id,multi_trace,is_simulation,sim_crit_loop,sim_crit_act);
+        self.write_multitrace(gen_ctx,
+                              co_localizations,
+                              new_state_id,
+                              multi_trace,
+                              flags,
+                              is_simulation,
+                              sim_crit_loop,
+                              sim_crit_act);
         self.write_interaction(gen_ctx,new_state_id,new_interaction);
         //
         self.file.write("}\n".as_bytes() );

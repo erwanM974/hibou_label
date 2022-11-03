@@ -16,60 +16,89 @@
 
 
 name: hibou_label
-version: "0.7.9"
+version: "0.8.0"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for manipulating interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
-        about: utility to draw as a sequence diagram an interaction encoded in a hibou specification file (.hsf)
-        version: "0.7.9"
-        author: Erwan Mahe <github.com/erwanM974>
-        args:
-            - hsf:
-                required: true
-                index: 1
-                help: input hibou specification file
-            - output:
-                required: false
-                short: o
-                takes_value: true
-                help: target file for drawing (default is 'the name of the hsf'.png)
-    - explore:
-        about: utility to explore the semantics of an interaction encoded in a hibou specification file (.hsf)
-        version: "0.7.9"
-        author: Erwan Mahe <github.com/erwanM974>
-        args:
-            - hsf:
-                required: true
-                index: 1
-                help: input hibou specification file
-    - analyze:
-        about: utility to analyze an input (multi-)trace encoded in a hibou trace file (.htf) w.r.t. an interaction encoded in a hibou specification file (.hsf)
-        version: "0.7.9"
+        about: utility to draw an interaction as a sequence diagram
+        version: "0.8.0"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
               required: true
               index: 1
-              help: input hibou specification file
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - output:
+              required: false
+              short: o
+              takes_value: true
+              help: target file for drawing (default is 'the name of the hsf'.png)
+    - explore:
+        about: utility to explore the semantics of an interaction
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - hcf:
+              required: false
+              index: 3
+              help: input hibou configuration file
+    - analyze:
+        about: utility to analyze a (multi-)trace w.r.t. an interaction
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - htf:
+              required: true
+              index: 3
+              help: input hibou trace file
+          - hcf:
+              required: false
+              index: 4
+              help: input hibou configuration file
+    - slice:
+        about: utility to generate slices of a (multi-)trace
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
           - htf:
               required: true
               index: 2
               help: input hibou trace file
-    - slice:
-        about: utility to generate slices of a (multi-)trace encoded in a hibou trace file (.htf)
-        version: "0.7.9"
-        author: Erwan Mahe <github.com/erwanM974>
-        args:
-          - htf:
-              required: true
-              index: 1
-              help: input hibou trace file
-          - parent_file:
+          - parent_folder:
               required: false
               short: p
               takes_value: true
-              help: parent file in which to generate slices
+              help: parent folder in which to generate slices
+          - kind:
+              required: false
+              short: k
+              takes_value: true
+              help: either prefix, suffix or slice (default)
           - random:
               required: false
               short: r
@@ -81,68 +110,29 @@ subcommands:
               takes_value: false
               help: keep only wider slices (each component length at least one third of the original)
     - puml_sd:
-            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal sequence diagram spec (.puml)
-            version: "0.7.9"
+            about: utility to translate an interaction into a .puml informal sequence diagram spec (.puml)
+            version: "0.8.0"
             author: Erwan Mahe <github.com/erwanM974>
             args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
+              - hsf:
+                  required: true
+                  index: 1
+                  help: input hibou signature file
+              - hif:
+                  required: true
+                  index: 2
+                  help: input hibou interaction file
     - puml_ap:
-            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
-            version: "0.7.9"
+            about: utility to translate an interaction into a .puml informal automata product spec (.puml)
+            version: "0.8.0"
             author: Erwan Mahe <github.com/erwanM974>
             args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
-    - term_repr:
-            about: utility to translate an interaction encoded in a hibou specification file (.hsf) into a .puml informal automata product spec (.puml)
-            version: "0.7.9"
-            author: Erwan Mahe <github.com/erwanM974>
-            args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
-    - canonize:
-            about: utility to compute the normal form of an interaction encoded in a hibou specification file (.hsf) and to draw possible sequences of transformations leading to that normal form
-            version: "0.7.9"
-            author: Erwan Mahe <github.com/erwanM974>
-            args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
-                - searchall:
-                    required: false
-                    short: s
-                    takes_value: false
-                    help: computes all possible sequences of transformations (by default only one is)
-    - merge:
-            about: utility to merge interaction with gates
-            version: "0.7.9"
-            author: Erwan Mahe <github.com/erwanM974>
-            args:
-                - hsf:
-                    required: true
-                    index: 1
-                    help: input hibou specification file
-                - returns:
-                    required: false
-                    short: r
-                    takes_value: false
-                    help: returns first successful merge and write it on file
-                - complete:
-                    required: false
-                    short: c
-                    takes_value: false
-                    help: if returns then only a merge without remaining gates
-                - graphic:
-                    required: false
-                    short: g
-                    takes_value: false
-                    help: draw search with graphviz
+              - hsf:
+                  required: true
+                  index: 1
+                  help: input hibou signature file
+              - hif:
+                  required: true
+                  index: 2
+                  help: input hibou interaction file
 

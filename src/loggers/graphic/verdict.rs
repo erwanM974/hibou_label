@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use crate::process::ana_proc::verdicts::CoverageVerdict;
+use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
 
-use crate::rendering::graphviz::common::GraphvizColor;
+use crate::output::rendering::graphviz::common::GraphvizColor;
 
 
 impl CoverageVerdict {

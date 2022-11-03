@@ -20,30 +20,33 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use crate::core::colocalizations::CoLocalizations;
+use crate::core::execution::trace::multitrace::MultiTrace;
+
 use crate::core::general_context::GeneralContext;
-use crate::core::trace::TraceAction;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::loggers::tracegen::conf::TracegenProcessLoggerGeneration;
-use crate::process::ana_proc::multitrace::{AnalysableMultiTrace, AnalysableMultiTraceCanal};
-use crate::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+
 
 pub struct TraceGenProcessLogger {
     int_name : String,
     pub generation : TracegenProcessLoggerGeneration,
     // ***
-    pub trace_map : HashMap<u32,Vec<Vec<HashSet<TraceAction>>>>,
-    pub co_localizations : Vec<HashSet<usize>>
+    pub trace_map : HashMap<u32,MultiTrace>,
+    pub co_localizations : CoLocalizations
 }
 
 impl TraceGenProcessLogger {
     pub fn new(name: String,
                generation: TracegenProcessLoggerGeneration,
-               co_localizations : Vec<HashSet<usize>>) -> TraceGenProcessLogger {
+               co_localizations : CoLocalizations) -> TraceGenProcessLogger {
         // ***
-        let mut empty_mutrace : Vec<Vec<HashSet<TraceAction>>> = vec![];
-        for cl in &co_localizations {
+        let mut empty_mutrace : MultiTrace = vec![];
+        for cl in &co_localizations.locs_lf_ids {
             empty_mutrace.push( vec![] );
         }
-        let mut trace_map : HashMap<u32,Vec<Vec<HashSet<TraceAction>>>> = hashmap!{};
+        let mut trace_map : HashMap<u32,MultiTrace> = hashmap!{};
         trace_map.insert( 1, empty_mutrace);
         // ***
         return TraceGenProcessLogger {
@@ -59,7 +62,7 @@ impl TraceGenProcessLogger {
     }
 
     fn get_lf_coloc_id(&self, lf_id : usize) -> Option<usize> {
-        for (coloc_id,coloc) in self.co_localizations.iter().enumerate() {
+        for (coloc_id,coloc) in self.co_localizations.locs_lf_ids.iter().enumerate() {
             if coloc.contains(&lf_id) {
                 return Some(coloc_id);
             }
@@ -102,9 +105,10 @@ impl TraceGenProcessLogger {
     }
 
     pub fn generate_trace_file(&mut self,
-                               gen_ctx : &GeneralContext, state_id : u32) {
+                               gen_ctx : &GeneralContext,
+                               state_id : u32) {
         let mutrace_as_vec = self.trace_map.get(&state_id).unwrap();
         let file_path = format!("./{:}/{:}_t{:}", self.proc_name(), self.int_name, state_id);
-        write_multi_trace_into_file(&file_path, gen_ctx,Some(&self.co_localizations),mutrace_as_vec);
+        write_multi_trace_into_file(&file_path, gen_ctx, &self.co_localizations,mutrace_as_vec);
     }
 }

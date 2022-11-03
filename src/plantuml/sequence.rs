@@ -15,14 +15,12 @@ limitations under the License.
 */
 
 use std::fs::File;
-use std::io::{Read,BufReader,BufRead,BufWriter,Write};
-
-use crate::core::syntax::interaction::{Interaction,LoopKind};
-use crate::core::syntax::util::get_recursive_frag::*;
-use crate::core::syntax::action::*;
+use std::io::Write;
 
 use crate::core::general_context::GeneralContext;
-
+use crate::core::language::syntax::action::*;
+use crate::core::language::syntax::interaction::{Interaction, LoopKind};
+use crate::core::language::syntax::util::get_recursive_frag::*;
 
 pub fn to_plant_uml_sd(output_path : &String,
                        title : &str,

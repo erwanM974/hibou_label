@@ -18,12 +18,6 @@ limitations under the License.
 use std::fmt;
 
 
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-
-use crate::core::trace::TraceAction;
-
-
 
 #[derive(Debug)]
 pub enum HibouCoreError {

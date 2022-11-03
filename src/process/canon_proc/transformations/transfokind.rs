@@ -15,9 +15,9 @@ limitations under the License.
 */
 
 
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-use crate::rendering::textual::monochrome::position::position_to_text;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::language::position::position::Position;
+use crate::output::rendering::textual::monochrome::position::position_to_text;
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum CanonizationTransformationKind {

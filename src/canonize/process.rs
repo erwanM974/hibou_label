@@ -22,15 +22,15 @@ use std::collections::{HashSet,HashMap};
 
 use std::process::Command;
 
-use crate::rendering::graphviz::graph::*;
-use crate::rendering::graphviz::node_style::*;
-use crate::rendering::graphviz::edge_style::*;
-use crate::rendering::graphviz::common::*;
+use crate::output::rendering::graphviz::graph::*;
+use crate::output::rendering::graphviz::node_style::*;
+use crate::output::rendering::graphviz::edge_style::*;
+use crate::output::rendering::graphviz::common::*;
 
 
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::action::*;
-use crate::core::syntax::position::Position;
+use crate::core::language::syntax::interaction::{Interaction};
+use crate::core::language::syntax::action::*;
+use crate::core::language::position::position::Position;
 use crate::core::general_context::GeneralContext;
 
 use crate::canonize::term_repr_out::to_term_repr_temp;

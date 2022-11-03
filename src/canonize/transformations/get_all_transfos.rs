@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::action::*;
-use crate::core::syntax::position::Position;
+use crate::core::language::syntax::interaction::{Interaction};
+use crate::core::language::syntax::action::*;
+use crate::core::language::position::position::Position;
 use crate::core::general_context::GeneralContext;
 
-use crate::rendering::textual::monochrome::position::position_to_text;
+use crate::output::rendering::textual::monochrome::position::position_to_text;
 
 use crate::canonize::transformations::transfokind::*;
 use crate::canonize::transformations::transfodef::*;

@@ -15,11 +15,11 @@ limitations under the License.
 */
 
 
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::action::*;
-use crate::core::syntax::position::Position;
-use crate::core::syntax::util::get_recursive_frag::*;
-use crate::core::syntax::util::fold_recursive_frags::*;
+use crate::core::language::syntax::interaction::{Interaction};
+use crate::core::language::syntax::action::*;
+use crate::core::language::position::position::Position;
+use crate::core::language::syntax::util::get_recursive_frag::*;
+use crate::core::language::syntax::util::fold_recursive_frags::*;
 use crate::core::general_context::GeneralContext;
 
 use crate::canonize::total_order::interaction_lower_than;

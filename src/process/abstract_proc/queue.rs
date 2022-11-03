@@ -17,13 +17,9 @@ limitations under the License.
 
 
 
-use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::ops::DerefMut;
-use crate::core::general_context::GeneralContext;
-use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
-use crate::process::abstract_proc::generic::*;
+use std::collections::VecDeque;
 
+use crate::process::abstract_proc::generic::*;
 
 pub trait GenericProcessQueue<Config : AbstractConfiguration> {
 

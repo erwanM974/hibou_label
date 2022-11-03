@@ -41,17 +41,16 @@ extern crate rand;
 // **********
 
 pub mod core;
-pub mod from_hfiles;
-pub mod rendering;
+pub mod output;
 pub mod ui;
+pub mod input;
 pub mod plantuml;
 //pub mod canonize;
 //pub mod merge_gates;
 pub mod process;
-pub mod to_hfiles;
 pub mod loggers;
 pub mod util;
-pub mod slice;
+pub mod trace_manip;
 
 // **********
 

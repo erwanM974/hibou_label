@@ -17,8 +17,8 @@ limitations under the License.
 
 
 
-use crate::core::semantics::frontier::FrontierElement;
-use crate::core::trace::TraceActionKind;
+use crate::core::execution::semantics::frontier::FrontierElement;
+use crate::core::execution::trace::trace::TraceActionKind;
 use crate::process::abstract_proc::generic::AbstractStepKind;
 use crate::process::explo_proc::interface::conf::ExplorationConfig;
 use crate::process::explo_proc::interface::priorities::ExplorationPriorities;

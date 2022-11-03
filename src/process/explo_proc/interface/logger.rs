@@ -18,9 +18,9 @@ limitations under the License.
 
 use std::collections::HashSet;
 use crate::core::general_context::GeneralContext;
-use crate::core::syntax::interaction::Interaction;
-use crate::core::syntax::position::Position;
-use crate::core::trace::TraceAction;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::execution::trace::trace::TraceAction;
+use crate::core::language::position::position::Position;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 
 

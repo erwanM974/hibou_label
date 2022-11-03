@@ -14,5 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+pub mod util;
+mod commands;
 pub mod hibou_cli;
-pub mod extensions;

@@ -18,7 +18,7 @@ limitations under the License.
 
 
 
-use crate::core::syntax::interaction::Interaction;
+use crate::core::language::syntax::interaction::Interaction;
 use crate::proc_refactoring::abstract_proc::AbstractNodeKind;
 
 pub struct CanonizationNodeKind {

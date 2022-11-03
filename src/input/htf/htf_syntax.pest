@@ -1,0 +1,46 @@
+/*
+Copyright 2020 Erwan Mahe (github.com/erwanM974)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+WHITESPACE = _{ " " | "\r\n" | "\n" | "\t" | "\r" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+HIBOU_LABEL = @{ LETTER ~ (LETTER | ASCII_DIGIT | "_")* }
+
+
+
+TRACE_LIFELINE = { HIBOU_LABEL }
+TRACE_MESSAGE = { HIBOU_LABEL }
+
+TRACE_EMISSION_SYMBOL = { "!" }
+TRACE_RECEPTION_SYMBOL = { "?" }
+
+TRACE_ACTION = { TRACE_LIFELINE ~ (TRACE_EMISSION_SYMBOL|TRACE_RECEPTION_SYMBOL) ~ TRACE_MESSAGE }
+TRACE_ACTION_SET = { "{" ~ TRACE_ACTION ~ ("," ~ TRACE_ACTION)+ ~ "}" }
+TRACE_SEQUENCE_elt = _{ TRACE_ACTION | TRACE_ACTION_SET }
+TRACE_SEQUENCE = { (TRACE_SEQUENCE_elt ~ ("." ~ TRACE_SEQUENCE_elt)*)? }
+// ***********************************************
+CANAL_LIFELINES_spec = { TRACE_LIFELINE ~ ("," ~ TRACE_LIFELINE)* }
+CANAL_LIFELINES_any = {"#any"}
+CANAL_LIFELINES_all = {"#all"}
+CANAL_LIFELINES = _{ "[" ~ (CANAL_LIFELINES_any | CANAL_LIFELINES_all | CANAL_LIFELINES_spec) ~ "]" }
+CANAL_TRACE = { CANAL_LIFELINES ~ TRACE_SEQUENCE }
+// ***********************************************
+
+MULTI_TRACE = { "{" ~ (CANAL_TRACE ~ (";" ~ CANAL_TRACE)* )? ~ (";")? ~ "}" }
+
+HTF_PEST_FILE = { SOI ~ (MULTI_TRACE|TRACE_SEQUENCE) ~ EOI }
+

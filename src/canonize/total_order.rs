@@ -16,12 +16,12 @@ limitations under the License.
 
 
 
-use crate::core::syntax::interaction::{Interaction};
-use crate::core::syntax::action::*;
-use crate::core::syntax::position::Position;
+use crate::core::language::syntax::interaction::{Interaction};
+use crate::core::language::syntax::action::*;
+use crate::core::language::position::position::Position;
 use crate::core::general_context::GeneralContext;
 
-use crate::core::trace::TraceActionKind;
+use crate::core::execution::trace::trace::TraceActionKind;
 
 
 

@@ -14,12 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
 pub mod interface;
-
-pub(in crate::process::ana_proc) mod matches;
-pub(in crate::process::ana_proc) mod local_analysis;
-pub mod multitrace;
-pub mod verdicts;
+pub mod logic;
 pub mod manager;
-pub mod anakind;
-
