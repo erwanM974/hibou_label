@@ -22,6 +22,9 @@ pub mod cli_explore;
 pub mod cli_puml_ap;
 pub mod cli_puml_sd;
 pub mod cli_slice;
+pub mod cli_mutate_insert_noise;
+pub mod cli_mutate_swap_actions;
+pub mod cli_mutate_swap_components;
 //pub mod cli_term_repr;
 
 

@@ -21,12 +21,40 @@ use std::ptr;
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::distributions::{Distribution, Uniform};
+use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace, Trace};
+use crate::core::general_context::GeneralContext;
+use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
 
 
-pub fn mutate_by_swapping_actions(multi_trace : &MultiTrace, max_num_swaps : usize) -> MultiTrace {
+pub fn generate_swap_actions_mutant(gen_ctx : &GeneralContext,
+                       co_localizations : &CoLocalizations,
+                       multi_trace : &MultiTrace,
+                       parent_folder : Option<&str>,
+                       mutant_name : &str,
+                       max_num_swaps : u32) -> String{
+    let file_path : String;
+    match parent_folder {
+        None => {
+            file_path = format!("./{:}", mutant_name);
+        },
+        Some( parent ) => {
+            file_path = format!("{:}/{:}", parent, mutant_name);
+        }
+    }
     // ***
-    let mut rem_num_swaps = max_num_swaps.max(multi_trace_max_swap(multi_trace));
+    let mutant_mt = mutate_by_swapping_actions(multi_trace,max_num_swaps);
+    write_multi_trace_into_file(&file_path,
+                                gen_ctx,
+                                co_localizations,
+                                &mutant_mt);
+    return file_path;
+}
+
+
+fn mutate_by_swapping_actions(multi_trace : &MultiTrace, max_num_swaps : u32) -> MultiTrace {
+    // ***
+    let mut rem_num_swaps = max_num_swaps.min(multi_trace_max_swap(multi_trace));
     // ***
     let mut rng = rand::thread_rng();
     let rng_coloc_indices = Uniform::from(0..multi_trace.len() );
@@ -43,11 +71,11 @@ pub fn mutate_by_swapping_actions(multi_trace : &MultiTrace, max_num_swaps : usi
     return mutated_mt;
 }
 
-fn multi_trace_max_swap(multi_trace : &MultiTrace) -> usize {
+fn multi_trace_max_swap(multi_trace : &MultiTrace) -> u32 {
     let mut max_swap = 0;
     for trace in multi_trace {
         if trace.len() > 1 {
-            max_swap += (trace.len() - 1);
+            max_swap += (trace.len() - 1) as u32;
         }
     }
     return max_swap;

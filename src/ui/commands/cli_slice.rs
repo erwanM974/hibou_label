@@ -33,7 +33,6 @@ pub fn cli_slice(matches : &ArgMatches) -> (Vec<String>,u32) {
         },
         Ok( gen_ctx ) => {
             let htf_file_path = matches.value_of("htf").unwrap();
-            let mut gen_ctx = GeneralContext::new();
             match parse_htf_file(&gen_ctx, htf_file_path) {
                 Err(e) => {
                     return (vec![e.to_string()],1);

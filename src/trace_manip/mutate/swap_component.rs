@@ -19,21 +19,50 @@ limitations under the License.
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::distributions::{Distribution, Uniform};
+use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace};
+use crate::core::general_context::GeneralContext;
+use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
 
 
-pub fn mutate_by_swapping_components(multi_trace_1 : &MultiTrace, multi_trace_2 : &MultiTrace, max_num_swaps : usize) -> MultiTrace {
-    let num_compos = multi_trace_1.len();
+pub fn generate_swap_components_mutant(gen_ctx : &GeneralContext,
+                                    co_localizations : &CoLocalizations,
+                                       mu1 : &MultiTrace,
+                                       mu2 : &MultiTrace,
+                                    parent_folder : Option<&str>,
+                                    mutant_name : &str,
+                                    max_num_swaps : u32) -> String{
+    let file_path : String;
+    match parent_folder {
+        None => {
+            file_path = format!("./{:}", mutant_name);
+        },
+        Some( parent ) => {
+            file_path = format!("{:}/{:}", parent, mutant_name);
+        }
+    }
+    // ***
+    let mutant_mt = mutate_by_swapping_components(mu1,mu2,max_num_swaps);
+    write_multi_trace_into_file(&file_path,
+                                gen_ctx,
+                                co_localizations,
+                                &mutant_mt);
+    return file_path;
+}
+
+
+fn mutate_by_swapping_components(multi_trace_1 : &MultiTrace, multi_trace_2 : &MultiTrace, max_num_swaps : u32) -> MultiTrace {
+    let num_compos = multi_trace_1.len() as u32;
     // ***
     let mut rng = rand::thread_rng();
-    let mut compos_indices : Vec<usize> = (0..num_compos).collect();
+    let mut compos_indices : Vec<usize> = (0..(num_compos as usize)).collect();
     compos_indices.shuffle(&mut rng);
     // ***
     let mut rem_num_swaps = max_num_swaps.max(num_compos - 1);
     // ***
     let mut mutated_mt = multi_trace_1.clone();
     while rem_num_swaps > 0 {
-        let coloc_id : usize = *compos_indices.get(rem_num_swaps).unwrap();
+        let coloc_id : usize = *compos_indices.get(rem_num_swaps as usize).unwrap();
         vectors_exchange(&mut mutated_mt, &multi_trace_2, coloc_id);
         rem_num_swaps -= 1;
     }

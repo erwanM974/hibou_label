@@ -109,6 +109,104 @@ subcommands:
               short: w
               takes_value: false
               help: keep only wider slices (each component length at least one third of the original)
+    - mutate_insert_noise:
+        about: utility to generate generate a mutant from a multi-trace by inserting noise actions
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - htf:
+              required: true
+              index: 2
+              help: input hibou trace file
+          - name:
+              required: false
+              short: n
+              takes_value: true
+              help: name of the mutant
+          - parent_folder:
+              required: false
+              short: p
+              takes_value: true
+              help: parent folder in which to generate mutant
+          - one_per_compo_max:
+              required: false
+              short: u
+              takes_value: false
+              help: if true can only insert one noisy action per trace component
+          - only_at_end:
+              required: false
+              short: e
+              takes_value: false
+              help: if true can only insert noisy actions at the end of trace components
+          - max_num_inserts:
+              required: false
+              short: m
+              takes_value: true
+              help: maximum number of inserts (default 1), actual number can be lower due other parameters
+    - mutate_swap_actions:
+        about: utility to generate generate a mutant from a multi-trace by swaping positions of actions within its component traces
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - htf:
+              required: true
+              index: 2
+              help: input hibou trace file
+          - name:
+              required: false
+              short: n
+              takes_value: true
+              help: name of the mutant
+          - parent_folder:
+              required: false
+              short: p
+              takes_value: true
+              help: parent folder in which to generate mutant
+          - max_num_swap:
+              required: false
+              short: m
+              takes_value: true
+              help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
+    - mutate_swap_components:
+        about: utility to generate generate a mutant from two multi-traces by swaping their respective component traces
+        version: "0.8.0"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - htf1:
+              required: true
+              index: 2
+              help: input hibou trace file
+          - htf2:
+              required: true
+              index: 3
+              help: input hibou trace file
+          - name:
+              required: false
+              short: n
+              takes_value: true
+              help: name of the mutant
+          - parent_folder:
+              required: false
+              short: p
+              takes_value: true
+              help: parent folder in which to generate mutant
+          - max_num_swap:
+              required: false
+              short: m
+              takes_value: true
+              help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
     - puml_sd:
             about: utility to translate an interaction into a .puml informal sequence diagram spec (.puml)
             version: "0.8.0"

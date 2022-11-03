@@ -20,6 +20,9 @@ use clap::App;
 use crate::ui::commands::cli_analyze::cli_analyze;
 use crate::ui::commands::cli_draw::cli_draw;
 use crate::ui::commands::cli_explore::cli_explore;
+use crate::ui::commands::cli_mutate_insert_noise::cli_mutate_insert_noise;
+use crate::ui::commands::cli_mutate_swap_actions::cli_mutate_swap_actions;
+use crate::ui::commands::cli_mutate_swap_components::cli_mutate_swap_components;
 use crate::ui::commands::cli_puml_ap::cli_puml_ap;
 use crate::ui::commands::cli_puml_sd::cli_puml_sd;
 use crate::ui::commands::cli_slice::cli_slice;
@@ -61,6 +64,18 @@ pub fn hibou_cli() -> i32 {
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("slice") {
         let mut got = cli_slice(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("mutate_insert_noise") {
+        let mut got = cli_mutate_insert_noise(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("mutate_swap_actions") {
+        let mut got = cli_mutate_swap_actions(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("mutate_swap_components") {
+        let mut got = cli_mutate_swap_components(matches);
         ret_print = got.0;
         ret_code = got.1;
     } else {

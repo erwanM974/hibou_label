@@ -43,7 +43,7 @@ pub fn multi_trace_as_text(gen_ctx : &GeneralContext,
         for actions in canal_trace {
             trace_text_elements.push( trace_actions_as_text(gen_ctx, actions) );
         }
-        canal_string.push_str(&format!( " {:};\n", trace_text_elements.join(".")) );
+        canal_string.push_str(&trace_text_elements.join(".") );
         // ***
         canals_strings.push(canal_string);
     }

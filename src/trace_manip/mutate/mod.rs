@@ -16,6 +16,6 @@ limitations under the License.
 
 
 
-mod swap_actions;
-mod swap_component;
-mod insert_actions;
+pub mod swap_actions;
+pub mod swap_component;
+pub mod insert_noise;

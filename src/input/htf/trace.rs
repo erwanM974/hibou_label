@@ -17,10 +17,11 @@ limitations under the License.
 use std::collections::HashSet;
 
 use pest::iterators::Pair;
-use crate::core::execution::trace::multitrace::Trace;
+
 
 use crate::core::general_context::GeneralContext;
-use crate::core::execution::trace::trace::*;
+use crate::core::execution::trace::multitrace::Trace;
+use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::input::error::HibouParsingError;
 
 
@@ -36,35 +37,65 @@ pub fn trace_sequence_from_pair(gen_ctx : &GeneralContext,
                                 unavailable_lifelines : &HashSet<usize>,
                                 lifelines : &mut HashSet<usize>,
                                 add_lfs : bool) -> Result<Trace,HibouParsingError> {
-    let mut trace : Vec<HashSet<TraceAction>> = vec![];
-    for trace_sequence_elt_pair in trace_sequence_pair.into_inner() {
-        match trace_sequence_elt_pair.as_rule() {
-            Rule::TRACE_ACTION => {
-                match get_trace_action(gen_ctx,trace_sequence_elt_pair,unavailable_lifelines,lifelines,add_lfs) {
-                    Err(e) => {return Err(e);},
-                    Ok( action ) => {
-                        trace.push( hashset!{action} );
-                    }
-                }
-            },
-            Rule::TRACE_ACTION_SET => {
-                let mut multi_action = hashset!{};
-                for action_pair in trace_sequence_elt_pair.into_inner() {
-                    match get_trace_action(gen_ctx,action_pair,unavailable_lifelines,lifelines,add_lfs) {
-                        Err(e) => {return Err(e);},
-                        Ok( action ) => {
-                            multi_action.insert(action);
-                        }
-                    }
-                }
-                trace.push( multi_action );
-            },
-            _ => {
-                panic!("what rule then ? : {:?}", trace_sequence_elt_pair.as_rule() );
+    let mut trace : Trace = vec![];
+    for trace_elt_pair in trace_sequence_pair.into_inner() {
+        match trace_element_from_pair(gen_ctx,trace_elt_pair,unavailable_lifelines,lifelines,add_lfs) {
+            Err(e) => {
+                return Err(e);
+            }
+            Ok(trace_elt) => {
+                trace.push(trace_elt);
             }
         }
     }
     return Ok( trace );
+}
+
+
+pub fn trace_element_from_pair(gen_ctx : &GeneralContext,
+                               trace_elt_pair : Pair<Rule>,
+                               unavailable_lifelines : &HashSet<usize>,
+                               lifelines : &mut HashSet<usize>,
+                               add_lfs : bool) -> Result<HashSet<TraceAction>,HibouParsingError> {
+    match trace_elt_pair.as_rule() {
+        Rule::TRACE_ACTION => {
+            match get_trace_action(gen_ctx,trace_elt_pair,unavailable_lifelines,lifelines,add_lfs) {
+                Err(e) => {return Err(e);},
+                Ok( action ) => {
+                    return Ok(hashset!{action});
+                }
+            }
+        },
+        Rule::TRACE_ACTION_SET => {
+            match get_trace_multi_action(gen_ctx,trace_elt_pair,unavailable_lifelines,lifelines,add_lfs) {
+                Err(e) => {return Err(e);},
+                Ok( multi_action ) => {
+                    return Ok(multi_action);
+                }
+            }
+        },
+        _ => {
+            panic!("what rule then ? : {:?}", trace_elt_pair.as_rule() );
+        }
+    }
+}
+
+
+fn get_trace_multi_action(gen_ctx : &GeneralContext,
+                          multi_act_pair : Pair<Rule>,
+                          unavailable_lifelines : &HashSet<usize>,
+                          lifelines : &mut HashSet<usize>,
+                          add_lfs : bool) -> Result<HashSet<TraceAction>,HibouParsingError> {
+    let mut multi_action = hashset!{};
+    for action_pair in multi_act_pair.into_inner() {
+        match get_trace_action(gen_ctx,action_pair,unavailable_lifelines,lifelines,add_lfs) {
+            Err(e) => {return Err(e);},
+            Ok( action ) => {
+                multi_action.insert(action);
+            }
+        }
+    }
+    return Ok(multi_action);
 }
 
 fn get_trace_action(gen_ctx : &GeneralContext,
