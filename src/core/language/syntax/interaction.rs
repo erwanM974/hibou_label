@@ -28,7 +28,7 @@ pub enum LoopKind {
     SStrictSeq     = 4
 }
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, PartialOrd)]
 pub enum Interaction {
     Empty,
     Emission(EmissionAction),

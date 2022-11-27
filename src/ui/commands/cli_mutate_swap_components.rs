@@ -19,8 +19,8 @@ use std::path::Path;
 
 use clap::ArgMatches;
 
-use crate::input::hsf::interface::parse_hsf_file;
-use crate::input::htf::interface::parse_htf_file;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::io::input::htf::interface::parse_htf_file;
 use crate::trace_manip::mutate::swap_component::generate_swap_components_mutant;
 
 

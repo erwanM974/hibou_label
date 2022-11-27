@@ -15,52 +15,65 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
-use std::fs::write;
-use std::path::Path;
+
 use std::time::Instant;
-use clap::App;
 use clap::ArgMatches;
+use crate::io::input::hcf::interface::{HibouCanonizeOptions, parse_hcf_file_for_canonize};
+use crate::io::input::hif::interface::parse_hif_file;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::process::canon_proc::manager::CanonizationProcessManager;
+
 
 pub fn cli_canonize(matches : &ArgMatches) -> (Vec<String>,u32) {
     let hsf_file_path = matches.value_of("hsf").unwrap();
     match parse_hsf_file(hsf_file_path) {
         Err(e) => {
-            ret_print.push( e.to_string() );
-            print_retval(ret_print);
-            return -1;
+            return (vec![e.to_string()],1);
         },
-        Ok( (gen_ctx,my_int,_) ) => {
-            let file_name = Path::new(hsf_file_path).file_stem().unwrap().to_str().unwrap();
-            let process_name : String;
-            let search_all : bool;
-            // ***
-            if matches.is_present("searchall") {
-                process_name = format!("{}_canon_all", file_name);
-                search_all = true;
-            } else {
-                process_name = format!("{}_canon_one", file_name);
-                search_all = false;
-            }
-            // ***
-            if my_int.has_coregions() || my_int.has_ands() {
-                ret_print.push( "Interaction term has coregions and/or ands -> Not Implemented".to_string() );
-                print_retval(ret_print);
-                return -1;
-            }
-            // ***
-            canon_process_interaction_term(&my_int,&gen_ctx,&process_name,search_all);
-            // ***
-            ret_print.push( "".to_string());
-            ret_print.push( "CANONIZING process for INTERACTION".to_string());
-            ret_print.push( format!("from file '{}'",hsf_file_path) );
-            ret_print.push( format!("on file : {}.svg",process_name) );
-            ret_print.push( "".to_string());
-            if search_all {
-                ret_print.push( "(searched all transformation sequences)".to_string());
-            } else {
-                ret_print.push( "(searched one transformation sequence)".to_string());
+        Ok( gen_ctx ) => {
+            let hif_file_path = matches.value_of("hif").unwrap();
+            match parse_hif_file(&gen_ctx,hif_file_path) {
+                Err(e) => {
+                    return (vec![e.to_string()],1);
+                },
+                Ok( int) => {
+                    let canon_opts : HibouCanonizeOptions;
+                    if matches.is_present("hcf") {
+                        let hcf_file_path = matches.value_of("hcf").unwrap();
+                        match parse_hcf_file_for_canonize(&gen_ctx,hcf_file_path) {
+                            Err(e) => {
+                                return (vec![e.to_string()],1);
+                            },
+                            Ok( got_canon_opt) => {
+                                canon_opts = got_canon_opt;
+                            }
+                        }
+                    } else {
+                        canon_opts = HibouCanonizeOptions::default();
+                    }
+                    let mut ret_print = vec![];
+                    // ***
+                    ret_print.push( "".to_string());
+                    ret_print.push( "CANONIZING process for INTERACTION".to_string());
+                    ret_print.push( format!("from file '{}'",hif_file_path) );
+                    ret_print.push( "".to_string());
+                    // ***
+                    let mut manager = CanonizationProcessManager::new(gen_ctx,
+                                                                      canon_opts.strategy,
+                                                                      canon_opts.filters,
+                                                                      canon_opts.priorities,
+                                                                      canon_opts.loggers,
+                                                                      canon_opts.search_all);
+                    // ***
+                    let now = Instant::now();
+                    let node_count = manager.canonize(int);
+                    let elapsed_time = now.elapsed();
+                    ret_print.push( format!("node count : {:?}", node_count ) );
+                    ret_print.push( format!("elapsed    : {:?}", elapsed_time.as_secs_f64() ) );
+                    return (ret_print,0);
+                }
             }
         }
     }
 }
+

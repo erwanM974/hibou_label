@@ -31,12 +31,13 @@ fn get_exhaustive_slicing<'a>(gen_ctx : &GeneralContext,
                               co_localizations : &CoLocalizations,
                           kind : &SliceKind,
                           dir_name : &String,
+                              file_name_prefix : &String,
                           rem_canals : &mut (impl Iterator<Item = &'a Trace> + Clone)) {
     match kind {
         &SliceKind::Prefix => {
             get_all_prefixes_rec(gen_ctx,
                                  co_localizations,
-                                 dir_name,
+                                 dir_name,file_name_prefix,
                                  &mut 1,
                                  &vec![],
                                  rem_canals);
@@ -44,7 +45,7 @@ fn get_exhaustive_slicing<'a>(gen_ctx : &GeneralContext,
         &SliceKind::Suffix => {
             get_all_suffixes_rec(gen_ctx,
                                  co_localizations,
-                                 dir_name,
+                                 dir_name,file_name_prefix,
                                  &mut 1,
                                  &vec![],
                                  rem_canals);
@@ -52,7 +53,7 @@ fn get_exhaustive_slicing<'a>(gen_ctx : &GeneralContext,
         &SliceKind::Slice => {
             get_all_slices_rec(gen_ctx,
                                co_localizations,
-                                 dir_name,
+                                 dir_name,file_name_prefix,
                                  &mut 1,
                                  &vec![],
                                rem_canals);
@@ -65,6 +66,7 @@ pub fn generate_slices(gen_ctx : &GeneralContext,
                        mu_name : &str,
                        multi_trace : &MultiTrace,
                        parent_folder : Option<&str>,
+                       file_name_prefix_opt : Option<&str>,
                        select : &SliceGenerationSelection,
                        kind : &SliceKind) {
     let dir_name : String;
@@ -73,9 +75,19 @@ pub fn generate_slices(gen_ctx : &GeneralContext,
             dir_name = format!("./{:}_slices", mu_name);
         },
         Some( parent ) => {
-            dir_name = format!("{:}/{:}_slices", parent, mu_name);
+            dir_name = parent.to_string();
         }
     }
+    let file_name_prefix : String;
+    match file_name_prefix_opt {
+        None => {
+            file_name_prefix = "".to_string();
+        },
+        Some( got_fnp ) => {
+            file_name_prefix = got_fnp.to_string();
+        }
+    }
+    /*
     // empties directory if exists
     match fs::remove_dir_all(&dir_name) {
         Ok(_) => {
@@ -85,6 +97,7 @@ pub fn generate_slices(gen_ctx : &GeneralContext,
             // do nothing
         }
     }
+    */
     // creates directory
     fs::create_dir_all(&dir_name).unwrap();
     // ***
@@ -93,32 +106,18 @@ pub fn generate_slices(gen_ctx : &GeneralContext,
             get_exhaustive_slicing(gen_ctx,
                                    co_localizations,
                                    kind,
-                                   &dir_name,
+                                   &dir_name,&file_name_prefix,
                                    &mut multi_trace.iter());
         },
         &SliceGenerationSelection::Random( mut num_slices, wide ) => {
             get_random_slicing(gen_ctx,
                                co_localizations,
-                               &dir_name,
+                               &dir_name,&file_name_prefix,
                                &mut num_slices,
-                               &multi_trace,kind,
+                               &multi_trace,
+                               kind,
                                wide);
         }
     }
 }
 
-/*
-fn get_total_num_slices(multi_trace : &AnalysableMultiTrace) -> u32 {
-    let mut prod : u32 = 1;
-    for canal in &multi_trace.canals {
-        let canal_len = canal.trace.len();
-        if canal_len > 1 {
-            let num_slices_of_canal : u32 = 1 + ( (1..canal_len as u32).sum::<u32>() );
-            prod = prod * num_slices_of_canal;
-        } else if canal_len == 1 {
-            prod = prod * 2;
-        }
-    }
-    return prod;
-}
-*/

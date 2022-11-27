@@ -17,25 +17,29 @@ limitations under the License.
 
 
 use std::collections::HashSet;
+use std::path::PathBuf;
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::Trace;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::TraceAction;
-use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
+use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;
 use crate::util::slicer::Slicer;
 
 pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
                               co_localizations : &CoLocalizations,
                       dir_name : &str,
+                      file_name_prefix : &str,
                       id : &mut u32,
                       ok_canals : &Vec<Trace>,
                               rem_canals : &mut (impl Iterator<Item = &'a Trace> + Clone)) {
     match rem_canals.next() {
         None => {
-            let file_path = format!("{:}/s{:}", dir_name, id);
+            let file_name = format!("{:}s{:}.{:}", file_name_prefix, id, HIBOU_TRACE_FILE_EXTENSION);
+            let path : PathBuf = [dir_name, &file_name].iter().collect();
             *id = *id + 1;
-            write_multi_trace_into_file(&file_path, gen_ctx, co_localizations,ok_canals);
+            write_multi_trace_into_file(path.as_path(), gen_ctx, co_localizations,ok_canals);
         },
         Some(canal_trace) => {
             let mut slicer = Slicer::new(&canal_trace);
@@ -46,6 +50,7 @@ pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
                 get_all_slices_rec(gen_ctx,
                                    co_localizations,
                                    dir_name,
+                                   file_name_prefix,
                                    id,
                                    &new_ok_canals,
                                    &mut rem_canals.clone());
@@ -57,14 +62,16 @@ pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
 pub fn get_all_prefixes_rec<'a>(gen_ctx : &GeneralContext,
                                 co_localizations : &CoLocalizations,
                               dir_name : &str,
+                                file_name_prefix : &str,
                               id : &mut u32,
                                 ok_canals : &Vec<Trace>,
                                 rem_canals : &mut (impl Iterator<Item = &'a Trace> + Clone)) {
     match rem_canals.next() {
         None => {
-            let file_path = format!("{:}/s{:}", dir_name, id);
+            let file_name = format!("{:}s{:}.{:}", file_name_prefix, id, HIBOU_TRACE_FILE_EXTENSION);
+            let path : PathBuf = [dir_name, &file_name].iter().collect();
             *id = *id + 1;
-            write_multi_trace_into_file(&file_path, gen_ctx, co_localizations,ok_canals);
+            write_multi_trace_into_file(path.as_path(), gen_ctx, co_localizations,ok_canals);
         },
         Some(canal_trace ) => {
             for i in 0..(canal_trace.len()+1) {
@@ -74,6 +81,7 @@ pub fn get_all_prefixes_rec<'a>(gen_ctx : &GeneralContext,
                 get_all_prefixes_rec(gen_ctx,
                                      co_localizations,
                                      dir_name,
+                                     file_name_prefix,
                                      id,
                                      &new_ok_canals,
                                      &mut rem_canals.clone());
@@ -85,14 +93,16 @@ pub fn get_all_prefixes_rec<'a>(gen_ctx : &GeneralContext,
 pub fn get_all_suffixes_rec<'a>(gen_ctx : &GeneralContext,
                                 co_localizations : &CoLocalizations,
                                 dir_name : &str,
+                                file_name_prefix : &str,
                                 id : &mut u32,
                                 ok_canals : &Vec<Trace>,
                                 rem_canals : &mut (impl Iterator<Item = &'a Trace> + Clone)) {
     match rem_canals.next() {
         None => {
-            let file_path = format!("{:}/s{:}", dir_name, id);
+            let file_name = format!("{:}s{:}.{:}", file_name_prefix, id, HIBOU_TRACE_FILE_EXTENSION);
+            let path : PathBuf = [dir_name, &file_name].iter().collect();
             *id = *id + 1;
-            write_multi_trace_into_file(&file_path, gen_ctx, co_localizations,ok_canals);
+            write_multi_trace_into_file(path.as_path(), gen_ctx, co_localizations,ok_canals);
         },
         Some(canal_trace) => {
             for i in 0..(canal_trace.len()+1) {
@@ -102,6 +112,7 @@ pub fn get_all_suffixes_rec<'a>(gen_ctx : &GeneralContext,
                 get_all_suffixes_rec(gen_ctx,
                                      co_localizations,
                                      dir_name,
+                                     file_name_prefix,
                                      id,
                                      &new_ok_canals,
                                      &mut rem_canals.clone());

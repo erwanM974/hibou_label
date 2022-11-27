@@ -517,6 +517,7 @@ impl AnalysisProcessManager {
                       new_flags : &MultiTraceAnalysisFlags,
                       parent_state_id : u32,
                       new_state_id :u32) {
+        let (is_simulation,sim_crit_loop,sim_crit_act) = self.ana_kind.get_sim_crits();
         for logger in self.manager.loggers.iter_mut() {
             logger.log_hide(&self.manager.gen_ctx,
                             &self.co_localizations,
@@ -525,7 +526,10 @@ impl AnalysisProcessManager {
                             new_state_id,
                             lfs_to_hide,
                             new_interaction,
-                            new_flags);
+                            new_flags,
+                            is_simulation,
+                            sim_crit_loop,
+                            sim_crit_act);
         }
     }
 }

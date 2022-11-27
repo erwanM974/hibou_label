@@ -18,6 +18,7 @@ limitations under the License.
 use clap::App;
 
 use crate::ui::commands::cli_analyze::cli_analyze;
+use crate::ui::commands::cli_canonize::cli_canonize;
 use crate::ui::commands::cli_draw::cli_draw;
 use crate::ui::commands::cli_explore::cli_explore;
 use crate::ui::commands::cli_mutate_insert_noise::cli_mutate_insert_noise;
@@ -56,6 +57,10 @@ pub fn hibou_cli() -> i32 {
 
     }*/ else if let Some(matches) = matches.subcommand_matches("explore") {
         let mut got = cli_explore(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("canonize") {
+        let mut got = cli_canonize(matches);
         ret_print = got.0;
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("analyze") {

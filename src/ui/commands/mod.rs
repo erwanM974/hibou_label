@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 pub mod cli_analyze;
-//pub mod cli_canonize;
+pub mod cli_canonize;
 pub mod cli_draw;
 pub mod cli_explore;
 //pub mod cli_merge;

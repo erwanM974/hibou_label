@@ -20,19 +20,19 @@ use std::fmt::Debug;
 
 
 
-#[derive(PartialOrd, Ord, Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, PartialOrd)]
 pub enum EmissionTargetRef {
     Lifeline(usize),
     Gate(usize)
 }
 
-#[derive(PartialOrd, Ord, Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, PartialOrd)]
 pub enum CommunicationSynchronicity {
     Asynchronous,
     Synchronous
 }
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, PartialOrd)]
 pub struct EmissionAction {
     pub origin_lf_id : usize,
     pub ms_id : usize,
@@ -49,7 +49,7 @@ impl EmissionAction {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, PartialOrd)]
 pub struct ReceptionAction {
     pub origin_gt_id : Option<usize>,
     pub ms_id : usize,

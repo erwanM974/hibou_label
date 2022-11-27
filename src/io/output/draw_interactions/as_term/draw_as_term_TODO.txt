@@ -1,0 +1,10 @@
+
+In order to have a more homogeneous and detail graphical representation,
+write the term with the same Font and color scheme as the interaction diagrams
+
+To do so:
+- create a png for each node with draw_colored_text or whatev
+- compose with dot, do not draw node frames
+- use nodesep=0 and ranksep=x on the graph for managing spacing and have a better handling of layout
+
+

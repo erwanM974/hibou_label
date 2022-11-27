@@ -19,9 +19,11 @@ use std::path::Path;
 
 use clap::ArgMatches;
 
-use crate::input::hsf::interface::parse_hsf_file;
-use crate::input::hif::interface::parse_hif_file;
-use crate::output::rendering::custom_draw::seqdiag::interaction::draw_interaction;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::io::input::hif::interface::parse_hif_file;
+use crate::io::output::draw_interactions::interface::{InteractionGraphicalRepresentation,draw_interaction};
+
+
 
 pub fn cli_draw(matches : &ArgMatches) -> (Vec<String>,u32) {
     let hsf_file_path = matches.value_of("hsf").unwrap();
@@ -36,21 +38,41 @@ pub fn cli_draw(matches : &ArgMatches) -> (Vec<String>,u32) {
                     return (vec![e.to_string()],1);
                 },
                 Ok( int) => {
-                    let mut ret_print = vec![];
-                    let spec_output_file : String;
+                    let rep_kind : InteractionGraphicalRepresentation;
+                    if matches.is_present("representation") {
+                        let extracted = matches.value_of("representation").unwrap();
+                        match extracted {
+                            "sd" => {
+                                rep_kind = InteractionGraphicalRepresentation::AsSequenceDiagram;
+                            },
+                            "tt" => {
+                                rep_kind = InteractionGraphicalRepresentation::AsTerm;
+                            },
+                            _ => {
+                                return (vec![format!("unknown representation kind : {:}",extracted)], 1);
+                            }
+                        }
+                    } else {
+                        rep_kind = InteractionGraphicalRepresentation::AsSequenceDiagram;
+                    }
+                    // ***
+                    let output_file_name : String;
                     if matches.is_present("output") {
                         let extracted = matches.value_of("output").unwrap();
-                        spec_output_file = format!("{}.png", extracted);
+                        output_file_name = extracted.to_string();
                     } else {
                         let file_name = Path::new(hif_file_path).file_stem().unwrap().to_str().unwrap();
-                        spec_output_file = format!("{}.png", file_name);
+                        output_file_name = format!("{}_repr", file_name);
                     }
+                    // ***
+                    draw_interaction(&gen_ctx, &int, &rep_kind, &"temp".to_string(), &"".to_string(), &output_file_name);
+                    // ***
+                    let mut ret_print = vec![];
                     ret_print.push( "".to_string());
                     ret_print.push( "DRAWING INTERACTION".to_string());
                     ret_print.push( format!("from file '{}'",hif_file_path) );
-                    ret_print.push( format!("on file : {}",spec_output_file) );
+                    ret_print.push( format!("on file : {}",output_file_name) );
                     ret_print.push( "".to_string());
-                    draw_interaction(&gen_ctx,&spec_output_file, &int);
                     return (ret_print,0);
                 }
             }

@@ -15,8 +15,11 @@ limitations under the License.
 */
 
 
+mod get_graph;
+
 pub mod verdict;
 pub mod graphic_logger;
 pub mod conf;
 pub mod glog_explo;
 pub mod glog_ana;
+pub mod glog_canon;

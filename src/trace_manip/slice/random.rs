@@ -18,6 +18,7 @@ limitations under the License.
 
 use std::cmp::{max, min};
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 use rand::distributions::{Distribution, Uniform};
 use rand::rngs::ThreadRng;
@@ -25,7 +26,8 @@ use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace, Trace};
 
 use crate::core::general_context::GeneralContext;
-use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
+use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;
 use crate::trace_manip::slice::conf::SliceKind;
 
 
@@ -33,6 +35,7 @@ use crate::trace_manip::slice::conf::SliceKind;
 pub fn get_random_slicing(gen_ctx : &GeneralContext,
                           co_localizations : &CoLocalizations,
                          dir_name : &str,
+                          file_name_prefix : &str,
                          num_slices : &mut u32,
                          multi_trace : &MultiTrace,
                          kind : &SliceKind,
@@ -52,12 +55,15 @@ pub fn get_random_slicing(gen_ctx : &GeneralContext,
             new_canals_ids.push( ids );
         }
         // ***
-        let file_path = format!("{:}/s{:}", dir_name, num_slices);
+        let file_name = format!("{:}s{:}.{:}", file_name_prefix, num_slices, HIBOU_TRACE_FILE_EXTENSION);
+        let path : PathBuf = [dir_name, &file_name].iter().collect();
+        //let file_path = format!("{:}/{:}s{:}", dir_name, file_name_prefix, num_slices);
         *num_slices = *num_slices - 1;
         // ***
         if !slices.contains( &new_canals_ids ) {
-            write_multi_trace_into_file(&file_path,
-                                        gen_ctx,co_localizations,
+            write_multi_trace_into_file(path.as_path(),
+                                        gen_ctx,
+                                        co_localizations,
                                         &new_multi_trace);
             slices.insert(new_canals_ids);
         }
@@ -97,9 +103,11 @@ fn get_any_cut(rng : &mut ThreadRng, length : usize, kind : &SliceKind) -> (usiz
         }
     }
     // ***
-    let min_id = min(id1,id2);
-    let max_id = max(id1,id2);
-    return (min_id,max_id);
+    if id2 >= id1 {
+        return (id1,id2);
+    } else {
+        return (id2,id1);
+    }
 }
 
 fn get_wider_cut(rng : &mut ThreadRng, length : usize, kind : &SliceKind) -> (usize,usize) {

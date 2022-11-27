@@ -16,13 +16,15 @@ limitations under the License.
 
 
 
+use std::path::PathBuf;
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::distributions::{Distribution, Uniform};
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace};
 use crate::core::general_context::GeneralContext;
-use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
+use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;
 
 
 pub fn generate_swap_components_mutant(gen_ctx : &GeneralContext,
@@ -32,22 +34,24 @@ pub fn generate_swap_components_mutant(gen_ctx : &GeneralContext,
                                     parent_folder : Option<&str>,
                                     mutant_name : &str,
                                     max_num_swaps : u32) -> String{
+    let file_name = format!("{:}.{:}", mutant_name, HIBOU_TRACE_FILE_EXTENSION);
+    let path : PathBuf;
     let file_path : String;
     match parent_folder {
         None => {
-            file_path = format!("./{:}", mutant_name);
+            path = [&file_name].iter().collect();
         },
         Some( parent ) => {
-            file_path = format!("{:}/{:}", parent, mutant_name);
+            path = [parent, &file_name].iter().collect();
         }
     }
     // ***
     let mutant_mt = mutate_by_swapping_components(mu1,mu2,max_num_swaps);
-    write_multi_trace_into_file(&file_path,
+    write_multi_trace_into_file(path.as_path(),
                                 gen_ctx,
                                 co_localizations,
                                 &mutant_mt);
-    return file_path;
+    return path.into_os_string().to_str().unwrap().to_string();;
 }
 
 

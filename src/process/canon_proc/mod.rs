@@ -15,15 +15,9 @@ limitations under the License.
 */
 
 
-
-
-pub(in crate::proc_refactoring::canon_proc) mod node;
-pub(in crate::proc_refactoring::canon_proc) mod step;
-pub(in crate::proc_refactoring::canon_proc) mod transformations;
-pub(in crate::proc_refactoring::canon_proc) mod priorities;
-pub(in crate::proc_refactoring::canon_proc) mod conf;
-pub(in crate::proc_refactoring::canon_proc) mod filter;
-
+pub mod transformations;
+pub mod interface;
+pub mod manager;
 
 
 

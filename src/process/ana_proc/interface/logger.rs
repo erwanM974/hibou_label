@@ -67,7 +67,10 @@ pub trait AnalysisLogger {
                 new_state_id : u32,
                 lfs_to_hide : &HashSet<usize>,
                 hidden_interaction : &Interaction,
-                new_flags : &MultiTraceAnalysisFlags);
+                new_flags : &MultiTraceAnalysisFlags,
+                is_simulation : bool,
+                sim_crit_loop : bool,
+                sim_crit_act : bool);
 
     fn log_filtered(&mut self,
                     parent_state_id : u32,

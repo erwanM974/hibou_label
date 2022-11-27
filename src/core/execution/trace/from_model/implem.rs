@@ -24,7 +24,7 @@ use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, R
 impl InterpretableAsTraceAction for EmissionAction {
     fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
         let mut contents : HashSet<TraceAction> = HashSet::new();
-        contents.insert( self.get_specific_atomic_action(0) );
+        contents.insert( self.get_first_atomic_action() );
         for target_ref in &self.targets {
             match target_ref {
                 &EmissionTargetRef::Lifeline(tar_lf_id) => {

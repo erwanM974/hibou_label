@@ -23,8 +23,38 @@ pub enum Position {
     Epsilon(Option<usize>)
 }
 
-
-
+impl Position {
+    pub fn to_string(&self) -> String {
+        match self {
+            Position::Left(ref in_self) => {
+                let mut my_string = "1".to_string();
+                let sub_pos = in_self.to_string();
+                if sub_pos != "0".to_string() {
+                    my_string.push_str( &sub_pos );
+                }
+                return my_string;
+            },
+            Position::Right(ref in_self) => {
+                let mut my_string = "2".to_string();
+                let sub_pos = in_self.to_string();
+                if sub_pos != "0".to_string() {
+                    my_string.push_str( &sub_pos );
+                }
+                return my_string;
+            },
+            Position::Epsilon(sub_pos) => {
+                match sub_pos {
+                    None => {
+                        return "0".to_string();
+                    },
+                    Some(sbp_idx) => {
+                        return format!("s{:}",sbp_idx);
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 

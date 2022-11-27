@@ -15,12 +15,9 @@ limitations under the License.
 */
 
 
-pub mod transfokind;
-pub mod transfofunc;
-pub mod phases;
 
-pub mod get_all_transfos;
-//pub mod get_one_transfo;
-pub mod total_order;
+pub mod phases;
+pub mod get_transfos;
+
 
 

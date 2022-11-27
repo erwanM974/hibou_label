@@ -16,7 +16,7 @@ limitations under the License.
 
 use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
 
-use crate::output::rendering::graphviz::common::GraphvizColor;
+use crate::io::output::graphviz::colors::GraphvizColor;
 
 
 impl CoverageVerdict {

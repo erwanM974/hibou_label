@@ -14,13 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/**
- cut up representation in node
- inner node for interaction/term
- other inner node for multi-trace
-**/
 
-pub enum GraphicProcessLoggerOutputKind {
+pub enum GraphicProcessLoggerOutputFormat {
     svg,
     png
 }
@@ -30,8 +25,4 @@ pub enum GraphicProcessLoggerLayout {
     vertical
 }
 
-pub enum GraphicProcessLoggerInteractionRepresentation {
-    diagram,
-    term
-}
 

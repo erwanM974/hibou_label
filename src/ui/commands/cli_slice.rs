@@ -18,9 +18,8 @@ use std::path::Path;
 
 use clap::ArgMatches;
 
-use crate::core::general_context::GeneralContext;
-use crate::input::hsf::interface::parse_hsf_file;
-use crate::input::htf::interface::parse_htf_file;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::io::input::htf::interface::parse_htf_file;
 use crate::trace_manip::slice::conf::{SliceGenerationSelection, SliceKind};
 use crate::trace_manip::slice::generate::generate_slices;
 
@@ -52,6 +51,16 @@ pub fn cli_slice(matches : &ArgMatches) -> (Vec<String>,u32) {
                         },
                         Some( folder_name ) => {
                             parent_folder = Some( folder_name );
+                        }
+                    }
+                    // ***
+                    let file_name_prefix_opt : Option<&str>;
+                    match matches.value_of("name") {
+                        None => {
+                            file_name_prefix_opt = None;
+                        },
+                        Some( got_name ) => {
+                            file_name_prefix_opt = Some( got_name );
                         }
                     }
                     // ***
@@ -96,7 +105,7 @@ pub fn cli_slice(matches : &ArgMatches) -> (Vec<String>,u32) {
                         generation_kind = SliceKind::Slice;
                     }
                     // ***
-                    generate_slices(&gen_ctx,&co_localizations,mu_name,&multi_trace,parent_folder,&generation_selection,&generation_kind);
+                    generate_slices(&gen_ctx,&co_localizations,mu_name,&multi_trace,parent_folder,file_name_prefix_opt,&generation_selection,&generation_kind);
                     return (ret_print,0);
                 }
             }

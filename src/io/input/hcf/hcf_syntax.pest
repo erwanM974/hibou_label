@@ -1,0 +1,223 @@
+/*
+Copyright 2020 Erwan Mahe (github.com/erwanM974)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+WHITESPACE = _{ " " | "\r\n" | "\n" | "\t" | "\r" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+HIBOU_LABEL = @{ LETTER ~ (LETTER | ASCII_DIGIT | "_")* }
+HIBOU_LABEL_LIST = { "(" ~ HIBOU_LABEL ~ ("," ~ HIBOU_LABEL)* ~ ")" }
+
+HIBOU_true = { "⊤" | "true" | "True" | "TRUE" }
+HIBOU_false = { "⊥" | "false" | "False" | "FALSE" }
+
+
+// ***
+
+
+GRAPHIC_LOGGER_format_png = { "png" }
+GRAPHIC_LOGGER_format_svg = { "svg" }
+GRAPHIC_LOGGER_format = _{ ("format" ~ "=")? ~ (GRAPHIC_LOGGER_format_png | GRAPHIC_LOGGER_format_svg) }
+
+GRAPHIC_LOGGER_layout_horizontal = { "horizontal" }
+GRAPHIC_LOGGER_layout_vertical = { "vertical" }
+GRAPHIC_LOGGER_layout = _{ ("layout" ~ "=")? ~ (GRAPHIC_LOGGER_layout_horizontal | GRAPHIC_LOGGER_layout_vertical) }
+
+GRAPHIC_LOGGER_draw_sequence_diagram = { "draw_sd" ~ "=" ~ (HIBOU_true | HIBOU_false) }
+GRAPHIC_LOGGER_draw_term_tree = { "draw_tt" ~ "=" ~ (HIBOU_true | HIBOU_false) }
+
+GRAPHIC_LOGGER_parent_folder = { ("parent"|"parent_folder"|"folder") ~ "=" ~ HIBOU_LABEL }
+GRAPHIC_LOGGER_output_file = { ("output"|"name") ~ "=" ~ HIBOU_LABEL }
+
+GRAPHIC_LOGGER_opt = _{ GRAPHIC_LOGGER_format
+                        | GRAPHIC_LOGGER_layout
+                        | GRAPHIC_LOGGER_draw_sequence_diagram
+                        | GRAPHIC_LOGGER_draw_term_tree
+                        | GRAPHIC_LOGGER_parent_folder
+                        | GRAPHIC_LOGGER_output_file }
+
+GRAPHIC_LOGGER_opts = { "[" ~ GRAPHIC_LOGGER_opt ~ ("," ~ GRAPHIC_LOGGER_opt)* ~ "]" }
+OPTION_GRAPHIC_LOGGER = { "graphic" ~ GRAPHIC_LOGGER_opts? }
+
+
+// ***
+
+
+TRACEGEN_LOGGER_terminal = { "terminal" }
+TRACEGEN_LOGGER_exact = { "exact" }
+TRACEGEN_LOGGER_prefix = { "prefix" }
+TRACEGEN_LOGGER_gen_kind = _{ "generation" ~ "=" ~ ( TRACEGEN_LOGGER_terminal | TRACEGEN_LOGGER_exact | TRACEGEN_LOGGER_prefix ) }
+
+TRACEGEN_LOGGER_partition_discrete = { "discrete" }
+TRACEGEN_LOGGER_partition_trivial = { "trivial" }
+TRACEGEN_LOGGER_partition_specific = { "{" ~ HIBOU_LABEL_LIST ~ ("," ~ HIBOU_LABEL_LIST)*  ~ "}" }
+TRACEGEN_LOGGER_partition = _{ "partition" ~ "=" ~ (TRACEGEN_LOGGER_partition_discrete | TRACEGEN_LOGGER_partition_trivial | TRACEGEN_LOGGER_partition_specific) }
+
+TRACEGEN_LOGGER_parent_folder = { ("parent"|"parent_folder"|"folder") ~ "=" ~ HIBOU_LABEL }
+TRACEGEN_LOGGER_trace_prefix = { ("name_prefix"|"trace_prefix"|"prefix") ~ "=" ~ HIBOU_LABEL }
+
+TRACEGEN_LOGGER_opt = _{ TRACEGEN_LOGGER_gen_kind
+                        | TRACEGEN_LOGGER_partition
+                        | TRACEGEN_LOGGER_parent_folder
+                        | TRACEGEN_LOGGER_trace_prefix }
+
+TRACEGEN_LOGGER_opts = { "[" ~ TRACEGEN_LOGGER_opt ~ ("," ~ TRACEGEN_LOGGER_opt)* ~ "]" }
+OPTION_TRACEGEN_LOGGER = { "tracegen" ~ TRACEGEN_LOGGER_opts? }
+
+
+// ***
+
+
+OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER | OPTION_TRACEGEN_LOGGER }
+OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
+// ***********************************************
+ARITH_INTEGER = { "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
+// ***********************************************
+OPTION_PRIORITY_emission = { "emission" }
+OPTION_PRIORITY_reception = { "reception" }
+OPTION_PRIORITY_loop = { "loop" }
+OPTION_PRIORITY_multi_rdv = { "multi_rdv" }
+// ***
+OPTION_PRIORITY_hide = { "hide" }
+OPTION_PRIORITY_simu = { "simu" }
+// ***
+OPTION_PRIORITY_simpl = { "simpl" }
+OPTION_PRIORITY_flush = { "flush" }
+OPTION_PRIORITY_invert = { "invert" }
+OPTION_PRIORITY_deduplicate = { "deduplicate" }
+OPTION_PRIORITY_factorize = { "factorize" }
+OPTION_PRIORITY_defactorize = { "defactorize" }
+// ***
+OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission
+                            | OPTION_PRIORITY_reception
+                            | OPTION_PRIORITY_loop
+                            | OPTION_PRIORITY_multi_rdv
+                            | OPTION_PRIORITY_hide
+                            | OPTION_PRIORITY_simu
+                            | OPTION_PRIORITY_simpl
+                            | OPTION_PRIORITY_flush
+                            | OPTION_PRIORITY_invert
+                            | OPTION_PRIORITY_deduplicate
+                            | OPTION_PRIORITY_factorize
+                            | OPTION_PRIORITY_defactorize }
+OPTION_PRIORITY_LEVEL = { ARITH_INTEGER | ("-" ~ ARITH_INTEGER ) }
+OPTION_PRIORITY_SPECIFIC_elt = { OPTION_PRIORITY_KIND ~ "=" ~ OPTION_PRIORITY_LEVEL }
+OPTION_PRIORITY_SPECIFIC = { "[" ~ OPTION_PRIORITY_SPECIFIC_elt ~ ("," ~ OPTION_PRIORITY_SPECIFIC_elt)* ~ "]" }
+OPTION_PRIORITY_RANDOM = { "random" | "rand" }
+OPTION_PRIORITY = _{ OPTION_PRIORITY_SPECIFIC | OPTION_PRIORITY_RANDOM }
+// ***********************************************
+OPTION_STRATEGY_BFS = { "BreadthFS" | "Breadth First Search" | "BFS" }
+OPTION_STRATEGY_DFS = { "DepthFS" | "Depth First Search" | "DFS" }
+OPTION_STRATEGY_HCS = { "HighCoverageS" | "High Coverage Search" | "HCS" }
+OPTION_STRATEGY_KIND = _{ OPTION_STRATEGY_BFS | OPTION_STRATEGY_DFS | OPTION_STRATEGY_HCS }
+OPTION_STRATEGY_DECL = { "strategy" ~ "=" ~ OPTION_STRATEGY_KIND }
+// ***********************************************
+OPTION_FILTER_MAX_DEPTH = { "max_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER_MAX_LOOP_DEPTH = { "max_loop_depth" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER_MAX_NODE_NUMBER = { "max_node_number" ~ "=" ~ ARITH_INTEGER }
+OPTION_FILTER = _{ OPTION_FILTER_MAX_DEPTH | OPTION_FILTER_MAX_LOOP_DEPTH | OPTION_FILTER_MAX_NODE_NUMBER }
+OPTION_FILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_FILTER ~ ("," ~ OPTION_FILTER)* ~ "]" }
+// ***********************************************
+OPTION_PRIORITIES_DECL = { "priorities" ~ "=" ~ OPTION_PRIORITY }
+// ***********************************************
+GENERAL_OPTION_DECL  = _{ OPTION_LOGGER_DECL
+                          | OPTION_STRATEGY_DECL
+                          | OPTION_FILTERS_DECL
+                          | OPTION_PRIORITIES_DECL }
+// ***********************************************
+EXPLORE_OPTION_DECL = _{ GENERAL_OPTION_DECL }
+EXPLORE_OPTION_SECTION = { "@explore_option" ~ "{" ~
+                               	EXPLORE_OPTION_DECL ~ (";" ~ EXPLORE_OPTION_DECL)* ~ (";")?
+                                   ~ "}"}
+
+
+
+// ***********************************************
+
+
+OPTION_ANA_KIND_accept = { "accept" }
+OPTION_ANA_KIND_prefix = { "prefix" }
+OPTION_ANA_KIND_hide = { "hide" }
+// ***
+OPTION_ANA_SIMULATE_CONFIG_crit_num = { "num" ~ "=" ~ ARITH_INTEGER }
+OPTION_ANA_SIMULATE_CONFIG_crit_maxnum = { "maxnum" | "max"~"num" }
+OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth = { "maxdepth" | "max"~"depth" }
+OPTION_ANA_SIMULATE_CONFIG_crit_none = { "none" | "None" | "NONE" }
+// ***
+OPTION_ANA_SIMULATE_CONFIG_loop = { "loop" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
+                                                | OPTION_ANA_SIMULATE_CONFIG_crit_maxnum
+                                                | OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth
+                                                | OPTION_ANA_SIMULATE_CONFIG_crit_none ) }
+OPTION_ANA_SIMULATE_CONFIG_act = { "act" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
+                                                | OPTION_ANA_SIMULATE_CONFIG_crit_none) }
+// ***
+OPTION_ANA_SIMULATE_CONFIG_simbefore = { "slice" | "before" | "preamble" }
+OPTION_ANA_SIMULATE_CONFIG_opt = _{ OPTION_ANA_SIMULATE_CONFIG_simbefore
+                                    | OPTION_ANA_SIMULATE_CONFIG_act
+                                    | OPTION_ANA_SIMULATE_CONFIG_loop }
+// ***
+OPTION_ANA_SIMULATE_CONFIG_decl = { "[" ~ OPTION_ANA_SIMULATE_CONFIG_opt ~ ("," ~ OPTION_ANA_SIMULATE_CONFIG_opt)* ~ "]" }
+// ***
+OPTION_ANA_KIND_simulate = { "simulate" ~ OPTION_ANA_SIMULATE_CONFIG_decl? }
+OPTION_ANALYSIS_KIND = _{ OPTION_ANA_KIND_accept
+                          | OPTION_ANA_KIND_prefix
+                          | OPTION_ANA_KIND_hide
+                          | OPTION_ANA_KIND_simulate }
+OPTION_ANALYSIS_KIND_DECL = { "analysis_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
+// ***********************************************
+OPTION_GOAL_pass = { "Pass" }
+OPTION_GOAL_weakpass = { "WeakPass" }
+OPTION_GOAL_none = { "None" }
+OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | OPTION_GOAL_none }
+OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
+// ***********************************************
+OPTION_LOCANA_yes = { "local_analysis" ~ "=" ~ HIBOU_true }
+OPTION_LOCANA_onlyfront = { "local_analysis" ~ "=" ~ ("front" | "onlyfront" | "only" ~"front") }
+OPTION_LOCANA_no = { "local_analysis" ~ "=" ~ HIBOU_false }
+OPTION_LOCANA = _{ OPTION_LOCANA_yes | OPTION_LOCANA_no }
+// ***********************************************
+ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL
+                            | OPTION_ANALYSIS_KIND_DECL
+                            | OPTION_GOAL_DECL
+                            | OPTION_LOCANA }
+ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
+                               	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)* ~ (";")?
+                                   ~ "}"}
+// ***********************************************
+
+
+
+
+OPTION_CANON_searchall_yes = { "search_all" ~ ("=" ~ HIBOU_true)? }
+OPTION_CANON_searchall_no = { "search_all" ~ "=" ~ HIBOU_false }
+OPTION_CANON_searchall = _{ OPTION_CANON_searchall_yes | OPTION_CANON_searchall_no }
+// ***
+CANONIZE_OPTION_DECL = _{ GENERAL_OPTION_DECL
+                            | OPTION_CANON_searchall }
+CANONIZE_OPTION_SECTION =  { "@canonize_option" ~ "{" ~
+                               	CANONIZE_OPTION_DECL ~ (";" ~ CANONIZE_OPTION_DECL)* ~ (";")?
+                                   ~ "}"}
+
+
+// ***********************************************
+
+CONFIGURATION_SECTION = _{ EXPLORE_OPTION_SECTION
+                            | ANALYZE_OPTION_SECTION
+                            | CANONIZE_OPTION_SECTION }
+
+HIBOU_CONFIGURATION = { CONFIGURATION_SECTION* }
+
+HCF_PEST_FILE = _{ SOI ~ HIBOU_CONFIGURATION ~ EOI }

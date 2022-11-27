@@ -20,27 +20,33 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::path::PathBuf;
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::loggers::tracegen::conf::TracegenProcessLoggerGeneration;
-use crate::output::to_hfiles::multitrace_to_htf::write_multi_trace_into_file;
+use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
+use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;
 
 
 pub struct TraceGenProcessLogger {
-    int_name : String,
     pub generation : TracegenProcessLoggerGeneration,
     // ***
     pub trace_map : HashMap<u32,MultiTrace>,
-    pub co_localizations : CoLocalizations
+    pub co_localizations : CoLocalizations,
+    // ***
+    pub parent_folder_name : String,
+    pub trace_prefix : String
+    // ***
 }
 
 impl TraceGenProcessLogger {
-    pub fn new(name: String,
-               generation: TracegenProcessLoggerGeneration,
-               co_localizations : CoLocalizations) -> TraceGenProcessLogger {
+    pub fn new(generation: TracegenProcessLoggerGeneration,
+               co_localizations : CoLocalizations,
+               parent_folder_name : String,
+               trace_prefix : String) -> TraceGenProcessLogger {
         // ***
         let mut empty_mutrace : MultiTrace = vec![];
         for cl in &co_localizations.locs_lf_ids {
@@ -50,15 +56,12 @@ impl TraceGenProcessLogger {
         trace_map.insert( 1, empty_mutrace);
         // ***
         return TraceGenProcessLogger {
-            int_name: name,
             generation,
             trace_map,
-            co_localizations
+            co_localizations,
+            parent_folder_name,
+            trace_prefix
         }
-    }
-
-    fn proc_name(&self) -> String {
-        return format!("tracegen_{}", self.int_name);
     }
 
     fn get_lf_coloc_id(&self, lf_id : usize) -> Option<usize> {
@@ -72,7 +75,7 @@ impl TraceGenProcessLogger {
 
     pub fn initiate(&mut self) {
         // empties temp directory if exists
-        match fs::remove_dir_all(format!("./{:}", self.proc_name())) {
+        match fs::remove_dir_all(format!("./{:}", self.parent_folder_name)) {
             Ok(_) => {
                 // do nothing
             },
@@ -81,7 +84,7 @@ impl TraceGenProcessLogger {
             }
         }
         // creates temp directory
-        fs::create_dir_all(format!("./{:}", self.proc_name())).unwrap();
+        fs::create_dir_all(format!("./{:}", self.parent_folder_name)).unwrap();
     }
 
     pub fn add_actions(&mut self, parent_id : u32, new_id : u32, new_actions : &HashSet<TraceAction>) {
@@ -108,7 +111,8 @@ impl TraceGenProcessLogger {
                                gen_ctx : &GeneralContext,
                                state_id : u32) {
         let mutrace_as_vec = self.trace_map.get(&state_id).unwrap();
-        let file_path = format!("./{:}/{:}_t{:}", self.proc_name(), self.int_name, state_id);
-        write_multi_trace_into_file(&file_path, gen_ctx, &self.co_localizations,mutrace_as_vec);
+        let file_name = format!("{:}t{:}.{:}", self.trace_prefix, state_id, HIBOU_TRACE_FILE_EXTENSION);
+        let path : PathBuf = [&self.parent_folder_name, &file_name].iter().collect();
+        write_multi_trace_into_file(path.as_path(), gen_ctx, &self.co_localizations,mutrace_as_vec);
     }
 }

@@ -19,8 +19,8 @@ use std::path::Path;
 
 use clap::ArgMatches;
 
-use crate::input::hsf::interface::parse_hsf_file;
-use crate::input::hif::interface::parse_hif_file;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::io::input::hif::interface::parse_hif_file;
 
 use crate::plantuml::sequence::to_plant_uml_sd;
 

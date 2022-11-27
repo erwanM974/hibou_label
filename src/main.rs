@@ -41,9 +41,8 @@ extern crate rand;
 // **********
 
 pub mod core;
-pub mod output;
+pub mod io;
 pub mod ui;
-pub mod input;
 pub mod plantuml;
 //pub mod canonize;
 //pub mod merge_gates;

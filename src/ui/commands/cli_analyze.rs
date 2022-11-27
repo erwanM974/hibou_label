@@ -19,10 +19,10 @@ use std::time::Instant;
 use clap::ArgMatches;
 use crate::core::execution::trace::multitrace::multi_trace_length;
 
-use crate::input::hsf::interface::parse_hsf_file;
-use crate::input::hif::interface::parse_hif_file;
-use crate::input::hcf::interface::{parse_hcf_file_for_ana,HibouAnalyzeOptions};
-use crate::input::htf::interface::parse_htf_file;
+use crate::io::input::hsf::interface::parse_hsf_file;
+use crate::io::input::hif::interface::parse_hif_file;
+use crate::io::input::hcf::interface::{parse_hcf_file_for_ana,HibouAnalyzeOptions};
+use crate::io::input::htf::interface::parse_htf_file;
 use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
 
 use crate::process::ana_proc::manager::AnalysisProcessManager;
