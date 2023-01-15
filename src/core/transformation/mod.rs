@@ -16,7 +16,9 @@ limitations under the License.
 
 
 pub mod transfokind;
-pub mod transfodef;
-
 pub mod transfofunc;
-pub mod get_transfos;
+pub mod transfores;
+mod get_transfos;
+
+pub mod transfophase;
+

@@ -30,7 +30,9 @@ use crate::pest::Parser;
 use crate::io::input::hcf::parser::{HcfParser,Rule};
 
 
-pub fn parse_hcf_string_for_ana(gen_ctx : &GeneralContext, hcf_string : String, file_name : &str) -> Result<HibouAnalyzeOptions,HibouParsingError> {
+pub fn parse_hcf_string_for_ana(gen_ctx : &GeneralContext,
+                                hcf_string : String,
+                                file_name : &str) -> Result<HibouAnalyzeOptions,HibouParsingError> {
     match HcfParser::parse(Rule::HCF_PEST_FILE, &hcf_string) {
         Ok( ref mut got_pair ) => {
             let conf_pair = got_pair.next().unwrap();

@@ -209,7 +209,7 @@ impl std::string::ToString for AnalysisKind {
 #[derive(Clone, PartialEq, Debug)]
 pub enum UseLocalAnalysis {
     No,
-    Yes(bool)
+    Yes
 }
 
 
@@ -219,13 +219,8 @@ impl std::string::ToString for UseLocalAnalysis {
             UseLocalAnalysis::No => {
                 return "No".to_string();
             },
-            UseLocalAnalysis::Yes(only_front) => {
-                if *only_front {
-                    return "Only front".to_string();
-                }
-                else {
-                    return "Yes".to_string();
-                }
+            UseLocalAnalysis::Yes => {
+                return "Yes".to_string();
             }
         }
     }

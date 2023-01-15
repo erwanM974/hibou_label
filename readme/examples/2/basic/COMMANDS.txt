@@ -1,0 +1,14 @@
+(.\hibou_label.exe explore sig.hsf asynch_broadcast.hif explo.hcf) -and (Rename-Item explo_l1.svg asynch_broadcast.svg)
+(.\hibou_label.exe explore sig.hsf asynch_passing.hif explo.hcf) -and (Rename-Item explo_l1.svg asynch_passing.svg)
+(.\hibou_label.exe explore sig.hsf emission.hif explo.hcf) -and (Rename-Item explo_l1.svg emission.svg)
+(.\hibou_label.exe explore sig.hsf reception.hif explo.hcf) -and (Rename-Item explo_l1.svg reception.svg)
+(.\hibou_label.exe explore sig.hsf synch_broadcast.hif explo.hcf) -and (Rename-Item explo_l1.svg synch_broadcast.svg)
+(.\hibou_label.exe explore sig.hsf synch_passing.hif explo.hcf) -and (Rename-Item explo_l1.svg synch_passing.svg)
+
+
+hibou_label explore sig.hsf asynch_broadcast.hif explo.hcf && mv explo_l1.svg asynch_broadcast.svg
+hibou_label explore sig.hsf asynch_passing.hif explo.hcf && mv explo_l1.svg asynch_passing.svg
+hibou_label explore sig.hsf emission.hif explo.hcf && mv explo_l1.svg emission.svg
+hibou_label explore sig.hsf reception.hif explo.hcf && mv explo_l1.svg reception.svg
+hibou_label explore sig.hsf synch_broadcast.hif explo.hcf && mv explo_l1.svg synch_broadcast.svg
+hibou_label explore sig.hsf synch_passing.hif explo.hcf&& mv explo_l1.svg synch_passing.svg

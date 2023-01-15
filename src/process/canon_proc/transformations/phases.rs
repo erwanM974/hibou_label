@@ -16,19 +16,8 @@ limitations under the License.
 
 
 
-use crate::core::language::syntax::interaction::Interaction;
-use crate::core::transformation::transfofunc::action::*;
-use crate::core::transformation::transfofunc::dedupl::*;
-use crate::core::transformation::transfofunc::defactorize::*;
-use crate::core::transformation::transfofunc::factorize_par::factorize_par;
-use crate::core::transformation::transfofunc::factorize_prefix::*;
-use crate::core::transformation::transfofunc::factorize_suffix::*;
-use crate::core::transformation::transfofunc::flush::*;
-use crate::core::transformation::transfofunc::invert::*;
-use crate::core::transformation::transfofunc::loop_alt_simpl::loop_alt_simpl;
-use crate::core::transformation::transfofunc::loop_simpl::*;
-use crate::core::transformation::transfofunc::simpl::*;
 use crate::core::transformation::transfokind::InteractionTransformationKind;
+
 
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
@@ -50,42 +39,40 @@ impl CanonizationPhase {
     }
 }
 
-pub fn transfos_phase1<'lifetime>() -> Vec<(InteractionTransformationKind, &'lifetime dyn Fn(&Interaction) -> Vec<Interaction>)> {
+pub fn transfos_phase1() -> Vec<InteractionTransformationKind> {
     return vec![
-        (InteractionTransformationKind::Deduplicate,&deduplicate),
-        (InteractionTransformationKind::Simpl,&simpl),
-        (InteractionTransformationKind::FlushRight,&flush_right),
-        (InteractionTransformationKind::InvertPar,&invert_par_sorted),
-        (InteractionTransformationKind::InvertAlt,&invert_alt_sorted),
-        (InteractionTransformationKind::LoopSimpl,&loop_empty_simpl),
-        (InteractionTransformationKind::LoopUnNest,&loop_unnest),
-        (InteractionTransformationKind::LoopAltSimpl,&loop_alt_simpl),
+        InteractionTransformationKind::Deduplicate,
+        InteractionTransformationKind::Simpl,
+        InteractionTransformationKind::FlushRight,
+        InteractionTransformationKind::InvertPar,
+        InteractionTransformationKind::InvertAlt,
+        InteractionTransformationKind::LoopSimpl,
+        InteractionTransformationKind::LoopUnNest,
         // ***
-        (InteractionTransformationKind::DeFactorizeLeft,&defactorize_left),
-        (InteractionTransformationKind::DeFactorizeRight,&defactorize_right),
+        InteractionTransformationKind::DeFactorizeLeft,
+        InteractionTransformationKind::DeFactorizeRight,
         // ***
-        (InteractionTransformationKind::SortActionContent,&sort_action_content)
+        InteractionTransformationKind::SortActionContent
     ];
 }
 
-pub fn transfos_phase2<'lifetime>() -> Vec<(InteractionTransformationKind, &'lifetime dyn Fn(&Interaction) -> Vec<Interaction>)> {
+pub fn transfos_phase2() -> Vec<InteractionTransformationKind> {
     return vec![
-        (InteractionTransformationKind::Deduplicate,&deduplicate),
-        (InteractionTransformationKind::Simpl,&simpl),
-        (InteractionTransformationKind::FlushRight,&flush_right),
-        (InteractionTransformationKind::InvertPar,&invert_par_sorted),
-        (InteractionTransformationKind::InvertAlt,&invert_alt_sorted),
-        (InteractionTransformationKind::LoopSimpl,&loop_empty_simpl),
-        (InteractionTransformationKind::LoopUnNest,&loop_unnest),
-        (InteractionTransformationKind::LoopAltSimpl,&loop_alt_simpl),
+        InteractionTransformationKind::Deduplicate,
+        InteractionTransformationKind::Simpl,
+        InteractionTransformationKind::FlushRight,
+        InteractionTransformationKind::InvertPar,
+        InteractionTransformationKind::InvertAlt,
+        InteractionTransformationKind::LoopSimpl,
+        InteractionTransformationKind::LoopUnNest,
         // ***
-        (InteractionTransformationKind::FactorizePrefixStrict,&factorize_prefix_strict),
-        (InteractionTransformationKind::FactorizePrefixSeq,&factorize_prefix_seq),
-        (InteractionTransformationKind::FactorizeSuffixStrict,&factorize_suffix_strict),
-        (InteractionTransformationKind::FactorizeSuffixSeq,&factorize_suffix_seq),
-        (InteractionTransformationKind::FactorizeCommutativePar,&factorize_par),
+        InteractionTransformationKind::FactorizePrefixStrict,
+        InteractionTransformationKind::FactorizePrefixSeq,
+        InteractionTransformationKind::FactorizeSuffixStrict,
+        InteractionTransformationKind::FactorizeSuffixSeq,
+        InteractionTransformationKind::FactorizeCommutativePar,
         // ***
-        (InteractionTransformationKind::SortActionContent,&sort_action_content)
+        InteractionTransformationKind::SortActionContent
     ];
 }
 

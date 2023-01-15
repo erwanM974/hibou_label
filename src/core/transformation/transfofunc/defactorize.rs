@@ -19,7 +19,7 @@ limitations under the License.
 
 use crate::core::language::syntax::interaction::Interaction;
 
-pub fn defactorize_left(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_defactorize_left(interaction : &Interaction) -> Vec<Interaction> {
     match interaction {
         &Interaction::Strict(ref i1, ref i2) => {
             match **i2 {
@@ -68,7 +68,7 @@ pub fn defactorize_left(interaction : &Interaction) -> Vec<Interaction> {
 
 
 
-pub fn defactorize_right(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_defactorize_right(interaction : &Interaction) -> Vec<Interaction> {
     match interaction {
         &Interaction::Strict(ref i1, ref i2) => {
             match **i1 {

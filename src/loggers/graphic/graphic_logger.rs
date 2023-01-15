@@ -20,8 +20,9 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use crate::io::output::graphviz::colors::DotTranslatable;
+use crate::io::output::graphviz::colors::{DotTranslatable, GraphvizColor};
 use crate::io::output::graphviz::graph::GraphVizDiGraph;
+use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem};
 use crate::loggers::graphic::conf::{GraphicProcessLoggerLayout, GraphicProcessLoggerOutputFormat};
 
 
@@ -33,7 +34,10 @@ use crate::process::abstract_proc::common::FilterEliminationKind;
 
 pub struct GraphicProcessLogger {
     output_format : GraphicProcessLoggerOutputFormat,
-    layout : GraphicProcessLoggerLayout,
+    pub layout : GraphicProcessLoggerLayout,
+    // ***
+    display_legend : bool,
+    pub display_subprocesses : bool,
     // ***
     pub int_repr_sd : bool,
     pub int_repr_tt : bool,
@@ -50,6 +54,8 @@ impl GraphicProcessLogger {
 
     pub fn new(output_format : GraphicProcessLoggerOutputFormat,
                layout : GraphicProcessLoggerLayout,
+               display_legend : bool,
+               display_subprocesses : bool,
                int_repr_sd : bool,
                int_repr_tt : bool,
                temp_folder : String,
@@ -74,6 +80,8 @@ impl GraphicProcessLogger {
         // ***
         return GraphicProcessLogger{output_format,
             layout,
+            display_legend,
+            display_subprocesses,
             int_repr_sd,
             int_repr_tt,
             temp_folder:temp_folder,
@@ -85,13 +93,16 @@ impl GraphicProcessLogger {
     pub fn terminate(&mut self,
                 options_as_strs : &Vec<String>) {
         // *** LEGEND
-        self.graph.nodes.push(Box::new(make_graphic_logger_legend(options_as_strs)));
+        if self.display_legend {
+            self.graph.nodes.push(Box::new(make_graphic_logger_legend(options_as_strs)));
+        }
         // ***
         let dot_file_name = format!("{:}.dot", self.output_file_name);
         let dot_file_path : PathBuf = [&self.temp_folder, &dot_file_name].iter().collect();
         {
             // ***
             let mut dot_file = File::create(dot_file_path.as_path()).unwrap();
+            // ***
             dot_file.write(self.graph.to_dot_string().as_bytes());
         }
         // ***
@@ -106,7 +117,6 @@ impl GraphicProcessLogger {
                     .arg("-o")
                     .arg(output_file_path.as_path())
                     .output();
-                println!("{:?}",status);
             },
             GraphicProcessLoggerOutputFormat::svg => {
                 let output_file_name = format!("{:}.svg", self.output_file_name);
@@ -118,7 +128,6 @@ impl GraphicProcessLogger {
                     .arg("-o")
                     .arg(output_file_path.as_path())
                     .output();
-                println!("{:?}",status);
             }
         }
     }

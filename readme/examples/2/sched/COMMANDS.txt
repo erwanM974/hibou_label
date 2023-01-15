@@ -1,0 +1,14 @@
+(.\hibou_label.exe explore sig.hsf strict_same.hif explo.hcf) -and (Rename-Item explo_l1.svg strict_same.svg)
+(.\hibou_label.exe explore sig.hsf seq_same.hif explo.hcf) -and (Rename-Item explo_l1.svg seq_same.svg)
+(.\hibou_label.exe explore sig.hsf par_same.hif explo.hcf) -and (Rename-Item explo_l1.svg par_same.svg)
+(.\hibou_label.exe explore sig.hsf strict_diff.hif explo.hcf) -and (Rename-Item explo_l1.svg strict_diff.svg)
+(.\hibou_label.exe explore sig.hsf seq_diff.hif explo.hcf) -and (Rename-Item explo_l1.svg seq_diff.svg)
+(.\hibou_label.exe explore sig.hsf par_diff.hif explo.hcf) -and (Rename-Item explo_l1.svg par_diff.svg)
+
+
+hibou_label explore sig.hsf strict_same.hif explo.hcf && mv explo_l1.svg strict_same.svg
+hibou_label explore sig.hsf seq_same.hif explo.hcf && mv explo_l1.svg seq_same.svg
+hibou_label explore sig.hsf par_same.hif explo.hcf && mv explo_l1.svg par_same.svg
+hibou_label explore sig.hsf strict_diff.hif explo.hcf && mv explo_l1.svg strict_diff.svg
+hibou_label explore sig.hsf seq_diff.hif explo.hcf && mv explo_l1.svg seq_diff.svg
+hibou_label explore sig.hsf par_diff.hif explo.hcf&& mv explo_l1.svg par_diff.svg

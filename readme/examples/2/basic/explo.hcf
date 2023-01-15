@@ -1,0 +1,4 @@
+@explore_option{
+    loggers = [graphic[svg,vertical,draw_legend=false,draw_sd=true,draw_tt=true]];
+    strategy = DFS
+}

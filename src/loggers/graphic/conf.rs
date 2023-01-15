@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum GraphicProcessLoggerOutputFormat {
     svg,
     png
 }
 
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum GraphicProcessLoggerLayout {
     horizontal,
     vertical

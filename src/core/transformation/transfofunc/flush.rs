@@ -18,13 +18,12 @@ limitations under the License.
 
 use crate::core::language::syntax::interaction::Interaction;
 
-pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
-    let mut new_int : Option<Interaction> = None;
+pub fn transfo_flush_right(interaction : &Interaction) -> Vec<Interaction> {
     match interaction {
         &Interaction::Alt(ref i1, ref i2) => {
             match **i1 {
                 Interaction::Alt(ref i11,ref i12) => {
-                    new_int = Some(Interaction::Alt( i11.clone(), Box::new(Interaction::Alt(i12.clone(), i2.clone())) ) );
+                    return vec![Interaction::Alt( i11.clone(), Box::new(Interaction::Alt(i12.clone(), i2.clone())) )];
                 },
                 _ => {}
             }
@@ -32,7 +31,7 @@ pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
         &Interaction::Strict(ref i1, ref i2) => {
             match **i1 {
                 Interaction::Strict(ref i11,ref i12) => {
-                    new_int = Some(Interaction::Strict( i11.clone(), Box::new(Interaction::Strict(i12.clone(), i2.clone())) ));
+                    return vec![Interaction::Strict( i11.clone(), Box::new(Interaction::Strict(i12.clone(), i2.clone())) )];
                 },
                 _ => {}
             }
@@ -40,7 +39,7 @@ pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
         &Interaction::Seq(ref i1, ref i2) => {
             match **i1 {
                 Interaction::Seq(ref i11,ref i12) => {
-                    new_int = Some(Interaction::Seq( i11.clone(), Box::new(Interaction::Seq(i12.clone(), i2.clone())) ));
+                    return vec![Interaction::Seq( i11.clone(), Box::new(Interaction::Seq(i12.clone(), i2.clone())) )];
                 },
                 _ => {}
             }
@@ -48,7 +47,7 @@ pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
         &Interaction::Par(ref i1, ref i2) => {
             match **i1 {
                 Interaction::Par(ref i11,ref i12) => {
-                    new_int = Some(Interaction::Par( i11.clone(), Box::new(Interaction::Par(i12.clone(), i2.clone())) ));
+                    return vec![Interaction::Par( i11.clone(), Box::new(Interaction::Par(i12.clone(), i2.clone())) )];
                 },
                 _ => {}
             }
@@ -57,7 +56,7 @@ pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
             match **i1 {
                 Interaction::CoReg(ref cr2, ref i11,ref i12) => {
                     if cr1 == cr2 {
-                        new_int = Some(Interaction::CoReg( cr1.clone(), i11.clone(), Box::new(Interaction::CoReg(cr1.clone(), i12.clone(), i2.clone())) ));
+                        return vec![Interaction::CoReg( cr1.clone(), i11.clone(), Box::new(Interaction::CoReg(cr1.clone(), i12.clone(), i2.clone())) )];
                     }
                 },
                 _ => {}
@@ -65,18 +64,7 @@ pub fn flush_right(interaction : &Interaction) -> Vec<Interaction> {
         },
         _ => {}
     }
-    match new_int {
-        None => {
-            return vec![];
-        },
-        Some(got_int) => {
-            if &got_int < interaction {
-                return vec![got_int];
-            } else {
-                return vec![]
-            }
-        }
-    }
+    return vec![]
 }
 
 /*

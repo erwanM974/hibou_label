@@ -63,7 +63,7 @@ impl HibouAnalyzeOptions {
             filters:Vec::new(),
             priorities:GenericProcessPriorities::Specific(AnalysisPriorities::default()),
             ana_kind:AnalysisKind::Prefix,
-            local_analysis:UseLocalAnalysis::Yes(false),
+            local_analysis:UseLocalAnalysis::Yes,
             goal:Some(GlobalVerdict::WeakPass)
         };
     }
@@ -79,7 +79,7 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
     let mut filters : Vec<AnalysisFilter> = Vec::new();
     let mut priorities : GenericProcessPriorities<AnalysisConfig> = GenericProcessPriorities::Specific(AnalysisPriorities::default());
     let mut ana_kind = AnalysisKind::Prefix;
-    let mut local_analysis = UseLocalAnalysis::Yes(false);
+    let mut local_analysis = UseLocalAnalysis::Yes;
     let mut goal = Some(GlobalVerdict::WeakPass);
     // ***
     for option_decl_pair in option_pair.into_inner() {
@@ -188,10 +188,7 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                 }
             },
             Rule::OPTION_LOCANA_yes => {
-                local_analysis = UseLocalAnalysis::Yes(false);
-            },
-            Rule::OPTION_LOCANA_onlyfront => {
-                local_analysis = UseLocalAnalysis::Yes(true);
+                local_analysis = UseLocalAnalysis::Yes;
             },
             Rule::OPTION_LOCANA_no => {
                 local_analysis = UseLocalAnalysis::No;

@@ -37,7 +37,7 @@ pub fn draw_interaction(gen_ctx : &GeneralContext,
                         output_file_name : &String) {
     match repr {
         InteractionGraphicalRepresentation::AsSequenceDiagram => {
-            draw_int_as_sd(gen_ctx,int,temp_folder,parent_folder,output_file_name);
+            draw_int_as_sd(gen_ctx,int,parent_folder,output_file_name);
         },
         InteractionGraphicalRepresentation::AsTerm => {
             draw_int_as_term(gen_ctx,int,temp_folder,parent_folder,output_file_name);

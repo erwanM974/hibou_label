@@ -39,6 +39,9 @@ GRAPHIC_LOGGER_layout = _{ ("layout" ~ "=")? ~ (GRAPHIC_LOGGER_layout_horizontal
 GRAPHIC_LOGGER_draw_sequence_diagram = { "draw_sd" ~ "=" ~ (HIBOU_true | HIBOU_false) }
 GRAPHIC_LOGGER_draw_term_tree = { "draw_tt" ~ "=" ~ (HIBOU_true | HIBOU_false) }
 
+GRAPHIC_LOGGER_draw_sub_processes = { "draw_sub_processes" ~ "=" ~ (HIBOU_true | HIBOU_false) }
+GRAPHIC_LOGGER_draw_legend = { "draw_legend" ~ "=" ~ (HIBOU_true | HIBOU_false) }
+
 GRAPHIC_LOGGER_parent_folder = { ("parent"|"parent_folder"|"folder") ~ "=" ~ HIBOU_LABEL }
 GRAPHIC_LOGGER_output_file = { ("output"|"name") ~ "=" ~ HIBOU_LABEL }
 
@@ -46,6 +49,8 @@ GRAPHIC_LOGGER_opt = _{ GRAPHIC_LOGGER_format
                         | GRAPHIC_LOGGER_layout
                         | GRAPHIC_LOGGER_draw_sequence_diagram
                         | GRAPHIC_LOGGER_draw_term_tree
+                        | GRAPHIC_LOGGER_draw_sub_processes
+                        | GRAPHIC_LOGGER_draw_legend
                         | GRAPHIC_LOGGER_parent_folder
                         | GRAPHIC_LOGGER_output_file }
 
@@ -185,7 +190,6 @@ OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | OPTION_GOAL_none
 OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
 // ***********************************************
 OPTION_LOCANA_yes = { "local_analysis" ~ "=" ~ HIBOU_true }
-OPTION_LOCANA_onlyfront = { "local_analysis" ~ "=" ~ ("front" | "onlyfront" | "only" ~"front") }
 OPTION_LOCANA_no = { "local_analysis" ~ "=" ~ HIBOU_false }
 OPTION_LOCANA = _{ OPTION_LOCANA_yes | OPTION_LOCANA_no }
 // ***********************************************

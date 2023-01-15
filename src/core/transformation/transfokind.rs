@@ -14,112 +14,113 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use strum_macros::IntoStaticStr;
+use crate::core::language::syntax::interaction::Interaction;
+use crate::core::transformation::transfofunc::action::transfo_sort_action_content;
+use crate::core::transformation::transfofunc::alt_dedup::alt_dedup_equal::transfo_deduplicate;
+use crate::core::transformation::transfofunc::defactorize::{transfo_defactorize_left, transfo_defactorize_right};
+use crate::core::transformation::transfofunc::factorize::factorize_par::transfo_factorize_par;
+use crate::core::transformation::transfofunc::factorize::factorize_prefix::{transfo_factorize_prefix_seq, transfo_factorize_prefix_strict};
+use crate::core::transformation::transfofunc::factorize::factorize_suffix::{transfo_factorize_suffix_seq, transfo_factorize_suffix_strict};
+use crate::core::transformation::transfofunc::flush::transfo_flush_right;
+use crate::core::transformation::transfofunc::invert::{transfo_invert_alt_sorted, transfo_invert_par_sorted};
+use crate::core::transformation::transfofunc::loop_simpl::{transfo_loop_empty_simpl, transfo_loop_unnest};
+use crate::core::transformation::transfofunc::simpl::transfo_simpl;
 
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(IntoStaticStr,Clone, PartialEq, Debug, Eq, Hash)]
 pub enum InteractionTransformationKind {
     Simpl,
-    FlushLeft,
     FlushRight,
     InvertAlt,
     InvertPar,
     Deduplicate,
     FactorizePrefixStrict,
     FactorizePrefixSeq,
+    FactorizeCommutativePar,
     FactorizeSuffixStrict,
     FactorizeSuffixSeq,
-    FactorizeCommutativePar,
     DeFactorizeLeft,
     DeFactorizeRight,
     LoopSimpl,
-    LoopAltSimpl,
     LoopUnNest,
     SortActionContent, // sort emission targets OR reception recipients
     // ***
-    MergeShiftLeft1,
+    /*MergeShiftLeft1,
     MergeShiftLeft2,
     MergeShiftRight1,
     MergeShiftRight2,
     MergeAction,
     MergeSkip,
-    MergeSkipInvert,
+    MergeSkipInvert,*/
 }
 
 
 impl InteractionTransformationKind {
     pub fn to_string(&self) -> String {
+        let as_static_str : &'static str = self.into();
+        return as_static_str.to_string();
+    }
+    pub fn get_transformation(&self) -> fn(&Interaction) -> Vec<Interaction> {
         match self {
-            &InteractionTransformationKind::Simpl => {
-                return "Simpl".to_string();
-            },
-            &InteractionTransformationKind::FlushLeft => {
-                return "FlushLeft".to_string();
-            },
-            &InteractionTransformationKind::FlushRight => {
-                return "FlushRight".to_string();
-            },
-            &InteractionTransformationKind::InvertAlt => {
-                return "InvertAlt".to_string();
-            },
-            &InteractionTransformationKind::InvertPar => {
-                return "InvertPar".to_string();
-            },
-            &InteractionTransformationKind::Deduplicate => {
-                return "Deduplicate".to_string();
-            },
-            &InteractionTransformationKind::FactorizePrefixStrict => {
-                return "FactorizePrefixStrict".to_string();
-            },
-            &InteractionTransformationKind::FactorizePrefixSeq => {
-                return "FactorizePrefixSeq".to_string();
-            },
-            &InteractionTransformationKind::FactorizeSuffixStrict => {
-                return "FactorizeSuffixStrict".to_string();
-            },
-            &InteractionTransformationKind::FactorizeSuffixSeq => {
-                return "FactorizeSuffixSeq".to_string();
-            },
-            &InteractionTransformationKind::FactorizeCommutativePar => {
-                return "FactorizeCommutativePar".to_string();
-            },
-            &InteractionTransformationKind::DeFactorizeLeft => {
-                return "DeFactorizeLeft".to_string();
-            },
-            &InteractionTransformationKind::DeFactorizeRight => {
-                return "DeFactorizeRight".to_string();
-            },
-            &InteractionTransformationKind::LoopSimpl => {
-                return "LoopSimpl".to_string();
-            },
-            &InteractionTransformationKind::LoopAltSimpl => {
-                return "LoopAltSimpl".to_string();
-            },
-            &InteractionTransformationKind::LoopUnNest => {
-                return "LoopUnNest".to_string();
-            },
-            &InteractionTransformationKind::SortActionContent => {
-                return "SortActionContent".to_string();
-            },
-            &InteractionTransformationKind::MergeShiftLeft1 => {
-                return "MergeShiftLeft1".to_string();
-            },
-            &InteractionTransformationKind::MergeShiftRight1 => {
-                return "MergeShiftRight1".to_string();
-            },
-            &InteractionTransformationKind::MergeShiftLeft2 => {
-                return "MergeShiftLeft2".to_string();
-            },
-            &InteractionTransformationKind::MergeShiftRight2 => {
-                return "MergeShiftRight2".to_string();
-            },
-            &InteractionTransformationKind::MergeAction => {
-                return "MergeAction".to_string();
-            },
-            &InteractionTransformationKind::MergeSkip => {
-                return "MergeSkip".to_string();
-            },
-            &InteractionTransformationKind::MergeSkipInvert => {
-                return "MergeSkipInvert".to_string();
+            InteractionTransformationKind::Simpl => {
+                return transfo_simpl;
             }
+            InteractionTransformationKind::FlushRight => {
+                return transfo_flush_right;
+            },
+            InteractionTransformationKind::InvertAlt => {
+                return transfo_invert_alt_sorted;
+            },
+            InteractionTransformationKind::InvertPar => {
+                return transfo_invert_par_sorted;
+            },
+            InteractionTransformationKind::Deduplicate => {
+                return transfo_deduplicate;
+            },
+            InteractionTransformationKind::FactorizePrefixStrict => {
+                return transfo_factorize_prefix_strict;
+            },
+            InteractionTransformationKind::FactorizePrefixSeq => {
+                return transfo_factorize_prefix_seq;
+            },
+            InteractionTransformationKind::FactorizeCommutativePar => {
+                return transfo_factorize_par;
+            },
+            InteractionTransformationKind::FactorizeSuffixSeq => {
+                return transfo_factorize_suffix_strict;
+            },
+            InteractionTransformationKind::FactorizeSuffixStrict => {
+                return transfo_factorize_suffix_seq;
+            },
+            InteractionTransformationKind::DeFactorizeLeft => {
+                return transfo_defactorize_left;
+            },
+            InteractionTransformationKind::DeFactorizeRight => {
+                return transfo_defactorize_right;
+            },
+            InteractionTransformationKind::LoopSimpl => {
+                return transfo_loop_empty_simpl;
+            },
+            InteractionTransformationKind::LoopUnNest => {
+                return transfo_loop_unnest;
+            },
+            InteractionTransformationKind::SortActionContent => {
+                return transfo_sort_action_content;
+            },
+            // ***
+            /*
+            InteractionTransformationKind::MergeShiftLeft1 => {
+                return transfo_merge_shift_left_1;
+            },
+            InteractionTransformationKind::MergeShiftLeft2 => {
+                return transfo_merge_shift_left_2;
+            },
+            InteractionTransformationKind::MergeShiftRight1 => {
+                return transfo_merge_shift_right_1;
+            },
+            InteractionTransformationKind::MergeShiftRight2 => {
+                return transfo_merge_shift_right_2;
+            },*/
         }
     }
 }

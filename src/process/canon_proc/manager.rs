@@ -20,8 +20,9 @@ use std::iter::FromIterator;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::position::position::Position;
-use crate::core::transformation::transfodef::InteractionTransformation;
 use crate::core::transformation::transfokind::InteractionTransformationKind;
+use crate::core::transformation::transfophase::InteractionTransformationPhase;
+use crate::core::transformation::transfores::InteractionTransformationResult;
 use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
 use crate::process::abstract_proc::generic::{GenericNode, GenericStep};
 use crate::process::abstract_proc::manager::{GenericProcessManager, GenericProcessPriorities};
@@ -30,8 +31,7 @@ use crate::process::canon_proc::interface::filter::{CanonizationFilter, Canoniza
 use crate::process::canon_proc::interface::logger::CanonizationLogger;
 use crate::process::canon_proc::interface::node::CanonizationNodeKind;
 use crate::process::canon_proc::interface::step::CanonizationStepKind;
-use crate::process::canon_proc::transformations::get_transfos::get_canonize_transfos;
-use crate::process::canon_proc::transformations::phases::CanonizationPhase;
+use crate::process::canon_proc::transformations::phases::{CanonizationPhase, transfos_phase1, transfos_phase2};
 
 
 
@@ -43,13 +43,25 @@ pub enum IntRefOrOldIdRef<'l> {
 
 pub struct CanonizationProcessManager {
     pub(crate) manager: GenericProcessManager<CanonizationConfig>,
-    pub(crate) get_all_transfos : bool,
     pub(crate) node_has_child_interaction : HashSet<u32>,
+    phase1 : InteractionTransformationPhase,
+    phase2 : InteractionTransformationPhase,
     phase1_known : HashMap<Interaction,u32>, // interaction term and corresponding state id
     phase2_known : HashMap<Interaction,u32> // interaction term and corresponding state id
 }
 
 impl CanonizationProcessManager {
+
+    pub fn get_transo_phase(&self,canon_phase : &CanonizationPhase) -> &InteractionTransformationPhase {
+        match canon_phase {
+            CanonizationPhase::FirstDefactorize => {
+                return &self.phase1;
+            },
+            CanonizationPhase::SecondFactorize => {
+                return &self.phase2;
+            }
+        }
+    }
 
     pub fn new(gen_ctx : GeneralContext,
                strategy : HibouSearchStrategy,
@@ -65,8 +77,9 @@ impl CanonizationProcessManager {
             loggers
         );
         return CanonizationProcessManager{manager,
-            get_all_transfos,
             node_has_child_interaction:HashSet::new(),
+            phase1 : InteractionTransformationPhase::new(transfos_phase1(),get_all_transfos,false),
+            phase2 : InteractionTransformationPhase::new(transfos_phase2(),get_all_transfos,false),
             phase1_known:HashMap::new(),
             phase2_known:HashMap::new()};
     }
@@ -127,7 +140,7 @@ impl CanonizationProcessManager {
                                          phase : CanonizationPhase,
                                         depth       : u32) {
         // ***
-        let transfos = get_canonize_transfos(&interaction,&phase,self.get_all_transfos);
+        let transfos = self.get_transo_phase(&phase).apply_phase(&interaction);
         // ***
         let mut id_as_child : u32 = 0;
         // ***
@@ -226,7 +239,7 @@ impl CanonizationProcessManager {
 
     fn process_new_transformation_step(&mut self,
                         parent_state : &GenericNode<CanonizationConfig>,
-                        transfo   : InteractionTransformation,
+                        transfo   : InteractionTransformationResult,
                         parent_id : u32,
                         new_state_id : u32,
                         node_counter : u32) -> Option<(Interaction,u32,CanonizationPhase)> {
@@ -260,7 +273,7 @@ impl CanonizationProcessManager {
     fn term_loggers(&mut self) {
         let mut options_as_strs = (&self).manager.get_basic_options_as_strings();
         options_as_strs.insert(0, "process=canonization".to_string());
-        options_as_strs.push( format!("search_all={}", self.get_all_transfos.to_string()) );
+        options_as_strs.push( format!("search_all={}", self.phase1.get_all.to_string()) );
         for logger in self.manager.loggers.iter_mut() {
             (*logger).log_term(&options_as_strs);
         }

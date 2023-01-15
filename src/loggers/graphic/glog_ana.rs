@@ -16,14 +16,19 @@ limitations under the License.
 
 
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::position::position::Position;
 use crate::core::language::syntax::interaction::Interaction;
+use crate::io::output::graphviz::colors::GraphvizColor;
 use crate::io::output::graphviz::edge::edge::GraphVizEdge;
 use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle, GvEdgeLineStyle};
+use crate::io::output::graphviz::node::node::GraphVizNode;
+use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
+use crate::loggers::graphic::conf::GraphicProcessLoggerOutputFormat;
 use crate::loggers::graphic::get_graph::filter::make_graphic_logger_filter;
 use crate::loggers::graphic::get_graph::state::make_graphic_logger_state;
 use crate::loggers::graphic::get_graph::transition::{make_graphic_logger_firing, make_graphic_logger_hiding};
@@ -32,7 +37,9 @@ use crate::loggers::graphic::graphic_logger::GraphicProcessLogger;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 use crate::process::ana_proc::interface::logger::AnalysisLogger;
 use crate::process::ana_proc::interface::step::SimulationStepKind;
+use crate::process::ana_proc::logic::anakind::AnalysisKind;
 use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
+use crate::process::ana_proc::logic::local_analysis::perform_local_analysis;
 use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
 
 
@@ -176,5 +183,70 @@ impl AnalysisLogger for GraphicProcessLogger {
         let (verd_node,verd_edge) = make_graphic_logger_verdict(parent_state_id,verdict);
         self.graph.nodes.push(Box::new(verd_node));
         self.graph.edges.push(verd_edge);
+    }
+
+    fn log_out_on_local_analysis(&mut self,
+                                 gen_ctx : &GeneralContext,
+                                 parent_state_id: u32,
+                                 verdict: &CoverageVerdict,
+                                 parent_analysis_kind: &AnalysisKind,
+                                 local_coloc: &CoLocalizations,
+                                 local_interaction: &Interaction,
+                                 local_multi_trace: &MultiTrace,
+                                 local_flags: &MultiTraceAnalysisFlags) {
+        if self.display_subprocesses {
+            // ***
+            let subproc_image_file_name = format!("ana{}", parent_state_id);
+            let sub_graphic_logger = GraphicProcessLogger::new(GraphicProcessLoggerOutputFormat::png,
+                                                               self.layout.clone(),
+                                                               false,
+                                                               false,
+                                                               self.int_repr_sd,
+                                                               self.int_repr_tt,
+                                                               "./temp".to_string(),
+                                                               self.temp_folder.clone(),
+                                                               subproc_image_file_name.clone());
+            perform_local_analysis(gen_ctx,
+                                   local_coloc.clone(),
+                                   parent_analysis_kind,
+                                   local_interaction.clone(),
+                                   local_multi_trace.clone(),
+                                   local_flags.clone(),
+                                   vec![Box::new(sub_graphic_logger)]);
+            // ***
+            let subproc_image_file_path : PathBuf = [&self.temp_folder, &format!("{}.png",subproc_image_file_name)].iter().collect();
+            // ***
+            let verdict_color = verdict.get_verdict_color();
+            // ***
+            let locana_node : GraphVizNode;
+            {
+                let mut gv_node_options : GraphvizNodeStyle = Vec::new();
+                gv_node_options.push( GraphvizNodeStyleItem::Image( subproc_image_file_path.into_os_string().to_str().unwrap().to_string() ) );
+                gv_node_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
+                gv_node_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
+                gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
+                gv_node_options.push( GraphvizNodeStyleItem::PenWidth(3) );
+                gv_node_options.push(GraphvizNodeStyleItem::Color( verdict_color.clone() ));
+                // ***
+                locana_node = GraphVizNode{id:subproc_image_file_name,style:gv_node_options};
+            }
+            // ***
+            let locana_edge : GraphVizEdge;
+            {
+                let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
+                // ***
+                tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
+                tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
+                tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
+                // ***
+                locana_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),locana_node.id.clone(),tran_gv_options);
+            }
+            // ***
+            self.graph.nodes.push(Box::new(locana_node));
+            self.graph.edges.push(locana_edge);
+            // ***
+        } else {
+            self.log_verdict(parent_state_id,verdict);
+        }
     }
 }

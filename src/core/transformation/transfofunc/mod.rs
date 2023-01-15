@@ -14,19 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+pub mod simpl;
 pub mod action;
-pub mod dedupl;
+pub mod alt_dedup;
 pub mod defactorize;
-pub mod factorize_par;
-pub mod factorize_prefix;
-pub mod factorize_suffix;
+pub mod factorize;
 pub mod flush;
 pub mod invert;
-pub mod loop_alt_simpl;
 pub mod loop_simpl;
-pub mod merge_action;
-pub mod merge_skip;
-pub mod merge_skip_invert;
-pub mod merge_shift_left;
-pub mod merge_shift_right;
-pub mod simpl;

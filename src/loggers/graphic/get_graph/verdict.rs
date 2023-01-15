@@ -48,7 +48,7 @@ pub fn make_graphic_logger_verdict(parent_state_id: u32,
         // ***
         tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
         tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
-        tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",parent_state_id) ) );
+        tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
         // ***
         verd_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),verd_node.id.clone(),tran_gv_options);
     }

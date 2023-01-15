@@ -39,8 +39,8 @@ use crate::process::ana_proc::interface::step::SimulationStepKind;
 pub fn make_graphic_logger_string_label(temp_folder : &String,
                                   state_id : u32,
                                   string_label : String) -> GraphVizNode {
-    let sl_image_file_name = format!("sl{}.png", state_id);
-    let sl_image_file_path : PathBuf = [temp_folder, &sl_image_file_name].iter().collect();
+    let sl_image_file_name = format!("sl{}", state_id);
+    let sl_image_file_path : PathBuf = [temp_folder, &format!("{}.png",sl_image_file_name)].iter().collect();
     // ***
     draw_string_label(sl_image_file_path.as_path(),string_label);
     // ***
@@ -50,7 +50,7 @@ pub fn make_graphic_logger_string_label(temp_folder : &String,
     gv_node_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
     gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
     // ***
-    return GraphVizNode{id:format!("sl{:}", state_id),style:gv_node_options};
+    return GraphVizNode{id:sl_image_file_name,style:gv_node_options};
 }
 
 
@@ -61,8 +61,8 @@ pub fn make_graphic_logger_transformation(temp_folder : &String,
                                           state_id : u32,
                                           transfo_kind : &InteractionTransformationKind,
                                           position : &Position) -> GraphVizNode {
-    let tr_image_file_name = format!("t{}.png", state_id);
-    let tr_image_file_path : PathBuf = [temp_folder, &tr_image_file_name].iter().collect();
+    let tr_image_file_name = format!("t{}", state_id);
+    let tr_image_file_path : PathBuf = [temp_folder, &format!("{}.png",tr_image_file_name)].iter().collect();
     // ***
     draw_transformation(tr_image_file_path.as_path(),transfo_kind,position);
     // ***
@@ -72,7 +72,7 @@ pub fn make_graphic_logger_transformation(temp_folder : &String,
     gv_node_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
     gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
     // ***
-    return GraphVizNode{id:format!("t{:}", state_id),style:gv_node_options};
+    return GraphVizNode{id:tr_image_file_name,style:gv_node_options};
 }
 
 
@@ -82,8 +82,8 @@ pub fn make_graphic_logger_hiding(temp_folder : &String,
                                   gen_ctx : &GeneralContext,
                                   state_id : u32,
                                   lfs_to_hide: &HashSet<usize>) -> GraphVizNode {
-    let hid_image_file_name = format!("h{}.png", state_id);
-    let hid_image_file_path : PathBuf = [temp_folder, &hid_image_file_name].iter().collect();
+    let hid_image_file_name = format!("h{}", state_id);
+    let hid_image_file_path : PathBuf = [temp_folder, &format!("{}.png",hid_image_file_name)].iter().collect();
     // ***
     draw_hiding(hid_image_file_path.as_path(),gen_ctx,lfs_to_hide);
     // ***
@@ -93,7 +93,7 @@ pub fn make_graphic_logger_hiding(temp_folder : &String,
     gv_node_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
     gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
     // ***
-    return GraphVizNode{id:format!("h{:}", state_id),style:gv_node_options};
+    return GraphVizNode{id:hid_image_file_name,style:gv_node_options};
 }
 
 
@@ -104,8 +104,8 @@ pub fn make_graphic_logger_firing(temp_folder : &String,
                                   action_position : &Position,
                                   executed_actions : &HashSet<TraceAction>,
                                   ana : Option<(&CoLocalizations, &HashSet<usize>, &HashMap<usize,SimulationStepKind>)>) -> GraphVizNode {
-    let fir_image_file_name = format!("f{}.png", state_id);
-    let fir_image_file_path : PathBuf = [temp_folder, &fir_image_file_name].iter().collect();
+    let fir_image_file_name = format!("f{}", state_id);
+    let fir_image_file_path : PathBuf = [temp_folder, &format!("{}.png",fir_image_file_name)].iter().collect();
     // ***
     match ana {
         None => {
@@ -131,6 +131,6 @@ pub fn make_graphic_logger_firing(temp_folder : &String,
     gv_node_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::white ));
     gv_node_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
     // ***
-    return GraphVizNode{id:format!("f{:}", state_id),style:gv_node_options};
+    return GraphVizNode{id:fir_image_file_name,style:gv_node_options};
 }
 

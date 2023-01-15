@@ -18,6 +18,7 @@ limitations under the License.
 use crate::io::output::graphviz::cluster::cluster::GraphVizCluster;
 use crate::io::output::graphviz::colors::DotTranslatable;
 use crate::io::output::graphviz::edge::edge::GraphVizEdge;
+use crate::io::output::graphviz::node::style::GraphvizNodeStyle;
 
 
 pub struct GraphVizDiGraph {

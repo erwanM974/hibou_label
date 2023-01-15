@@ -23,7 +23,7 @@ use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::syntax::util::fold_recursive_frags::{fold_recursive_alt_frags, fold_recursive_par_frags};
 use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_alt_frags, get_recursive_par_frags};
 
-pub fn invert_alt_sorted(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_invert_alt_sorted(interaction : &Interaction) -> Vec<Interaction> {
     let orig_alt_frags = get_recursive_alt_frags(interaction);
     let mut sorted_alt_frags : Vec<&Interaction> = orig_alt_frags.iter().map(|x| *x).sorted().collect();
     if sorted_alt_frags != orig_alt_frags {
@@ -33,7 +33,7 @@ pub fn invert_alt_sorted(interaction : &Interaction) -> Vec<Interaction> {
     }
 }
 
-pub fn invert_par_sorted(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_invert_par_sorted(interaction : &Interaction) -> Vec<Interaction> {
     let orig_par_frags = get_recursive_par_frags(interaction);
     let mut sorted_par_frags : Vec<&Interaction> = orig_par_frags.iter().map(|x| *x).sorted().collect();
     if sorted_par_frags != orig_par_frags {

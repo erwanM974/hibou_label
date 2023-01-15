@@ -23,7 +23,6 @@ use crate::io::output::draw_interactions::as_sd::interaction_repr::interaction::
 
 pub fn draw_int_as_sd(gen_ctx : &GeneralContext,
                       interaction : &Interaction,
-                      temp_folder : &String,
                       parent_folder : &String,
                       output_file_name : &String) {
     // ***

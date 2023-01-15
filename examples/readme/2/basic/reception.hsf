@@ -1,7 +1,0 @@
-@message{message}
-@lifeline{lifeline}
-@explore_option{
-    loggers = [graphic[svg,vertical]];
-    strategy = DepthFS
-}
-message -> lifeline

@@ -20,7 +20,7 @@ limitations under the License.
 use crate::core::language::syntax::action::{EmissionAction, ReceptionAction};
 use crate::core::language::syntax::interaction::Interaction;
 
-pub fn sort_action_content(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_sort_action_content(interaction : &Interaction) -> Vec<Interaction> {
     match interaction {
         &Interaction::Emission(ref em_act) => {
             let mut new_targets = em_act.targets.clone();

@@ -126,5 +126,5 @@ For instance, given "i" an interaction:
 - "loopW(i)" is equivalent to the infinite alternative "alt(∅,i,seq(i,i),...)"
 - "loopP(i)" is equivalent to the infinite alternative "alt(∅,i,par(i,i),...)"
 
-"loopH" is a specific restriction of "loopW" which we documented in
-"[A structural operational semantics for interactions with a look at loops](https://arxiv.org/abs/2105.00208)".
+"loopH" is a specific restriction of "loopW" which is documented in
+"[Equivalence of Denotational and Operational Semantics for Interaction Languages](https://link.springer.com/chapter/10.1007/978-3-031-10363-6_8)".

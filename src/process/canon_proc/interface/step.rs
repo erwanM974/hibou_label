@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use crate::core::transformation::transfodef::InteractionTransformation;
+use crate::core::transformation::transfores::InteractionTransformationResult;
 use crate::core::transformation::transfokind::InteractionTransformationKind;
 use crate::process::abstract_proc::generic::AbstractStepKind;
 use crate::process::canon_proc::interface::conf::CanonizationConfig;
@@ -25,7 +25,7 @@ use crate::process::canon_proc::interface::priorities::CanonizationPriorities;
 
 
 pub enum CanonizationStepKind {
-    Transform(InteractionTransformation),
+    Transform(InteractionTransformationResult),
     ChangePhase
 }
 
@@ -43,9 +43,9 @@ impl AbstractStepKind<CanonizationConfig> for CanonizationStepKind {
                     InteractionTransformationKind::Simpl => {
                         priority += process_priorities.simpl;
                     },
-                    InteractionTransformationKind::FlushLeft => {
+                    /*InteractionTransformationKind::FlushLeft => {
                         priority += process_priorities.flush;
-                    },
+                    },*/
                     InteractionTransformationKind::FlushRight => {
                         priority += process_priorities.flush;
                     },
@@ -82,16 +82,16 @@ impl AbstractStepKind<CanonizationConfig> for CanonizationStepKind {
                     InteractionTransformationKind::LoopSimpl => {
                         priority += process_priorities.simpl;
                     },
-                    InteractionTransformationKind::LoopAltSimpl => {
+                    /*InteractionTransformationKind::LoopAltSimpl => {
                         priority += process_priorities.simpl;
-                    },
+                    },*/
                     InteractionTransformationKind::LoopUnNest => {
                         priority += process_priorities.simpl;
                     },
                     InteractionTransformationKind::SortActionContent => {
                         priority += process_priorities.simpl;
                     },
-                    // ***
+                    /*
                     InteractionTransformationKind::MergeShiftLeft1 => {
                         // nothing
                     },
@@ -112,7 +112,7 @@ impl AbstractStepKind<CanonizationConfig> for CanonizationStepKind {
                     },
                     InteractionTransformationKind::MergeAction => {
                         // nothing
-                    }
+                    }*/
                 }
                 // ***
                 return priority;

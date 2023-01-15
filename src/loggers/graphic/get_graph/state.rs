@@ -158,13 +158,23 @@ fn make_graphic_logger_mu(temp_folder : &String,
                           is_simulation : bool,
                           sim_crit_loop : bool,
                           sim_crit_act : bool) -> GraphVizNode {
-    let mu_image_file_name = format!("mu{}.png", state_id);
+    let mu_image_file_name = format!("mu{}", state_id);
     // ***
-    draw_multitrace(gen_ctx,co_localizations,multi_trace,flags,is_simulation,sim_crit_loop,sim_crit_act,temp_folder,&mu_image_file_name);
+    draw_multitrace(gen_ctx,
+                    co_localizations,
+                    multi_trace,
+                    flags,
+                    is_simulation,
+                    sim_crit_loop,
+                    sim_crit_act,
+                    temp_folder,
+                    &mu_image_file_name);
     // ***
     let mut node_gv_options : GraphvizNodeStyle = Vec::new();
-    let mu_image_file_path : PathBuf = [temp_folder, &mu_image_file_name].iter().collect();
-    node_gv_options.push( GraphvizNodeStyleItem::Image( mu_image_file_path.into_os_string().to_str().unwrap().to_string() ) );
+    {
+        let mu_image_file_path : PathBuf = [temp_folder, &format!("{}.png",mu_image_file_name)].iter().collect();
+        node_gv_options.push( GraphvizNodeStyleItem::Image( mu_image_file_path.into_os_string().to_str().unwrap().to_string() ) );
+    }
     node_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
     node_gv_options.push( GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle) );
     // ***

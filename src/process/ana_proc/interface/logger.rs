@@ -25,6 +25,7 @@ use crate::core::language::position::position::Position;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 use crate::process::ana_proc::interface::step::SimulationStepKind;
+use crate::process::ana_proc::logic::anakind::AnalysisKind;
 use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
 use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
 
@@ -80,5 +81,15 @@ pub trait AnalysisLogger {
     fn log_verdict(&mut self,
                    parent_state_id : u32,
                    verdict : &CoverageVerdict);
+
+    fn log_out_on_local_analysis(&mut self,
+                                 gen_ctx : &GeneralContext,
+                                 parent_state_id : u32,
+                                 verdict : &CoverageVerdict,
+                                 parent_analysis_kind : &AnalysisKind,
+                                 local_coloc : &CoLocalizations,
+                                 local_interaction : &Interaction,
+                                 local_multi_trace : &MultiTrace,
+                                 local_flags : &MultiTraceAnalysisFlags);
 
 }

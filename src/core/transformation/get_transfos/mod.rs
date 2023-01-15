@@ -15,7 +15,5 @@ limitations under the License.
 */
 
 
-mod get_all_transfos;
-mod get_one_transfo;
-
-pub mod get_transfos;
+pub mod get_all_transfos;
+pub mod get_one_transfo;

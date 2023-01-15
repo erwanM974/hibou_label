@@ -39,7 +39,7 @@ use crate::process::ana_proc::interface::logger::AnalysisLogger;
 use crate::process::ana_proc::interface::node::AnalysisNodeKind;
 use crate::process::ana_proc::interface::step::{AnalysisStepKind, SimulationStepKind};
 use crate::process::ana_proc::logic::flags::{MultiTraceAnalysisFlags, WasMultiTraceConsumedWithSimulation};
-use crate::process::ana_proc::logic::local_analysis::is_dead_local_analysis;
+use crate::process::ana_proc::logic::local_analysis::{get_local_analysis_starting_data, is_dead_local_analysis};
 //use crate::process::ana_proc::logic::local_analysis::is_dead_local_analysis;
 use crate::process::ana_proc::logic::verdicts::{CoverageVerdict, GlobalVerdict, InconcReason, update_global_verdict_from_new_coverage_verdict};
 
@@ -179,24 +179,6 @@ impl AnalysisProcessManager {
         // ***
         if !node_kind.flags.is_multi_trace_empty(&self.multi_trace) {
             // ***
-            if is_dead_local_analysis(&self.manager.gen_ctx,
-                                      &self.co_localizations,
-                                      &self.ana_kind,
-                                      &self.use_locana,
-                                      &node_kind.interaction,
-                                      &self.multi_trace,
-                                      &mut node_kind.flags) {
-                let verdict : CoverageVerdict;
-                if self.ana_kind.has_simulation() {
-                    verdict = CoverageVerdict::OutSim(true);
-                } else {
-                    verdict = CoverageVerdict::Out(true);
-                }
-                self.verdict_loggers(&verdict,parent_id);
-                return Some( verdict );
-            }
-            // ***
-            // ***
             match &self.ana_kind {
                 &AnalysisKind::Accept => {
                     self.add_action_matches_in_analysis(parent_id,&node_kind.interaction,&node_kind.flags,&mut id_as_child, &mut to_enqueue);
@@ -240,6 +222,38 @@ impl AnalysisProcessManager {
         }
         // ***
         if id_as_child > 0 {
+            // ***
+            match is_dead_local_analysis(&self.manager.gen_ctx,
+                                         &self.co_localizations,
+                                         &self.ana_kind,
+                                         &self.use_locana,
+                                         &node_kind.interaction,
+                                         &self.multi_trace,
+                                         &mut node_kind.flags) {
+                None => {},
+                Some( fail_on_canal_id ) => {
+                    let (local_coloc,local_interaction,local_multi_trace,local_flags) = get_local_analysis_starting_data(&self.manager.gen_ctx,
+                                                                                                                         fail_on_canal_id,
+                                                                                                                         &self.co_localizations,
+                                                                                                                         &node_kind.interaction,
+                                                                                                                         &self.multi_trace,
+                                                                                                                         &node_kind.flags);
+                    let verdict : CoverageVerdict;
+                    if self.ana_kind.has_simulation() {
+                        verdict = CoverageVerdict::OutSim(true);
+                    } else {
+                        verdict = CoverageVerdict::Out(true);
+                    }
+                    self.verdict_out_on_local_analysis(&verdict,
+                                                       parent_id,
+                                                       &local_coloc,
+                                                       &local_interaction,
+                                                       &local_multi_trace,
+                                                       &local_flags);
+                    return Some( verdict );
+                }
+            }
+            // ***
             let remaining_ids_to_process : HashSet<u32> = HashSet::from_iter((1..(id_as_child+1)).collect::<Vec<u32>>().iter().cloned() );
             let generic_node = GenericNode{kind:node_kind,remaining_ids_to_process,depth:ana_depth};
             self.manager.remember_state( parent_id, generic_node );
@@ -449,6 +463,25 @@ impl AnalysisProcessManager {
         for logger in self.manager.loggers.iter_mut() {
             logger.log_verdict(parent_state_id,
                                verdict);
+        }
+    }
+
+    pub fn verdict_out_on_local_analysis(&mut self,
+                                         verdict : &CoverageVerdict,
+                                         parent_state_id : u32,
+                                         local_coloc : &CoLocalizations,
+                                         local_interaction : &Interaction,
+                                         local_multi_trace : &MultiTrace,
+                                         local_flags : &MultiTraceAnalysisFlags) {
+        for logger in self.manager.loggers.iter_mut() {
+            logger.log_out_on_local_analysis(&self.manager.gen_ctx,
+                                             parent_state_id,
+                                             verdict,
+                                             &self.ana_kind,
+                                             local_coloc,
+                                             local_interaction,
+                                             local_multi_trace,
+                                             local_flags);
         }
     }
 

@@ -44,6 +44,8 @@ pub fn parse_graphic_logger(logger_id : u32,
     let mut layout = GraphicProcessLoggerLayout::vertical;
     let mut int_repr_sd = true;
     let mut int_repr_tt = false;
+    let mut display_legend = true;
+    let mut display_subprocesses = true;
     let mut parent_folder = "".to_string();
     let mut output_file_name = format!("{:}_l{:}",file_name,logger_id);
     // ***
@@ -94,6 +96,34 @@ pub fn parse_graphic_logger(logger_id : u32,
                             }
                         }
                     },
+                    Rule::GRAPHIC_LOGGER_draw_legend => {
+                        let inner = opt_pair.into_inner().next().unwrap();
+                        match inner.as_rule() {
+                            Rule::HIBOU_true => {
+                                display_legend = true;
+                            },
+                            Rule::HIBOU_false => {
+                                display_legend = false;
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", inner.as_rule());
+                            }
+                        }
+                    },
+                    Rule::GRAPHIC_LOGGER_draw_sub_processes => {
+                        let inner = opt_pair.into_inner().next().unwrap();
+                        match inner.as_rule() {
+                            Rule::HIBOU_true => {
+                                display_subprocesses = true;
+                            },
+                            Rule::HIBOU_false => {
+                                display_subprocesses = false;
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", inner.as_rule());
+                            }
+                        }
+                    },
                     Rule::GRAPHIC_LOGGER_parent_folder => {
                         let inner_pair = opt_pair.into_inner().next().unwrap();
                         parent_folder = inner_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
@@ -112,6 +142,8 @@ pub fn parse_graphic_logger(logger_id : u32,
     // ***
     return GraphicProcessLogger::new(output_format,
                                      layout,
+                                     display_legend,
+                                     display_subprocesses,
                                      int_repr_sd,
                                      int_repr_tt,
                                      format!("temp_l{:}", logger_id),

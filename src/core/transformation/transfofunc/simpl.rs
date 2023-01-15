@@ -23,7 +23,7 @@ use crate::core::language::syntax::util::fold_recursive_frags::{fold_recursive_c
 use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_coreg_frags, get_recursive_par_frags, get_recursive_seq_frags, get_recursive_strict_frags};
 
 
-pub fn simpl(interaction : &Interaction) -> Vec<Interaction> {
+pub fn transfo_simpl(interaction : &Interaction) -> Vec<Interaction> {
     match interaction {
         &Interaction::Strict(ref i1, ref i2) => {
             let mut old_frags = get_recursive_strict_frags(i1);

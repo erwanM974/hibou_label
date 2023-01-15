@@ -44,7 +44,6 @@ pub mod core;
 pub mod io;
 pub mod ui;
 pub mod plantuml;
-//pub mod canonize;
 //pub mod merge_gates;
 pub mod process;
 pub mod loggers;
