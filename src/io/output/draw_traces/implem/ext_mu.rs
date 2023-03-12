@@ -162,7 +162,7 @@ fn add_trace_text_to_canal<'a>(gen_ctx: &GeneralContext,
                                rem_actions : &mut impl Iterator<Item = &'a HashSet<TraceAction>> ) {
     let mut rem_len = init_len;
     while let Some(actions) = rem_actions.next() {
-        canal_text.append(&mut diagram_repr_trace_actions(actions,gen_ctx));
+        canal_text.append(&mut diagram_repr_trace_actions(actions,gen_ctx,false));
         rem_len -= 1;
         if rem_len > 0 {
             canal_text.push( TextToPrint{text:".".to_string(), color:Rgb(HC_Grammar_Symbol)} );

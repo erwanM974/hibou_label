@@ -18,7 +18,6 @@ pub mod cli_analyze;
 pub mod cli_canonize;
 pub mod cli_draw;
 pub mod cli_explore;
-//pub mod cli_merge;
 pub mod cli_puml_ap;
 pub mod cli_puml_sd;
 pub mod cli_slice;

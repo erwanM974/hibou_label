@@ -16,5 +16,6 @@ limitations under the License.
 
 mod parser;
 mod action;
+mod trace;
 mod interaction;
 pub mod interface;

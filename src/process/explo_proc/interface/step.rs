@@ -18,7 +18,7 @@ limitations under the License.
 
 
 use crate::core::execution::semantics::frontier::FrontierElement;
-use crate::core::execution::trace::trace::TraceActionKind;
+use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::process::abstract_proc::generic::AbstractStepKind;
 use crate::process::explo_proc::interface::conf::ExplorationConfig;
 use crate::process::explo_proc::interface::priorities::ExplorationPriorities;
@@ -33,16 +33,13 @@ impl AbstractStepKind<ExplorationConfig> for ExplorationStepKind {
         match self {
             ExplorationStepKind::Execute( frt_elt ) => {
                 let mut priority : i32 = 0;
-                match frt_elt.act_kind {
-                    TraceActionKind::Emission => {
-                        priority += process_priorities.emission;
-                    },
-                    TraceActionKind::Reception => {
-                        priority += process_priorities.reception;
-                    }
-                }
+                // ***
+                let (num_em,num_rc) = TraceAction::get_actions_kinds(&frt_elt.target_actions);
+                priority += num_em*process_priorities.emission;
+                priority += num_rc*process_priorities.reception;
+                // ***
                 priority += process_priorities.multi_rdv * ( frt_elt.target_actions.len() as i32);
-                priority += process_priorities.in_loop * ( frt_elt.loop_depth as i32);
+                priority += process_priorities.in_loop * ( frt_elt.max_loop_depth as i32);
                 // ***
                 return priority;
             }

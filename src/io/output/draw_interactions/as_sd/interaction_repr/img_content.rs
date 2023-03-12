@@ -15,15 +15,16 @@ limitations under the License.
 */
 
 use std::cmp;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use image::{Rgb, RgbImage};
 use imageproc::drawing::draw_line_segment_mut;
 use rusttype::{Font, Scale};
+use crate::core::execution::trace::trace::TraceAction;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
-use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_strict_frags,get_recursive_seq_frags,get_recursive_par_frags,get_recursive_alt_frags,get_recursive_coreg_frags};
+use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_strict_frags, get_recursive_seq_frags, get_recursive_par_frags, get_recursive_alt_frags, get_recursive_coreg_frags, get_recursive_sync_frags};
 use crate::io::output::draw_commons::colored_text::draw_ttp::draw_colored_text;
 use crate::io::output::draw_commons::colored_text::ttp::TextToPrint;
 use crate::io::output::draw_commons::hibou_color_palette::HCP_Black;
@@ -32,6 +33,7 @@ use crate::io::output::draw_interactions::as_sd::action_repr::emission::draw_emi
 use crate::io::output::draw_interactions::as_sd::action_repr::reception::draw_reception;
 use crate::io::output::draw_interactions::as_sd::util::dimensions_tools::get_y_pos_from_yshift;
 use crate::io::output::draw_interactions::as_sd::util::lf_coords::DrawingLifelineCoords;
+use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_actions;
 use crate::io::textual_convention::*;
 
 
@@ -86,6 +88,14 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
             let mut frags = get_recursive_par_frags(i1);
             frags.extend( get_recursive_par_frags(i2) );
             let label = vec![TextToPrint{text:SYNTAX_PAR.to_string(),color:Rgb(HCP_Black)}];
+            return draw_n_ary_combined_fragment(image, gen_ctx,frags,lf_x_widths, lf_num,label, nest_shift, yshift);
+        },
+        &Interaction::Sync(ref sync_acts, ref i1,ref i2) => {
+            let mut frags = get_recursive_sync_frags(sync_acts,i1);
+            frags.extend( get_recursive_sync_frags(sync_acts,i2) );
+            let mut label = vec![TextToPrint{text:SYNTAX_SYNC.to_string(),color:Rgb(HCP_Black)}];
+            let sync_acts_as_hashset = HashSet::from_iter(sync_acts.iter().cloned());
+            label.append(&mut diagram_repr_trace_actions(&sync_acts_as_hashset,gen_ctx,true));
             return draw_n_ary_combined_fragment(image, gen_ctx,frags,lf_x_widths, lf_num,label, nest_shift, yshift);
         },
         &Interaction::Loop(ref lkind, ref i1) => {

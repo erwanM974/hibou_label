@@ -17,6 +17,7 @@ limitations under the License.
 
 use std::collections::HashSet;
 use std::hash::Hash;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::syntax::action::{EmissionAction, ReceptionAction};
 
 
@@ -39,7 +40,8 @@ pub enum Interaction {
     Alt(Box<Interaction>,Box<Interaction>),
     Par(Box<Interaction>,Box<Interaction>),
     Loop(LoopKind,Box<Interaction>),
-    And(Box<Interaction>,Box<Interaction>)
+    And(Box<Interaction>,Box<Interaction>),
+    Sync(Vec<TraceAction>,Box<Interaction>,Box<Interaction>)
 }
 
 
@@ -73,6 +75,9 @@ impl Interaction {
             },
             &Interaction::Loop(_, _) => {
                 return true;
+            },
+            &Interaction::Sync(_,ref i1, ref i2) => {
+                return i1.express_empty() && i2.express_empty();
             },
             _ => {
                 panic!("non-conform interaction");
@@ -129,6 +134,13 @@ impl Interaction {
             &Interaction::Loop(_, i1) => {
                 return i1.contained_model_actions();
             },
+            &Interaction::Sync(_, ref i1, ref i2) => {
+                let (mut em,mut rc) = i1.contained_model_actions();
+                let (mut em2,mut rc2) = i2.contained_model_actions();
+                em.extend(em2);
+                rc.extend(rc2);
+                return (em,rc);
+            },
             _ => {
                 panic!("non-conform interaction");
             }
@@ -155,6 +167,8 @@ impl Interaction {
                 return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
             }, &Interaction::Loop(_, ref i1) => {
                 return 1 + i1.max_nested_loop_depth();
+            }, &Interaction::Sync(_, ref i1, ref i2) => {
+                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
             },
             _ => {
                 panic!("non-conform interaction");
@@ -182,6 +196,8 @@ impl Interaction {
                 return i1.total_loop_num() + i2.total_loop_num();
             }, &Interaction::Loop(_, ref i1) => {
                 return 1 + i1.total_loop_num();
+            }, &Interaction::Sync(_, ref i1, ref i2) => {
+                return i1.total_loop_num() + i2.total_loop_num();
             },
             _ => {
                 panic!("non-conform interaction");

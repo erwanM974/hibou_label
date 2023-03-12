@@ -16,4 +16,5 @@ limitations under the License.
 
 
 pub mod from_model;
-mod implem;
+mod primitive;
+mod interaction;

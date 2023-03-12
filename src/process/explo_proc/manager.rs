@@ -141,7 +141,7 @@ impl ExplorationProcessManager {
         match &(to_process.kind) {
             &ExplorationStepKind::Execute( ref frt_elt ) => {
                 let new_depth = parent_state.depth + 1;
-                let new_loop_depth = parent_state.kind.loop_depth + (parent_state.kind.interaction).get_loop_depth_at_pos(&frt_elt.position);
+                let new_loop_depth = parent_state.kind.loop_depth + frt_elt.max_loop_depth;
                 // ***
                 match self.manager.apply_filters(new_depth,node_counter,&ExplorationFilterCriterion{loop_depth:new_loop_depth}) {
                     None => {
@@ -217,6 +217,14 @@ impl ExplorationProcessManager {
                          parent_state_id : u32,
                          new_state_id :u32) {
         for logger in self.manager.loggers.iter_mut() {
+            /*logger.log_new_interaction(&self.manager.gen_ctx,
+                                       new_state_id,
+                                       new_interaction);
+            logger.log_exec_transition(&self.manager.gen_ctx,
+                               parent_state_id,
+                               new_state_id,
+                               action_position,
+                               executed_actions);*/
             logger.log_explore(&self.manager.gen_ctx,
                                  parent_state_id,
                                  new_state_id,

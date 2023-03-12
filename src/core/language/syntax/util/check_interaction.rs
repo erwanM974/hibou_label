@@ -29,7 +29,8 @@ pub struct InteractionCharacteristics {
     pub has_coregions : bool,
     pub has_loop_p : bool,
     pub has_loop_w : bool,
-    pub has_loop_s : bool
+    pub has_loop_s : bool,
+    pub has_sync : bool
 }
 
 impl InteractionCharacteristics {
@@ -39,12 +40,14 @@ impl InteractionCharacteristics {
                has_coregions : bool,
                has_loop_p : bool,
                has_loop_w : bool,
-               has_loop_s : bool) -> InteractionCharacteristics {
-        return InteractionCharacteristics{has_gates,has_ands,has_coregions,has_loop_p,has_loop_w,has_loop_s};
+               has_loop_s : bool,
+               has_sync : bool) -> InteractionCharacteristics {
+        return InteractionCharacteristics{has_gates,has_ands,has_coregions,has_loop_p,has_loop_w,has_loop_s,has_sync};
     }
 
     pub fn new_empty() -> InteractionCharacteristics {
         return InteractionCharacteristics::new(false,
+                                               false,
                                                false,
                                                false,
                                                false,
@@ -64,6 +67,7 @@ impl InteractionCharacteristics {
             self.has_loop_p || other.has_loop_p,
             self.has_loop_w || other.has_loop_w,
             self.has_loop_s || other.has_loop_s,
+            self.has_sync || other.has_sync,
         )
     }
 }
@@ -145,127 +149,13 @@ impl Interaction {
                 let mut charac = i1.get_characteristics().merge( &i2.get_characteristics() );
                 charac.has_ands = true;
                 return charac;
+            },
+            Interaction::Sync(_, ref i1, ref i2) => {
+                let mut charac = i1.get_characteristics().merge( &i2.get_characteristics() );
+                charac.has_sync = true;
+                return charac;
             }
         }
     }
 
-    pub fn has_gates(&self) -> bool {
-        match self {
-            Interaction::Empty => {
-                return false;
-            },
-            Interaction::Emission(ref em_act) => {
-                for tar_ref in &em_act.targets {
-                    match tar_ref {
-                        EmissionTargetRef::Gate(_) => {
-                            return true;
-                        },
-                        _ => {}
-                    }
-                }
-                return false;
-            },
-            Interaction::Reception(ref rc_act) => {
-                match rc_act.origin_gt_id {
-                    None => {
-                        return false;
-                    },
-                    Some(_) => {
-                        return true;
-                    }
-                }
-            },
-            Interaction::Strict(ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            },
-            Interaction::Seq(ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            },
-            Interaction::Par(ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            },
-            Interaction::Alt(ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            },
-            Interaction::Loop(_, ref i1) => {
-                return i1.has_gates();
-            },
-            Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            },
-            Interaction::And(ref i1, ref i2) => {
-                return i1.has_gates() && i2.has_gates();
-            }
-        }
-    }
-
-    pub fn has_ands(&self) -> bool {
-        match self {
-            Interaction::Empty => {
-                return false;
-            },
-            Interaction::Emission(_) => {
-                return false;
-            },
-            Interaction::Reception(_) => {
-                return false;
-            },
-            Interaction::Strict(ref i1, ref i2) => {
-                return i1.has_ands() && i2.has_ands();
-            },
-            Interaction::Seq(ref i1, ref i2) => {
-                return i1.has_ands() && i2.has_ands();
-            },
-            Interaction::Par(ref i1, ref i2) => {
-                return i1.has_ands() && i2.has_ands();
-            },
-            Interaction::Alt(ref i1, ref i2) => {
-                return i1.has_ands() && i2.has_ands();
-            },
-            Interaction::Loop(_, ref i1) => {
-                return i1.has_ands();
-            },
-            Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.has_ands() && i2.has_ands();
-            },
-            Interaction::And(_, _) => {
-                return true;
-            }
-        }
-    }
-
-    pub fn has_coregions(&self) -> bool {
-        match self {
-            Interaction::Empty => {
-                return false;
-            },
-            Interaction::Emission(_) => {
-                return false;
-            },
-            Interaction::Reception(_) => {
-                return false;
-            },
-            Interaction::Strict(ref i1, ref i2) => {
-                return i1.has_coregions() && i2.has_coregions();
-            },
-            Interaction::Seq(ref i1, ref i2) => {
-                return i1.has_coregions() && i2.has_coregions();
-            },
-            Interaction::Par(ref i1, ref i2) => {
-                return i1.has_coregions() && i2.has_coregions();
-            },
-            Interaction::Alt(ref i1, ref i2) => {
-                return i1.has_coregions() && i2.has_coregions();
-            },
-            Interaction::Loop(_, ref i1) => {
-                return i1.has_coregions();
-            },
-            Interaction::CoReg(_,_, _) => {
-                return true;
-            },
-            Interaction::And(ref i1, ref i2) => {
-                return i1.has_coregions() && i2.has_coregions();
-            }
-        }
-    }
 }

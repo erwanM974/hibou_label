@@ -165,15 +165,13 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                         let mut inner = ana_kind_pair.into_inner();
                         match inner.next() {
                             None => {
-                                ana_kind = AnalysisKind::Simulate(
-                                    SimulationConfiguration{sim_before:false,
-                                                            loop_crit:SimulationLoopCriterion::MaxDepth,
-                                                            act_crit:SimulationActionCriterion::None});
+                                let sim_config = SimulationConfiguration::new(false,false,false,SimulationLoopCriterion::MaxDepth,SimulationActionCriterion::None);
+                                ana_kind = AnalysisKind::Simulate(sim_config);
                             },
                             Some( sim_config_decl_pair) => {
                                 match parse_simulation_config(sim_config_decl_pair) {
-                                    Ok( config) => {
-                                        ana_kind = AnalysisKind::Simulate(config);
+                                    Ok( sim_config) => {
+                                        ana_kind = AnalysisKind::Simulate(sim_config);
                                     },
                                     Err(e) => {
                                         return Err(e);
@@ -319,6 +317,8 @@ fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<Analys
 
 fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<SimulationConfiguration,HibouParsingError> {
     let mut sim_before = false;
+    let mut reset_crit_after_exec = false;
+    let mut multiply_by_multitrace_length = false;
     let mut loop_crit = SimulationLoopCriterion::MaxDepth;
     let mut act_crit = SimulationActionCriterion::None;
     // ***
@@ -326,6 +326,12 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
         match config_opt_pair.as_rule() {
             Rule::OPTION_ANA_SIMULATE_CONFIG_simbefore => {
                 sim_before = true;
+            },
+            Rule::OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length => {
+                multiply_by_multitrace_length = true;
+            },
+            Rule::OPTION_ANA_SIMULATE_CONFIG_reset => {
+                reset_crit_after_exec = true;
             },
             Rule::OPTION_ANA_SIMULATE_CONFIG_act => {
                 let inner : Pair<Rule> = config_opt_pair.into_inner().next().unwrap();
@@ -335,6 +341,9 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
                         let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                         let my_val : u32 = content_str.parse::<u32>().unwrap();
                         act_crit = SimulationActionCriterion::SpecificNum(my_val);
+                    },
+                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_maxnum => {
+                        act_crit = SimulationActionCriterion::MaxNumOutsideLoops;
                     },
                     Rule::OPTION_ANA_SIMULATE_CONFIG_crit_none => {
                         act_crit = SimulationActionCriterion::None;
@@ -373,6 +382,6 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
         }
     }
     // ***
-    let config = SimulationConfiguration{sim_before,loop_crit,act_crit};
+    let config = SimulationConfiguration::new(sim_before,reset_crit_after_exec,multiply_by_multitrace_length,loop_crit,act_crit);
     return Ok(config);
 }

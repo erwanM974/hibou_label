@@ -64,6 +64,7 @@ impl DotTranslatable for GvNodeStyle {
 pub enum GvNodeShape {
     Ellipse,
     Circle,
+    DoubleCircle,
     Triangle,
     Diamond,
     Trapezium,

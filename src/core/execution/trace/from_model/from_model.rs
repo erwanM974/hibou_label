@@ -19,7 +19,7 @@ limitations under the License.
 use std::collections::HashSet;
 use crate::core::execution::trace::trace::TraceAction;
 
-pub trait InterpretableAsTraceAction {
+pub trait PrimitiveInterpretableAsTraceAction {
 
     fn get_all_atomic_actions(&self) -> HashSet<TraceAction>;
 
@@ -30,4 +30,14 @@ pub trait InterpretableAsTraceAction {
 }
 
 
+pub trait InteractionInterpretableAsTraceAction {
 
+    fn get_all_trace_actions(&self) -> HashSet<TraceAction>;
+
+    fn get_trace_actions_outside_loops(&self) -> HashSet<TraceAction>;
+
+    fn get_atomic_actions_number(&self) -> usize;
+
+    fn get_atomic_actions_number_outside_loops(&self) -> usize;
+
+}

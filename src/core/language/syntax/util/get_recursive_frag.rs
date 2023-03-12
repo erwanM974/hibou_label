@@ -17,6 +17,7 @@ limitations under the License.
 
 
 
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::syntax::interaction::Interaction;
 
 pub fn get_recursive_alt_frags(interaction : &Interaction) -> Vec<&Interaction> {
@@ -95,4 +96,22 @@ pub fn get_recursive_coreg_frags<'lifetime>(ref_cr : &Vec<usize>, interaction : 
 }
 
 
+pub fn get_recursive_sync_frags<'lifetime>(ref_sync_acts : &Vec<TraceAction>,
+                                           interaction : &'lifetime Interaction) -> Vec<&'lifetime Interaction> {
+    let mut frags : Vec<&Interaction> = Vec::new();
+    match interaction {
+        &Interaction::Sync(ref sync_act, ref i1, ref i2) => {
+            if sync_act == ref_sync_acts {
+                frags.extend( get_recursive_sync_frags(ref_sync_acts,i1));
+                frags.extend( get_recursive_sync_frags(ref_sync_acts,i2));
+            } else {
+                frags.push(interaction);
+            }
+        },
+        _ => {
+            frags.push(interaction);
+        }
+    }
+    return frags;
+}
 

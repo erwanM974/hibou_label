@@ -105,17 +105,30 @@ pub fn get_all_transformations_rec(transfos : &Vec<InteractionTransformationKind
                                                                          Interaction::Loop(lk.clone(), Box::new(left_transfo.result))
                 ) );
             }
-        }, &Interaction::And(ref i1, ref i2) => {
+        }, &Interaction::Sync(ref sync_acts, ref i1, ref i2) => {
             for left_transfo in get_all_transformations_rec(transfos,i1) {
                 results.push( InteractionTransformationResult::new(left_transfo.kind,
-                                                                 Position::Left(Box::new(left_transfo.position)),
-                                                                 Interaction::Strict(Box::new(left_transfo.result),i2.clone())
+                                                                   Position::Left(Box::new(left_transfo.position)),
+                                                                   Interaction::Sync(sync_acts.clone(),Box::new(left_transfo.result),i2.clone())
                 ) );
             }
             for right_transfo in get_all_transformations_rec(transfos,i2) {
                 results.push( InteractionTransformationResult::new(right_transfo.kind,
-                                                                 Position::Right(Box::new(right_transfo.position)),
-                                                                 Interaction::Strict(i1.clone(), Box::new(right_transfo.result))
+                                                                   Position::Right(Box::new(right_transfo.position)),
+                                                                   Interaction::Sync(sync_acts.clone(),i1.clone(), Box::new(right_transfo.result))
+                ) );
+            }
+        }, &Interaction::And(ref i1, ref i2) => {
+            for left_transfo in get_all_transformations_rec(transfos,i1) {
+                results.push( InteractionTransformationResult::new(left_transfo.kind,
+                                                                   Position::Left(Box::new(left_transfo.position)),
+                                                                   Interaction::And(Box::new(left_transfo.result),i2.clone())
+                ) );
+            }
+            for right_transfo in get_all_transformations_rec(transfos,i2) {
+                results.push( InteractionTransformationResult::new(right_transfo.kind,
+                                                                   Position::Right(Box::new(right_transfo.position)),
+                                                                   Interaction::And(i1.clone(), Box::new(right_transfo.result))
                 ) );
             }
         }

@@ -163,7 +163,7 @@ impl Ord for Interaction {
             },
             // ***
             (Interaction::Loop(self_lk,self_i1),Interaction::Loop(other_lk,other_i1)) => {
-                let cmp_lk = self_lk.cmp(other_lk);
+                let cmp_lk = self_lk.cmp(&other_lk);
                 match &cmp_lk {
                     Ordering::Equal => {
                         return self_i1.cmp(other_i1);
@@ -178,7 +178,45 @@ impl Ord for Interaction {
             },
             (_,Interaction::Loop(_,_)) => {
                 return Ordering::Greater;
-            }
+            },
+            (Interaction::Sync(self_acts,self_i1,self_i2),Interaction::Sync(other_acts,other_i1,other_i2)) => {
+                let max_acts_len = self_acts.len().max(other_acts.len());
+                for i in 0..max_acts_len {
+                    match (self_acts.get(i) ,other_acts.get(i) ) {
+                        ( Some( cr_ref1 ), Some(cr_ref2) ) => {
+                            if cr_ref1 < cr_ref2 {
+                                return Ordering::Less;
+                            }
+                            if cr_ref1 > cr_ref2 {
+                                return Ordering::Greater;
+                            }
+                        },
+                        (None,Some(_)) => {
+                            return Ordering::Less;
+                        },
+                        (Some(_),None) => {
+                            return Ordering::Greater;
+                        },
+                        (None,None) => {}
+                    }
+                }
+                // ***
+                let cmp_left = self_i1.cmp(other_i1);
+                match &cmp_left {
+                    Ordering::Equal => {
+                        return self_i2.cmp(other_i2);
+                    },
+                    _ => {
+                        return cmp_left;
+                    }
+                }
+            },
+            (Interaction::Sync(_,_,_),_) => {
+                return Ordering::Less;
+            },
+            (_,Interaction::Sync(_,_,_)) => {
+                return Ordering::Greater;
+            },
             (Interaction::And(self_i1,self_i2),Interaction::And(other_i1,other_i2)) => {
                 let cmp_left = self_i1.cmp(other_i1);
                 match &cmp_left {

@@ -52,6 +52,39 @@ impl LifelineHideable for Interaction {
                     }
                 }
             },
+            Interaction::Sync(sync_acts,i1,i2) => {
+                let i1hid = i1.hide(lfs_to_remove);
+                let i2hid = i2.hide(lfs_to_remove);
+                // ***
+                let mut new_sync_acts= vec![];
+                for sync_act in sync_acts {
+                    if !lfs_to_remove.contains(&sync_act.lf_id) {
+                        new_sync_acts.push(sync_act.clone());
+                    }
+                }
+                if new_sync_acts.len() > 0 {
+                    return Interaction::Sync(new_sync_acts,
+                                              Box::new(i1hid),
+                                              Box::new(i2hid) );
+                } else {
+                    match &i1hid {
+                        Interaction::Empty => {
+                            return i2hid;
+                        },
+                        _ => {
+                            match &i2hid {
+                                Interaction::Empty => {
+                                    return i1hid;
+                                },
+                                _ => {
+                                    return Interaction::Par(Box::new(i1hid),
+                                                            Box::new(i2hid) );
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             Interaction::CoReg(cr,i1,i2) => {
                 let i1hid = i1.hide(lfs_to_remove);
                 let i2hid = i2.hide(lfs_to_remove);
@@ -65,7 +98,20 @@ impl LifelineHideable for Interaction {
                                 return i1hid
                             },
                             _ => {
-                                return Interaction::CoReg(cr.clone(), Box::new(i1hid), Box::new(i2hid) );
+                                let mut new_cr= vec![];
+                                for concurrent_lf in cr {
+                                    if !lfs_to_remove.contains(concurrent_lf) {
+                                        new_cr.push(*concurrent_lf);
+                                    }
+                                }
+                                if new_cr.len() > 0 {
+                                    return Interaction::CoReg(new_cr,
+                                                              Box::new(i1hid),
+                                                              Box::new(i2hid) );
+                                } else {
+                                    return Interaction::Seq(Box::new(i1hid),
+                                                              Box::new(i2hid) );
+                                }
                             }
                         }
                     }

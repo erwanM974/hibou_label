@@ -18,14 +18,25 @@ limitations under the License.
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Position {
+    Epsilon(Option<usize>),
     Left(Box<Position>),
     Right(Box<Position>),
-    Epsilon(Option<usize>)
+    Both(Box<Position>,Box<Position>)
 }
 
 impl Position {
     pub fn to_string(&self) -> String {
         match self {
+            Position::Epsilon(sub_pos) => {
+                match sub_pos {
+                    None => {
+                        return "0".to_string();
+                    },
+                    Some(sbp_idx) => {
+                        return format!("s{:}",sbp_idx);
+                    }
+                }
+            },
             Position::Left(ref in_self) => {
                 let mut my_string = "1".to_string();
                 let sub_pos = in_self.to_string();
@@ -42,15 +53,16 @@ impl Position {
                 }
                 return my_string;
             },
-            Position::Epsilon(sub_pos) => {
-                match sub_pos {
-                    None => {
-                        return "0".to_string();
-                    },
-                    Some(sbp_idx) => {
-                        return format!("s{:}",sbp_idx);
-                    }
+            Position::Both(ref sub1, ref sub2) => {
+                let mut sub1_str = sub1.to_string();
+                if sub1_str == "0".to_string() {
+                    sub1_str = "".to_string();
                 }
+                let mut sub2_str = sub2.to_string();
+                if sub2_str == "0".to_string() {
+                    sub2_str = "".to_string();
+                }
+                return format!("(1{},2{})", sub1_str,sub2_str);
             }
         }
     }

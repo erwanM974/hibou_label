@@ -53,7 +53,7 @@ impl AnalysisProcessManager {
                         // nothing
                     },
                     _ => {
-                        let loop_depth = interaction.get_loop_depth_at_pos(&frt_elt.position);
+                        let loop_depth = frt_elt.max_loop_depth;
                         if loop_depth > flags.rem_loop_in_sim {
                             ok_to_simulate = false;
                         }

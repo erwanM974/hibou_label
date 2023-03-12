@@ -17,3 +17,4 @@ limitations under the License.
 
 pub mod emission;
 pub mod reception;
+pub mod trace_action;

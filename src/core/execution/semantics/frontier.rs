@@ -17,8 +17,8 @@ limitations under the License.
 
 
 use std::collections::HashSet;
-use crate::core::execution::trace::from_model::from_model::InterpretableAsTraceAction;
-use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
+use crate::core::execution::trace::from_model::from_model::PrimitiveInterpretableAsTraceAction;
+use crate::core::execution::trace::trace::{TraceAction};
 use crate::core::language::avoid::avoids::AvoidsLifelines;
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::core::language::position::position::Position;
@@ -31,8 +31,7 @@ pub struct FrontierElement {
     pub position : Position,
     pub target_lf_ids : HashSet<usize>,
     pub target_actions : HashSet<TraceAction>,
-    pub act_kind : TraceActionKind,
-    pub loop_depth : u32
+    pub max_loop_depth : u32
 }
 
 
@@ -40,9 +39,8 @@ impl FrontierElement {
     pub fn new(position : Position,
                target_lf_ids : HashSet<usize>,
                target_actions : HashSet<TraceAction>,
-               act_kind : TraceActionKind,
-               loop_depth : u32) -> FrontierElement {
-        return FrontierElement{position,target_lf_ids,target_actions,act_kind,loop_depth};
+               max_loop_depth : u32) -> FrontierElement {
+        return FrontierElement{position,target_lf_ids,target_actions,max_loop_depth};
     }
 }
 
@@ -77,7 +75,6 @@ fn frontier_on_emission(em_act : &EmissionAction, loop_depth : u32) -> Vec<Front
             return vec![FrontierElement::new(Position::Epsilon(None),
                                              occupation,
                                              actions,
-                                             TraceActionKind::Emission,
                                              loop_depth)];
         },
         CommunicationSynchronicity::Asynchronous => {
@@ -85,7 +82,6 @@ fn frontier_on_emission(em_act : &EmissionAction, loop_depth : u32) -> Vec<Front
             return vec![FrontierElement::new(Position::Epsilon(None),
                                              hashset!{em_act.origin_lf_id},
                                              hashset!{emission_tract},
-                                             TraceActionKind::Emission,
                                              loop_depth)];
         }
     }
@@ -99,7 +95,6 @@ fn frontier_on_reception(rc_act : &ReceptionAction, loop_depth : u32) -> Vec<Fro
             return vec![FrontierElement::new(Position::Epsilon(None),
                                              occupation,
                                              actions,
-                                             TraceActionKind::Reception,
                                              loop_depth)];
         },
         CommunicationSynchronicity::Asynchronous => {
@@ -109,7 +104,6 @@ fn frontier_on_reception(rc_act : &ReceptionAction, loop_depth : u32) -> Vec<Fro
                 frt.push( FrontierElement::new(Position::Epsilon(Some(rcp_idx)),
                                                hashset!{*rcp_lf_id},
                                                hashset!{reception_tract},
-                                               TraceActionKind::Reception,
                                                loop_depth) );
             }
             return frt;
@@ -169,6 +163,57 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
             return front;
         },
+        Interaction::Sync(ref sync_acts,ref i1, ref i2) => {
+            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+            // ***
+            let mut new_front = vec![];
+            let mut rem_frt1 = vec![];
+            let mut rem_frt2 = vec![];
+            // ***
+            for frt1_elt in global_frontier_rec(i1,loop_depth) {
+                let intersect : HashSet<TraceAction> = frt1_elt.target_actions.intersection(&sync_acts_as_hashset).cloned().collect();
+                if intersect.len() > 0 {
+                    rem_frt1.push((frt1_elt, intersect) );
+                } else {
+                    let shifted_pos = Position::Left(Box::new(frt1_elt.position));
+                    new_front.push( FrontierElement::new(shifted_pos,
+                                                         frt1_elt.target_lf_ids,
+                                                         frt1_elt.target_actions,
+                                                         frt1_elt.max_loop_depth ));
+                }
+            }
+            // ***
+            for frt2_elt in global_frontier_rec(i2,loop_depth) {
+                let intersect : HashSet<TraceAction> = frt2_elt.target_actions.intersection(&sync_acts_as_hashset).cloned().collect();
+                if intersect.len() > 0 {
+                    rem_frt2.push((frt2_elt,intersect) );
+                } else {
+                    let shifted_pos = Position::Right(Box::new(frt2_elt.position));
+                    new_front.push( FrontierElement::new(shifted_pos,
+                                                         frt2_elt.target_lf_ids,
+                                                         frt2_elt.target_actions,
+                                                         frt2_elt.max_loop_depth ));
+                }
+            }
+            // ***
+            for (frt1_elt, intersect1) in &rem_frt1 {
+                for (frt2_elt,intersect2) in &rem_frt2 {
+                    if intersect1 == intersect2 {
+                        let new_pos = Position::Both(Box::new(frt1_elt.position.clone()),
+                                                     Box::new(frt2_elt.position.clone()));
+                        let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
+                        let new_target_actions : HashSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
+                        let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
+                        // ***
+                        new_front.push( FrontierElement::new(new_pos,
+                                                             new_target_lf_ids,
+                                                             new_target_actions,
+                                                             new_max_loop_depth ));
+                    }
+                }
+            }
+            return new_front;
+        },
         Interaction::Loop(_, ref i1) => {
             return push_frontier_left( &mut global_frontier_rec(i1,loop_depth+1) );
         },
@@ -184,14 +229,12 @@ fn push_frontier_left(frontier : &mut Vec<FrontierElement>) -> Vec<FrontierEleme
     return frontier.drain(..).map(|frt_elt| FrontierElement::new(Position::Left( Box::new(frt_elt.position ) ),
                                                                        frt_elt.target_lf_ids,
                                                                        frt_elt.target_actions,
-                                                                       frt_elt.act_kind,
-                                                                       frt_elt.loop_depth ) ).collect();
+                                                                       frt_elt.max_loop_depth ) ).collect();
 }
 
 fn push_frontier_right(frontier : &mut Vec<FrontierElement>) -> Vec<FrontierElement> {
     return frontier.drain(..).map(|frt_elt| FrontierElement::new(Position::Right( Box::new(frt_elt.position ) ),
                                                                  frt_elt.target_lf_ids,
                                                                  frt_elt.target_actions,
-                                                                 frt_elt.act_kind,
-                                                                 frt_elt.loop_depth) ).collect();
+                                                                 frt_elt.max_loop_depth) ).collect();
 }

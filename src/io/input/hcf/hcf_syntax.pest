@@ -167,10 +167,15 @@ OPTION_ANA_SIMULATE_CONFIG_loop = { "loop" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_n
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_none ) }
 OPTION_ANA_SIMULATE_CONFIG_act = { "act" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
+                                                | OPTION_ANA_SIMULATE_CONFIG_crit_maxnum
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_none) }
 // ***
 OPTION_ANA_SIMULATE_CONFIG_simbefore = { "slice" | "before" | "preamble" }
+OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length = { "multiply" | "resized" | "dependent" }
+OPTION_ANA_SIMULATE_CONFIG_reset = { "reset" | "reinitialize" }
 OPTION_ANA_SIMULATE_CONFIG_opt = _{ OPTION_ANA_SIMULATE_CONFIG_simbefore
+                                    | OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length
+                                    | OPTION_ANA_SIMULATE_CONFIG_reset
                                     | OPTION_ANA_SIMULATE_CONFIG_act
                                     | OPTION_ANA_SIMULATE_CONFIG_loop }
 // ***

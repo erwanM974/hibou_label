@@ -59,6 +59,9 @@ impl AvoidsLifelines for Interaction {
             &Interaction::CoReg(_, ref i1, ref i2) => {
                 return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
             },
+            &Interaction::Sync(_, ref i1, ref i2) => {
+                return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
+            },
             &Interaction::Par(ref i1, ref i2) => {
                 return i1.avoids_all_of(lf_ids) && i2.avoids_all_of(lf_ids);
             },

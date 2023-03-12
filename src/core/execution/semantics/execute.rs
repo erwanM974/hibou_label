@@ -17,6 +17,8 @@ limitations under the License.
 
 
 use std::collections::HashSet;
+use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::core::language::position::position::Position;
 use crate::core::language::prune::prunable::LifelinePrunable;
@@ -144,7 +146,10 @@ fn make_follow_up_loop(old_i1 : &Interaction, new_i1 : Interaction, lkind : &Loo
 }
 
 
-fn execute_interaction_left(my_int : &Interaction, sub_p1 : &Position, tar_lf_ids : &HashSet<usize>,get_affected : bool) -> ExecutionResult {
+fn execute_interaction_left(my_int : &Interaction,
+                            sub_p1 : &Position,
+                            tar_lf_ids : &HashSet<usize>,
+                            get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Alt(i1, i2) => {
             if get_affected {
@@ -220,6 +225,34 @@ fn execute_interaction_left(my_int : &Interaction, sub_p1 : &Position, tar_lf_id
             }
             return ExecutionResult::new(new_i,affected);
         },
+        Interaction::Sync(sync_acts,i1,i2) => {
+            let exres1 = execute_interaction(i1,sub_p1,tar_lf_ids,get_affected);
+            // ***
+            let acts1 = exres1.interaction.get_all_trace_actions();
+            let acts2 = i2.get_all_trace_actions();
+            // ***
+            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            // ***
+            let new_i : Interaction;
+            if intersetc1 == 0 && intersetc2 == 0 {
+                if exres1.interaction == Interaction::Empty {
+                    new_i = *i2.clone();
+                } else if **i2 == Interaction::Empty {
+                    new_i = exres1.interaction;
+                } else {
+                    new_i = Interaction::Par(Box::new(exres1.interaction),
+                                             Box::new(*i2.clone()));
+                }
+            } else {
+                new_i = Interaction::Sync(sync_acts.clone(),
+                                          Box::new(exres1.interaction),
+                                          Box::new(*i2.clone()));
+            }
+            // ***
+            return ExecutionResult::new(new_i,exres1.affected_lifelines);
+        },
         _ => {
             panic!();
         }
@@ -227,7 +260,11 @@ fn execute_interaction_left(my_int : &Interaction, sub_p1 : &Position, tar_lf_id
 }
 
 
-fn execute_interaction_right(my_int : &Interaction, sub_p2 : &Position, tar_lf_ids : &HashSet<usize>,get_affected : bool) -> ExecutionResult {
+
+fn execute_interaction_right(my_int : &Interaction,
+                             sub_p2 : &Position,
+                             tar_lf_ids : &HashSet<usize>,
+                             get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Alt(i1,i2) => {
             if get_affected {
@@ -333,8 +370,80 @@ fn execute_interaction_right(my_int : &Interaction, sub_p2 : &Position, tar_lf_i
                 }
             }
         },
+        Interaction::Sync(sync_acts, i1,i2) => {
+            let exres2 = execute_interaction(i2,sub_p2, tar_lf_ids,get_affected);
+            // ***
+            let acts1 = i1.get_all_trace_actions();
+            let acts2 = exres2.interaction.get_all_trace_actions();
+            // ***
+            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            // ***
+            let new_i : Interaction;
+            if intersetc1 == 0 && intersetc2 == 0 {
+                if **i1 == Interaction::Empty {
+                    new_i = exres2.interaction;
+                } else if exres2.interaction == Interaction::Empty {
+                    new_i = *i1.clone();
+                } else {
+                    new_i = Interaction::Par(Box::new(*i1.clone()),
+                                             Box::new(exres2.interaction));
+                }
+            } else {
+                new_i = Interaction::Sync(sync_acts.clone(),
+                                          Box::new(*i1.clone()),
+                                          Box::new(exres2.interaction));
+            }
+            // ***
+            return ExecutionResult::new(new_i,exres2.affected_lifelines);
+        },
         _ => {
             panic!("trying to execute right on {:?}", my_int);
+        }
+    }
+}
+
+fn execute_interaction_both(my_int : &Interaction,
+                            sub_p1 : &Position,
+                            sub_p2 : &Position,
+                            tar_lf_ids : &HashSet<usize>,
+                            get_affected : bool) -> ExecutionResult {
+    match my_int {
+        Interaction::Sync(sync_acts, i1, i2) => {
+            let exres1 = execute_interaction(i1,sub_p1, tar_lf_ids,get_affected);
+            let exres2 = execute_interaction(i2,sub_p2, tar_lf_ids,get_affected);
+            // ***
+            let acts1 = exres1.interaction.get_all_trace_actions();
+            let acts2 = exres2.interaction.get_all_trace_actions();
+            // ***
+            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            // ***
+            let new_i : Interaction;
+            if intersetc1 == 0 && intersetc2 == 0 {
+                if exres1.interaction == Interaction::Empty {
+                    new_i = exres2.interaction;
+                } else if exres2.interaction == Interaction::Empty {
+                    new_i = exres1.interaction;
+                } else {
+                    new_i = Interaction::Par(Box::new(exres1.interaction),
+                                             Box::new(exres2.interaction));
+                }
+            } else {
+                new_i = Interaction::Sync(sync_acts.clone(),
+                                          Box::new(exres1.interaction),
+                                          Box::new(exres2.interaction));
+            }
+            // ***
+            let mut new_aff = exres1.affected_lifelines;
+            new_aff.extend(exres2.affected_lifelines);
+            // ***
+            return ExecutionResult::new(new_i,new_aff);
+        },
+        _ => {
+            panic!("trying to execute both left and right on {:?}", my_int);
         }
     }
 }
@@ -352,6 +461,9 @@ pub fn execute_interaction(my_int : &Interaction,
         },
         Position::Right(p2) => {
             return execute_interaction_right(my_int,p2,tar_lf_ids,get_affected);
+        },
+        Position::Both(p1,p2) => {
+            return execute_interaction_both(my_int,p1,p2,tar_lf_ids,get_affected);
         }
     }
 }

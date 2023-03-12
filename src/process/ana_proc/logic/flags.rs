@@ -17,6 +17,7 @@ limitations under the License.
 
 
 use std::collections::{HashMap, HashSet};
+use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
 use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
@@ -78,6 +79,13 @@ impl MultiTraceAnalysisFlags {
                rem_loop_in_sim : u32,
                rem_act_in_sim : u32) -> MultiTraceAnalysisFlags {
         return MultiTraceAnalysisFlags{canals,rem_loop_in_sim,rem_act_in_sim};
+    }
+    // ********** ********** ********** ********** ********** ********** **********
+    // ********** ********** ********** ********** ********** ********** **********
+    // ********** ********** ********** ********** ********** ********** **********
+
+    fn get_number_of_consumed_actions(&self) -> usize {
+        return self.canals.iter().fold(0,|sum,trace_flag| sum + trace_flag.consumed);
     }
 
     // ********** ********** ********** ********** ********** ********** **********
@@ -156,6 +164,7 @@ impl MultiTraceAnalysisFlags {
                                 sim_map : &HashMap<usize,SimulationStepKind>, // id of canals on which simulation (of which kind) occur
                                 affected_colocs : &HashSet<usize>, // ids of canals containing lifelines affected by the execution of the action
                                 loop_depth : u32, // loop depth of action that is executed
+                                init_multitrace_length : usize,
                                 new_interaction : &Interaction) -> MultiTraceAnalysisFlags {
         // ***
         let mut new_canal_flags : Vec<TraceAnalysisFlags> = Vec::new();
@@ -195,68 +204,44 @@ impl MultiTraceAnalysisFlags {
                 rem_act_in_sim = 0;
             },
             Some( got_sim_config ) => {
-                let (rem_loop,rem_act) = self.get_rem_act_loop_in_sim(got_sim_config,new_interaction,consu_set,loop_depth);
-                rem_loop_in_sim = rem_loop;
-                rem_act_in_sim = rem_act;
+                if consu_set.len() > 0 { // an execution step
+                    if got_sim_config.reset_crit_after_exec {
+                        let rem_multitrace_length = init_multitrace_length - (self.get_number_of_consumed_actions() + consu_set.len());
+                        rem_loop_in_sim = got_sim_config.get_reset_rem_loop(rem_multitrace_length,new_interaction);
+                        rem_act_in_sim = got_sim_config.get_reset_rem_act(rem_multitrace_length,new_interaction);
+                    } else {
+                        rem_loop_in_sim = self.rem_loop_in_sim;
+                        rem_act_in_sim = self.rem_act_in_sim;
+                    }
+                } else { // a simulation step
+                    let rem_multitrace_length = init_multitrace_length - self.get_number_of_consumed_actions();
+                    let (rem_loop,rem_act) = self.update_criterion_on_simulation(rem_multitrace_length,got_sim_config,new_interaction,loop_depth);
+                    rem_loop_in_sim = rem_loop;
+                    rem_act_in_sim = rem_act;
+                }
             }
         }
         // ***
         return MultiTraceAnalysisFlags::new(new_canal_flags,rem_loop_in_sim,rem_act_in_sim);
     }
 
-    fn get_rem_act_loop_in_sim(&self,
+    fn update_criterion_on_simulation(&self,rem_multitrace_length : usize,
                                sim_config : &SimulationConfiguration,
                                new_interaction : &Interaction,
-                               consu_set : &HashSet<usize>,
                                loop_depth : u32) -> (u32,u32) {
+        // ***
         let rem_loop_in_sim : u32;
-        match sim_config.loop_crit {
-            SimulationLoopCriterion::MaxDepth => {
-                if consu_set.len() > 0 {
-                    rem_loop_in_sim = new_interaction.max_nested_loop_depth();
-                } else {
-                    let on_crit = new_interaction.max_nested_loop_depth();
-                    let removed = self.rem_loop_in_sim - loop_depth;
-                    rem_loop_in_sim = on_crit.min(removed);
-                }
-            },
-            SimulationLoopCriterion::MaxNum => {
-                if consu_set.len() > 0 {
-                    rem_loop_in_sim = new_interaction.total_loop_num();
-                } else {
-                    let on_crit = new_interaction.total_loop_num();
-                    let removed = self.rem_loop_in_sim - loop_depth;
-                    rem_loop_in_sim = on_crit.min(removed);
-                }
-            },
-            SimulationLoopCriterion::SpecificNum( sn ) => {
-                if consu_set.len() > 0 {
-                    rem_loop_in_sim = sn;
-                } else {
-                    let on_crit = sn;
-                    let removed = self.rem_loop_in_sim - loop_depth;
-                    rem_loop_in_sim = on_crit.min(removed);
-                }
-            },
-            SimulationLoopCriterion::None => {
-                rem_loop_in_sim = 0;
-            }
+        {
+            let removed = self.rem_loop_in_sim - loop_depth;
+            let reset = sim_config.get_reset_rem_loop(rem_multitrace_length,new_interaction);
+            rem_loop_in_sim = reset.min(removed);
         }
         // ***
         let rem_act_in_sim : u32;
-        match sim_config.act_crit {
-            SimulationActionCriterion::SpecificNum( sn ) => {
-                if consu_set.len() > 0 {
-                    rem_act_in_sim = sn;
-                } else {
-                    let on_crit = sn;
-                    let removed = self.rem_act_in_sim - 1;
-                    rem_act_in_sim = on_crit.min(removed);
-                }
-            },
-            SimulationActionCriterion::None => {
-                rem_act_in_sim = 0;
-            }
+        {
+            let removed = self.rem_act_in_sim - 1;
+            let reset = sim_config.get_reset_rem_act(rem_multitrace_length,new_interaction);
+            rem_act_in_sim = reset.min(removed);
         }
         // ***
         return (rem_loop_in_sim,rem_act_in_sim)

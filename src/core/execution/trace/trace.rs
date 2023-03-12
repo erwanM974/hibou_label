@@ -18,6 +18,8 @@ limitations under the License.
 
 
 
+use std::collections::HashSet;
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum TraceActionKind {
     Reception,
@@ -39,6 +41,21 @@ impl TraceAction {
         return TraceAction{lf_id,act_kind,ms_id};
     }
 
+    pub fn get_actions_kinds(set_of_actions : &HashSet<TraceAction>) -> (i32,i32) {
+        let mut num_emissions = 0;
+        let mut num_receptions = 0;
+        for tract in set_of_actions {
+            match tract.act_kind {
+                TraceActionKind::Emission => {
+                    num_emissions += 1;
+                },
+                TraceActionKind::Reception => {
+                    num_receptions += 1;
+                }
+            }
+        }
+        return (num_emissions,num_receptions);
+    }
 }
 
 

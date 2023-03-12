@@ -33,6 +33,7 @@ pub trait ExplorationLogger {
     fn log_term(&mut self,
                 options_as_str : &Vec<String>);
 
+
     fn log_explore(&mut self,
                      gen_ctx : &GeneralContext,
                      parent_state_id : u32,
@@ -40,6 +41,19 @@ pub trait ExplorationLogger {
                      action_position : &Position,
                      executed_actions : &HashSet<TraceAction>,
                      new_interaction : &Interaction);
+
+    fn log_exec_transition(&mut self,
+                           gen_ctx : &GeneralContext,
+                           origin_state_id : u32,
+                           transition_state_id : u32,
+                           target_state_id : u32,
+                           action_position : &Position,
+                           executed_actions : &HashSet<TraceAction>);
+
+    fn log_new_interaction(&mut self,
+                           gen_ctx : &GeneralContext,
+                           new_state_id : u32,
+                           new_interaction : &Interaction);
 
     fn log_filtered(&mut self,
                     parent_state_id : u32,

@@ -16,12 +16,12 @@ limitations under the License.
 
 
 use std::collections::HashSet;
-use crate::core::execution::trace::from_model::from_model::InterpretableAsTraceAction;
+use crate::core::execution::trace::from_model::from_model::{PrimitiveInterpretableAsTraceAction};
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};
 
 
-impl InterpretableAsTraceAction for EmissionAction {
+impl PrimitiveInterpretableAsTraceAction for EmissionAction {
     fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
         let mut contents : HashSet<TraceAction> = HashSet::new();
         contents.insert( self.get_first_atomic_action() );
@@ -64,7 +64,7 @@ impl InterpretableAsTraceAction for EmissionAction {
 }
 
 
-impl InterpretableAsTraceAction for ReceptionAction {
+impl PrimitiveInterpretableAsTraceAction for ReceptionAction {
     fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
         let mut contents : HashSet<TraceAction> = HashSet::new();
         for rc_lf_id in &self.recipients {

@@ -54,22 +54,32 @@ pub fn diagram_repr_trace_action(action : &TraceAction, gen_ctx : &GeneralContex
 }
 
 
-pub fn diagram_repr_trace_actions(actions : &HashSet<TraceAction>, gen_ctx : &GeneralContext) -> Vec<TextToPrint> {
-    let mut remaining_simultaneous_actions = actions.len();
-    if remaining_simultaneous_actions == 1 {
-        let act = actions.iter().next().unwrap();
-        return diagram_repr_trace_action(act, gen_ctx);
-    } else {
-        let mut to_print : Vec<TextToPrint> = Vec::new();
-        to_print.push( TextToPrint{text:"{".to_string(), color:Rgb(HC_Grammar_Symbol)} );
-        for act in actions.iter().sorted() {
-            to_print.append(&mut diagram_repr_trace_action(act, gen_ctx)  );
-            remaining_simultaneous_actions = remaining_simultaneous_actions - 1;
-            if remaining_simultaneous_actions > 0 {
-                to_print.push( TextToPrint{text:",".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+pub fn diagram_repr_trace_actions(actions : &HashSet<TraceAction>,
+                                  gen_ctx : &GeneralContext,
+                                  draw_brackets : bool) -> Vec<TextToPrint> {
+    let mut inner_reprs : Vec<Vec<TextToPrint>> =
+        actions.iter().sorted().map(|act| diagram_repr_trace_action(act, gen_ctx)).collect();
+    if draw_brackets || inner_reprs.len() > 1 {
+        let mut joined : Vec<TextToPrint> = vec![];
+        {
+            let mut rem = inner_reprs.len();
+            for mut sub_repr in inner_reprs {
+                rem = rem - 1;
+                joined.append(&mut sub_repr);
+                if rem > 0 {
+                    joined.push(TextToPrint{text:",".to_string(), color:Rgb(HC_Grammar_Symbol)});
+                }
             }
         }
+        //let mut joined = inner_reprs.join(TextToPrint{text:",".to_string(), color:Rgb(HC_Grammar_Symbol)});
+        let mut to_print : Vec<TextToPrint> = Vec::new();
+        to_print.push( TextToPrint{text:"{".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+        to_print.append(&mut joined);
         to_print.push( TextToPrint{text:"}".to_string(), color:Rgb(HC_Grammar_Symbol)} );
         return to_print;
+    } else if inner_reprs.len() == 1 {
+        return inner_reprs.pop().unwrap();
+    } else {
+        return vec![];
     }
 }

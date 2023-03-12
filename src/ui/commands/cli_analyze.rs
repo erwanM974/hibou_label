@@ -62,10 +62,11 @@ pub fn cli_analyze(matches : &ArgMatches) -> (Vec<String>,u32) {
                                 ana_opts = HibouAnalyzeOptions::default();
                             }
                             // ***
+                            let multi_trace_length = multi_trace_length(&multi_trace);
                             let mut ret_print = vec![];
                             ret_print.push( "ANALYZING TRACE".to_string());
                             ret_print.push( format!("from file '{}'",htf_file_path) );
-                            ret_print.push( format!("of length '{:?}'",multi_trace_length(&multi_trace)) );
+                            ret_print.push( format!("of length '{:?}'", multi_trace_length) );
                             ret_print.push( "W.R.T. INTERACTION".to_string());
                             ret_print.push( format!("from file '{}'",hsf_file_path) );
                             ret_print.push( "".to_string());
@@ -90,8 +91,8 @@ pub fn cli_analyze(matches : &ArgMatches) -> (Vec<String>,u32) {
                                 },
                                 Some( sim_config ) => {
                                     init_flags = MultiTraceAnalysisFlags::new_init(manager.co_localizations.num_colocs(),
-                                                                                   sim_config.get_reset_rem_loop(&int),
-                                                                                   sim_config.get_reset_rem_act(&int));
+                                                                                   sim_config.get_reset_rem_loop(multi_trace_length,&int),
+                                                                                   sim_config.get_reset_rem_act(multi_trace_length,&int));
                                 }
                             }
                             let now = Instant::now();

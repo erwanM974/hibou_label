@@ -131,20 +131,37 @@ pub fn get_one_transformation_rec(transfos : &Vec<InteractionTransformationKind>
                         },
                         None => {}
                     }
-                }, &Interaction::And(ref i1, ref i2) => {
+                }, &Interaction::Sync(ref sync_acts, ref i1, ref i2) => {
                     match get_one_transformation_rec(transfos,i1) {
                         Some(left_transfo) => {
                             return Some( InteractionTransformationResult::new(left_transfo.kind,
-                                                                            Position::Left(Box::new(left_transfo.position)),
-                                                                            Interaction::Strict(Box::new(left_transfo.result),i2.clone())) );
+                                                                              Position::Left(Box::new(left_transfo.position)),
+                                                                              Interaction::Sync(sync_acts.clone(),Box::new(left_transfo.result),i2.clone())) );
                         },
                         None => {}
                     }
                     match get_one_transformation_rec(transfos,i2) {
                         Some(right_transfo) => {
                             return Some( InteractionTransformationResult::new(right_transfo.kind,
-                                                                            Position::Right(Box::new(right_transfo.position)),
-                                                                            Interaction::Strict(i1.clone(), Box::new(right_transfo.result))) );
+                                                                              Position::Right(Box::new(right_transfo.position)),
+                                                                              Interaction::Sync(sync_acts.clone(),i1.clone(), Box::new(right_transfo.result))) );
+                        },
+                        None => {}
+                    }
+                }, &Interaction::And(ref i1, ref i2) => {
+                    match get_one_transformation_rec(transfos,i1) {
+                        Some(left_transfo) => {
+                            return Some( InteractionTransformationResult::new(left_transfo.kind,
+                                                                              Position::Left(Box::new(left_transfo.position)),
+                                                                              Interaction::And(Box::new(left_transfo.result),i2.clone())) );
+                        },
+                        None => {}
+                    }
+                    match get_one_transformation_rec(transfos,i2) {
+                        Some(right_transfo) => {
+                            return Some( InteractionTransformationResult::new(right_transfo.kind,
+                                                                              Position::Right(Box::new(right_transfo.position)),
+                                                                              Interaction::And(i1.clone(), Box::new(right_transfo.result))) );
                         },
                         None => {}
                     }

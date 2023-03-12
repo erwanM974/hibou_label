@@ -66,6 +66,14 @@ impl ExplorationLogger for TraceGenProcessLogger {
         }
     }
 
+    fn log_exec_transition(&mut self, gen_ctx: &GeneralContext, origin_state_id: u32, transition_state_id : u32, target_state_id: u32, action_position: &Position, executed_actions: &HashSet<TraceAction>) {
+        panic!("unexpected use of trace logger");
+    }
+
+    fn log_new_interaction(&mut self, gen_ctx: &GeneralContext, new_state_id: u32, new_interaction: &Interaction) {
+        panic!("unexpected use of trace logger");
+    }
+
     fn log_filtered(&mut self, parent_state_id: u32, new_state_id: u32, elim_kind: &FilterEliminationKind) {
         // ***
     }

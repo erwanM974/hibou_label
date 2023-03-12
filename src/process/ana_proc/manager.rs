@@ -22,7 +22,7 @@ use crate::core::colocalizations::CoLocalizations;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::semantics::execute::execute_interaction;
-use crate::core::execution::trace::multitrace::{MultiTrace, Trace};
+use crate::core::execution::trace::multitrace::{multi_trace_length, MultiTrace, Trace};
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::position::position::Position;
 use crate::core::language::syntax::util::check_interaction::InteractionCharacteristics;
@@ -49,6 +49,7 @@ pub struct AnalysisProcessManager {
     pub(crate) manager: GenericProcessManager<AnalysisConfig>,
     pub(crate) co_localizations : CoLocalizations,
     pub(crate) multi_trace : MultiTrace,
+    pub(crate) init_multitrace_length : usize,
     pub(crate) ana_kind : AnalysisKind,
     pub(crate) use_locana : UseLocalAnalysis,
     pub(crate) goal : Option<GlobalVerdict>,
@@ -73,7 +74,16 @@ impl AnalysisProcessManager {
             priorities,
             loggers
         );
-        return AnalysisProcessManager{manager,co_localizations,multi_trace,ana_kind,use_locana,goal,has_filtered_nodes:false};
+        // ***
+        let init_multitrace_length = multi_trace_length(&multi_trace);
+        return AnalysisProcessManager{manager,
+            co_localizations,
+            multi_trace,
+            init_multitrace_length,
+            ana_kind,
+            use_locana,
+            goal,
+            has_filtered_nodes:false};
     }
 
     pub fn analyze(&mut self,
@@ -308,7 +318,7 @@ impl AnalysisProcessManager {
             },
             &AnalysisStepKind::Execute( ref frt_elt, ref consu_set, ref sim_map ) => {
                 let new_ana_depth = parent_state.depth + 1;
-                let target_loop_depth = (parent_state.kind.interaction).get_loop_depth_at_pos(&frt_elt.position);
+                let target_loop_depth = frt_elt.max_loop_depth;
                 let new_ana_loop_depth = parent_state.kind.ana_loop_depth + target_loop_depth;
                 // ***
                 match self.manager.apply_filters(new_ana_depth,node_counter, &AnalysisFilterCriterion{loop_depth:new_ana_loop_depth}) {
@@ -323,6 +333,7 @@ impl AnalysisProcessManager {
                                                                                                  consu_set,
                                                                                                  sim_map,&affected_colos,
                                                                                                 target_loop_depth,
+                                                                                                self.init_multitrace_length,
                                                                                           &exe_result.interaction);
                         // ***
                         self.execution_loggers(&frt_elt.position,

@@ -17,6 +17,8 @@ limitations under the License.
 
 
 use std::collections::HashSet;
+use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::avoid::avoids::AvoidsLifelines;
 use crate::core::language::involve::involves::InvolvesLifelines;
 
@@ -61,6 +63,35 @@ impl LifelinePrunable for Interaction {
                     } else {
                         return Interaction::CoReg( cr.clone(),Box::new(pruned_i1) , Box::new(pruned_i2) );
                     }
+                }
+            },
+            Interaction::Sync(sync_acts, i1, i2) => {
+                let pruned_i1 = i1.prune(lf_ids);
+                let pruned_i2 = i2.prune(lf_ids);
+                // ***
+                let acts1 = pruned_i1.get_all_trace_actions();
+                let acts2 = pruned_i2.get_all_trace_actions();
+                // ***
+                let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+                let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
+                let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+                // ***
+                let new_i : Interaction;
+                if intersetc1 == 0 && intersetc2 == 0 {
+                    if pruned_i1 == Interaction::Empty {
+                        return pruned_i2;
+                    } else {
+                        if pruned_i2 == Interaction::Empty {
+                            return pruned_i1;
+                        } else {
+                            return Interaction::Par( Box::new(pruned_i1) ,
+                                                     Box::new(pruned_i2) );
+                        }
+                    }
+                } else {
+                    return Interaction::Sync(sync_acts.clone(),
+                                             Box::new(pruned_i1) ,
+                                             Box::new(pruned_i2));
                 }
             },
             Interaction::Strict(i1, i2) => {

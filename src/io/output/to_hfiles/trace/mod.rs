@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-mod trace_action;
+pub mod trace_action;
 mod multi_trace;
 pub mod to_htf;
 

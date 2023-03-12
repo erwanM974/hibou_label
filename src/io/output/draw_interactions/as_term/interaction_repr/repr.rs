@@ -19,12 +19,13 @@ use crate::core::language::syntax::interaction::{Interaction, LoopKind};
 use crate::core::language::position::position::Position;
 use crate::io::output::draw_interactions::as_term::action_repr::emission::{emission_as_gv_label};
 use crate::io::output::draw_interactions::as_term::action_repr::reception::{reception_as_gv_label};
+use crate::io::output::draw_interactions::as_term::action_repr::trace_action::trace_actions_as_gv_label;
 use crate::io::output::graphviz::colors::DotTranslatable;
 use crate::io::output::graphviz::edge::edge::GraphVizEdge;
 use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyleItem, GvArrowHeadStyle};
 use crate::io::output::graphviz::node::node::GraphVizNode;
 use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
-use crate::io::textual_convention::{SYNTAX_ALT, SYNTAX_LOOP_H, SYNTAX_LOOP_P, SYNTAX_LOOP_S, SYNTAX_LOOP_W, SYNTAX_PAR, SYNTAX_SEQ, SYNTAX_STRICT};
+use crate::io::textual_convention::{SYNTAX_ALT, SYNTAX_COREG, SYNTAX_LOOP_H, SYNTAX_LOOP_P, SYNTAX_LOOP_S, SYNTAX_LOOP_W, SYNTAX_PAR, SYNTAX_SEQ, SYNTAX_STRICT, SYNTAX_SYNC};
 
 
 pub fn interaction_gv_repr(gen_ctx : &GeneralContext,
@@ -74,7 +75,7 @@ fn interaction_gv_repr_rec(to_write : &mut String,
             repr_binary_operator(to_write, gen_ctx, i1, i2, SYNTAX_SEQ, current_pos);
         },
         &Interaction::CoReg(ref cr, ref i1, ref i2) => {
-            let mut op_label = "coreg(".to_string();
+            let mut op_label = format!("{}(", SYNTAX_COREG);
             let mut rem  = cr.len();
             for lf_id in cr {
                 let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
@@ -85,6 +86,11 @@ fn interaction_gv_repr_rec(to_write : &mut String,
                 }
             }
             op_label.push_str(")");
+            repr_binary_operator(to_write, gen_ctx, i1, i2, &op_label, current_pos);
+        },
+        &Interaction::Sync(ref sync_acts, ref i1, ref i2) => {
+            let acts_as_str = trace_actions_as_gv_label(gen_ctx,sync_acts.iter());
+            let op_label = format!("{}{}", SYNTAX_SYNC,acts_as_str);
             repr_binary_operator(to_write, gen_ctx, i1, i2, &op_label, current_pos);
         },
         &Interaction::Par(ref i1, ref i2) => {

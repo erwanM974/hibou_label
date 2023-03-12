@@ -52,6 +52,11 @@ impl InvolvesLifelines for Interaction {
                 content.extend( i2.involved_lifelines() );
                 return content;
             },
+            &Interaction::Sync(_, ref i1, ref i2) => {
+                let mut content = i1.involved_lifelines();
+                content.extend( i2.involved_lifelines() );
+                return content;
+            },
             &Interaction::Par(ref i1, ref i2) => {
                 let mut content = i1.involved_lifelines();
                 content.extend( i2.involved_lifelines() );
@@ -89,6 +94,9 @@ impl InvolvesLifelines for Interaction {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             },
             &Interaction::CoReg(_, ref i1, ref i2) => {
+                return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
+            },
+            &Interaction::Sync(_, ref i1, ref i2) => {
                 return i1.involves_any_of(lf_ids) || i2.involves_any_of(lf_ids);
             },
             &Interaction::Par(ref i1, ref i2) => {

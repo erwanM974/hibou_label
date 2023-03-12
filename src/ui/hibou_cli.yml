@@ -16,13 +16,13 @@
 
 
 name: hibou_label
-version: "0.8.2"
+version: "0.8.3"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for manipulating interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw an interaction either as a sequence diagram or a term tree
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -45,7 +45,7 @@ subcommands:
               help: kind of representation (either sequence diagram 'sd' or term tree 'tt')
     - canonize:
         about: utility to compute the normal form of an interaction
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -62,7 +62,7 @@ subcommands:
               help: input hibou configuration file
     - explore:
         about: utility to explore the semantics of an interaction
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -79,7 +79,7 @@ subcommands:
               help: input hibou configuration file
     - analyze:
         about: utility to analyze a (multi-)trace w.r.t. an interaction
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -100,7 +100,7 @@ subcommands:
               help: input hibou configuration file
     - slice:
         about: utility to generate slices of a (multi-)trace
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -138,7 +138,7 @@ subcommands:
               help: a name for prefixing generated files names
     - mutate_insert_noise:
         about: utility to generate generate a mutant from a multi-trace by inserting noise actions
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -176,7 +176,7 @@ subcommands:
               help: maximum number of inserts (default 1), actual number can be lower due other parameters
     - mutate_swap_actions:
         about: utility to generate generate a mutant from a multi-trace by swaping positions of actions within its component traces
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -204,7 +204,7 @@ subcommands:
               help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
     - mutate_swap_components:
         about: utility to generate generate a mutant from two multi-traces by swaping their respective component traces
-        version: "0.8.2"
+        version: "0.8.3"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -236,7 +236,7 @@ subcommands:
               help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
     - puml_sd:
             about: utility to translate an interaction into a .puml informal sequence diagram spec (.puml)
-            version: "0.8.2"
+            version: "0.8.3"
             author: Erwan Mahe <github.com/erwanM974>
             args:
               - hsf:
@@ -249,7 +249,7 @@ subcommands:
                   help: input hibou interaction file
     - puml_ap:
             about: utility to translate an interaction into a .puml informal automata product spec (.puml)
-            version: "0.8.2"
+            version: "0.8.3"
             author: Erwan Mahe <github.com/erwanM974>
             args:
               - hsf:

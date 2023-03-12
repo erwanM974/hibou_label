@@ -92,5 +92,6 @@ pub const HCP_BrightGray : [u8;3] = [165u8, 165u8, 165u8];
 
 pub const HC_Lifeline : [u8;3] = HCP_StandardBlue;
 pub const HC_Message : [u8;3] = HCP_DarkGreen;
+pub const HC_MessageKind : [u8;3] = HCP_StandardGreen;
 pub const HC_Grammar_Symbol : [u8;3] = HCP_Black;
 

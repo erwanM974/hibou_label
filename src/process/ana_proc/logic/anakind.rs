@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
 use crate::core::language::syntax::interaction::Interaction;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -28,16 +29,16 @@ impl std::string::ToString for SimulationLoopCriterion {
     fn to_string(&self) -> String {
         match self {
             SimulationLoopCriterion::MaxNum => {
-                return "maximum loop number".to_string();
+                return "total number of loops in interaction".to_string();
             },
             SimulationLoopCriterion::MaxDepth => {
-                return "maximum loop depth".to_string();
+                return "maximum depth of nested loops in interaction".to_string();
             },
             SimulationLoopCriterion::SpecificNum(sn) => {
-                return format!("loop num : {:}", sn);
+                return format!("specific number of loops : {:}", sn);
             },
             SimulationLoopCriterion::None => {
-                return String::new();
+                return "no limit on loops".to_string();
             }
         }
     }
@@ -45,6 +46,7 @@ impl std::string::ToString for SimulationLoopCriterion {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum SimulationActionCriterion {
+    MaxNumOutsideLoops,
     SpecificNum(u32),
     None
 }
@@ -52,11 +54,14 @@ pub enum SimulationActionCriterion {
 impl std::string::ToString for SimulationActionCriterion {
     fn to_string(&self) -> String {
         match self {
+            SimulationActionCriterion::MaxNumOutsideLoops => {
+                return "number of actions outside loops".to_string();
+            },
             SimulationActionCriterion::SpecificNum(sn) => {
-                return format!("action num : {:}", sn);
+                return format!("specific number of actions : {:}", sn);
             },
             SimulationActionCriterion::None => {
-                return String::new();
+                return "no limit on actions".to_string();
             }
         }
     }
@@ -65,44 +70,76 @@ impl std::string::ToString for SimulationActionCriterion {
 #[derive(Clone, PartialEq, Debug)]
 pub struct SimulationConfiguration {
     pub sim_before : bool,
+    pub reset_crit_after_exec : bool,
+    pub multiply_by_multitrace_length : bool,
     pub loop_crit : SimulationLoopCriterion,
     pub act_crit : SimulationActionCriterion
 }
 
 impl std::string::ToString for SimulationConfiguration {
     fn to_string(&self) -> String {
-        return format!("sim_before : {:} | {:} | {:}", self.sim_before, self.loop_crit.to_string(), self.act_crit.to_string());
+        return format!("sim before/slice : {:} | reset after exec : {:} | multiply by mu length : {:} | {:} | {:}",
+                       self.sim_before,
+                       self.reset_crit_after_exec,
+                       self.multiply_by_multitrace_length,
+                       self.loop_crit.to_string(),
+                       self.act_crit.to_string());
     }
 }
 
 impl SimulationConfiguration {
 
+    pub fn new(sim_before : bool,
+               reset_crit_after_exec : bool,
+               multiply_by_multitrace_length : bool,
+               loop_crit : SimulationLoopCriterion,
+               act_crit : SimulationActionCriterion) -> SimulationConfiguration {
+        return SimulationConfiguration{sim_before,reset_crit_after_exec,multiply_by_multitrace_length,loop_crit,act_crit};
+    }
+
     pub fn get_reset_rem_loop(&self,
-                       interaction : &Interaction) -> u32 {
+                              multi_trace_len : usize,
+                              interaction : &Interaction) -> u32 {
+        let num : u32;
         match self.loop_crit {
             SimulationLoopCriterion::MaxDepth => {
-                return interaction.max_nested_loop_depth();
+                num = interaction.max_nested_loop_depth();
             },
             SimulationLoopCriterion::MaxNum => {
-                return interaction.total_loop_num();
+                num = interaction.total_loop_num();
             },
             SimulationLoopCriterion::SpecificNum( sn ) => {
-                return sn;
+                num = sn;
             },
             SimulationLoopCriterion::None => {
-                return 0;
+                num = 0;
             }
+        }
+        if self.multiply_by_multitrace_length {
+            return num * (multi_trace_len as u32);
+        } else {
+            return num;
         }
     }
     pub fn get_reset_rem_act(&self,
+                             multi_trace_len : usize,
                               interaction : &Interaction) -> u32 {
+        let num : u32;
         match self.act_crit {
+            SimulationActionCriterion::MaxNumOutsideLoops => {
+                num = interaction.get_atomic_actions_number_outside_loops() as u32;
+            },
             SimulationActionCriterion::SpecificNum( sn ) => {
-                return sn;
+                num = sn;
             },
             SimulationActionCriterion::None => {
-                return 0;
+                num = 0;
             }
+        }
+        if self.multiply_by_multitrace_length {
+            return num * (multi_trace_len as u32);
+        } else {
+            return num;
         }
     }
 }

@@ -28,7 +28,9 @@ pub fn get_interaction_max_yshift(interaction : &Interaction) -> usize {
 
 fn get_interaction_depth(interaction : &Interaction ) -> usize {
     match interaction {
-        &Interaction::Empty => {return  0},
+        &Interaction::Empty => {
+            return  0;
+        },
         &Interaction::Emission(_) => {
             return 3;
         },
@@ -74,11 +76,20 @@ fn get_interaction_depth(interaction : &Interaction ) -> usize {
             }
             return sum;
         },
+        &Interaction::Sync(ref sync_acts, ref i1, ref i2) => {
+            let mut frags = get_recursive_sync_frags(sync_acts,i1);
+            frags.extend( get_recursive_sync_frags(sync_acts, i2) );
+            let mut sum : usize = 2;
+            for frag in frags {
+                sum = sum + get_interaction_depth(frag) + 2;
+            }
+            return sum;
+        },
         &Interaction::Loop(_, ref i1) => {
             return get_interaction_depth(i1) + 4;
         },
-        _ => {
-            panic!("non-conform interaction");
+        &Interaction::And(ref i1, ref i2) => {
+            return 6 + get_interaction_depth(i1) + get_interaction_depth(i2);
         }
     }
 }

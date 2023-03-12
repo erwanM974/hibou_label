@@ -169,6 +169,9 @@ fn to_plant_uml_ap_rec(output_file : &mut File,
         &Interaction::CoReg(_,_,_) => {
             panic!("translation towards puml-ap does not implement co-regions");
         },
+        &Interaction::Sync(_,_,_) => {
+            panic!("translation towards puml-ap does not implement sync");
+        },
         &Interaction::And(_,_) => {
             panic!("translation towards puml-ap does not implement ands");
         }

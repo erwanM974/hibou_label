@@ -17,6 +17,7 @@ limitations under the License.
 
 
 use pest::iterators::{Pair, Pairs};
+use crate::core::execution::trace::trace::TraceAction;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
@@ -28,6 +29,7 @@ use crate::io::input::hif::action::action::parse_communication_action;
 use crate::pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::hif::parser::{HifParser,Rule};
+use crate::io::input::hif::trace::sync_acts_from_pair;
 
 
 pub fn parse_hif_string(gen_ctx : &GeneralContext, hif_string : String) -> Result<Interaction,HibouParsingError> {
@@ -80,6 +82,29 @@ fn parse_interaction(gen_ctx : &GeneralContext, interaction_pair : Pair<Rule>) -
                 }
             }
         },
+        Rule::SD_SYNC_INT => {
+            let mut content = content_pair.into_inner();
+            content.next(); // get rid of the operator name
+            let sync_acts_pair = content.next().unwrap();
+            match sync_acts_from_pair(gen_ctx,
+                                          sync_acts_pair) {
+                Err(e) => {
+                    return Err(e);
+                },
+                Ok(sync_acts) => {
+                    match get_nary_sub_interactions(gen_ctx, content) {
+                        Err(e) => {
+                            return Err(e);
+                        },
+                        Ok( mut sub_ints ) => {
+                            let mut sync_acts_as_vec : Vec<TraceAction> = sync_acts.into_iter().collect();
+                            sync_acts_as_vec.sort();
+                            return Ok( fold_interactions_in_binary_operator(&BinaryOperatorKind::Sync(sync_acts_as_vec),&mut sub_ints) );
+                        }
+                    }
+                }
+            }
+        }
         Rule::SD_COREG_INT => {
             let mut content = content_pair.into_inner();
             content.next(); // get rid of the operator name
@@ -117,7 +142,7 @@ fn parse_interaction(gen_ctx : &GeneralContext, interaction_pair : Pair<Rule>) -
                     panic!("what rule then ? : {:?}", coreg_lfs_pair.as_rule() );
                 }
             }
-        }
+        },
         Rule::SD_ALT_INT => {
             match get_nary_sub_interactions_from_pair(gen_ctx, content_pair) {
                 Err(e) => {
@@ -209,6 +234,7 @@ enum BinaryOperatorKind {
     Seq,
     Par,
     Alt,
+    Sync(Vec<TraceAction>),
     And
 }
 
@@ -221,6 +247,9 @@ fn fold_interactions_in_binary_operator(op_kind : &BinaryOperatorKind, sub_ints 
         match op_kind {
             BinaryOperatorKind::CoReg(ref cr) => {
                 return Interaction::CoReg( cr.clone(),Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
+            },
+            BinaryOperatorKind::Sync(ref sync_acts) => {
+                return Interaction::Sync( sync_acts.clone(),Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));
             },
             BinaryOperatorKind::Strict => {
                 return Interaction::Strict( Box::new(first_int), Box::new(fold_interactions_in_binary_operator(op_kind,sub_ints)));

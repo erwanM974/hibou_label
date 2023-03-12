@@ -48,31 +48,39 @@ impl ExplorationLogger for GraphicProcessLogger {
                    action_position: &Position,
                    executed_actions: &HashSet<TraceAction>,
                    new_interaction: &Interaction) {
+        self.log_new_interaction(gen_ctx,new_state_id,new_interaction);
+        self.log_exec_transition(gen_ctx,parent_state_id,new_state_id,new_state_id,action_position,executed_actions);
+    }
+
+    fn log_exec_transition(&mut self, gen_ctx: &GeneralContext, origin_state_id: u32, transition_state_id : u32, target_state_id: u32, action_position: &Position, executed_actions: &HashSet<TraceAction>) {
         // ***
-        let state_firing = make_graphic_logger_firing(&self.temp_folder,gen_ctx,new_state_id,action_position,executed_actions,None);
+        let state_firing = make_graphic_logger_firing(&self.temp_folder,gen_ctx,transition_state_id,action_position,executed_actions,None);
         // *** Transition To Firing
         let tran_to_firing : GraphVizEdge;
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-            tran_to_firing = GraphVizEdge::new(format!("a{:}", parent_state_id),state_firing.id.clone(),tran_gv_options);
+            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",origin_state_id) ) );
+            tran_to_firing = GraphVizEdge::new(format!("a{:}", origin_state_id),state_firing.id.clone(),tran_gv_options);
         }
-        // *** Resulting New Node
-        let new_node = make_graphic_logger_state(&self.temp_folder,gen_ctx,new_state_id,new_interaction,self.int_repr_sd,self.int_repr_tt,None);
         // *** Transition To New Node
         let tran_to_new : GraphVizEdge;
         {
             let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
             tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",new_state_id) ) );
-            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),format!("a{:}", new_state_id),tran_gv_options);
+            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",target_state_id) ) );
+            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),format!("a{:}", target_state_id),tran_gv_options);
         }
         // ***
         self.graph.nodes.push(Box::new(state_firing));
         self.graph.edges.push(tran_to_firing);
-        self.graph.nodes.push(Box::new(new_node));
         self.graph.edges.push(tran_to_new);
+    }
+
+    fn log_new_interaction(&mut self, gen_ctx: &GeneralContext, new_state_id: u32, new_interaction: &Interaction) {
+        // *** Resulting New Node
+        let new_node = make_graphic_logger_state(&self.temp_folder,gen_ctx,new_state_id,new_interaction,self.int_repr_sd,self.int_repr_tt,None);
+        self.graph.nodes.push(Box::new(new_node));
     }
 
     fn log_filtered(&mut self, parent_state_id: u32, new_state_id: u32, elim_kind: &FilterEliminationKind) {
