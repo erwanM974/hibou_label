@@ -15,11 +15,13 @@ limitations under the License.
 */
 
 
-use crate::io::output::graphviz::colors::GraphvizColor;
-use crate::io::output::graphviz::edge::edge::GraphVizEdge;
-use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+use graphviz_dot_builder::colors::GraphvizColor;
+use graphviz_dot_builder::edge::edge::GraphVizEdge;
+use graphviz_dot_builder::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+
+
 use crate::process::ana_proc::logic::verdicts::CoverageVerdict;
 
 
@@ -44,13 +46,14 @@ pub fn make_graphic_logger_verdict(parent_state_id: u32,
     // ***
     let verd_edge : GraphVizEdge;
     {
-        let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
+        let tran_gv_options = vec![GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ),
+                                   GraphvizEdgeStyleItem::Color( verdict_color )];
         // ***
-        tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-        tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
-        tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-        // ***
-        verd_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),verd_node.id.clone(),tran_gv_options);
+        verd_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),
+                                      Some(format!("n{}",parent_state_id)),
+                                      verd_node.id.clone(),
+                                      None,
+                                      tran_gv_options);
     }
     return (verd_node,verd_edge);
 }

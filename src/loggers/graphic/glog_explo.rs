@@ -19,8 +19,9 @@ use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::position::position::Position;
 use crate::core::execution::trace::trace::TraceAction;
-use crate::io::output::graphviz::edge::edge::GraphVizEdge;
-use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
+use graphviz_dot_builder::edge::edge::GraphVizEdge;
+use graphviz_dot_builder::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
+use graphviz_dot_builder::traits::DotBuildable;
 use crate::loggers::graphic::get_graph::filter::make_graphic_logger_filter;
 use crate::process::abstract_proc::common::FilterEliminationKind;
 use crate::process::explo_proc::interface::logger::ExplorationLogger;
@@ -34,7 +35,7 @@ impl ExplorationLogger for GraphicProcessLogger {
 
     fn log_init(&mut self, interaction: &Interaction, gen_ctx: &GeneralContext) {
         let init_node = make_graphic_logger_state(&self.temp_folder,gen_ctx,1,interaction,self.int_repr_sd,self.int_repr_tt,None);
-        self.graph.nodes.push(Box::new(init_node));
+        self.graph.add_cluster(init_node);
     }
 
     fn log_term(&mut self, options_as_str: &Vec<String>) {
@@ -58,35 +59,39 @@ impl ExplorationLogger for GraphicProcessLogger {
         // *** Transition To Firing
         let tran_to_firing : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",origin_state_id) ) );
-            tran_to_firing = GraphVizEdge::new(format!("a{:}", origin_state_id),state_firing.id.clone(),tran_gv_options);
+            let tran_gv_options  = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) ];
+            tran_to_firing = GraphVizEdge::new(format!("a{:}", origin_state_id),
+                                               Some(format!("n{}",origin_state_id)),
+                                               state_firing.id.clone(),
+                                               None,
+                                               tran_gv_options);
         }
         // *** Transition To New Node
         let tran_to_new : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",target_state_id) ) );
-            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),format!("a{:}", target_state_id),tran_gv_options);
+            let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) ];
+            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),
+                                            None,
+                                            format!("a{:}", target_state_id),
+                                            Some(format!("n{}",target_state_id)),
+                                            tran_gv_options);
         }
         // ***
-        self.graph.nodes.push(Box::new(state_firing));
-        self.graph.edges.push(tran_to_firing);
-        self.graph.edges.push(tran_to_new);
+        self.graph.add_node(state_firing);
+        self.graph.add_edge(tran_to_firing);
+        self.graph.add_edge(tran_to_new);
     }
 
     fn log_new_interaction(&mut self, gen_ctx: &GeneralContext, new_state_id: u32, new_interaction: &Interaction) {
         // *** Resulting New Node
         let new_node = make_graphic_logger_state(&self.temp_folder,gen_ctx,new_state_id,new_interaction,self.int_repr_sd,self.int_repr_tt,None);
-        self.graph.nodes.push(Box::new(new_node));
+        self.graph.add_cluster(new_node);
     }
 
     fn log_filtered(&mut self, parent_state_id: u32, new_state_id: u32, elim_kind: &FilterEliminationKind) {
         let (elim_node,elim_edge) = make_graphic_logger_filter(parent_state_id,new_state_id,elim_kind);
-        self.graph.nodes.push(Box::new(elim_node));
-        self.graph.edges.push(elim_edge);
+        self.graph.add_node(elim_node);
+        self.graph.add_edge(elim_edge);
     }
 
     fn log_notified_lastchild_explored(&mut self, gen_ctx : &GeneralContext, parent_id: u32) {

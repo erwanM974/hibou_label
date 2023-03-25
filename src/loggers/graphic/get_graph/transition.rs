@@ -20,6 +20,12 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+
+
+use graphviz_dot_builder::colors::GraphvizColor;
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
+
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
@@ -29,9 +35,6 @@ use crate::io::output::draw_transitions::draw_firing::{draw_firing_analysis, dra
 use crate::io::output::draw_transitions::draw_hiding::draw_hiding;
 use crate::io::output::draw_transitions::draw_string_label::draw_string_label;
 use crate::io::output::draw_transitions::draw_transformation::draw_transformation;
-use crate::io::output::graphviz::colors::GraphvizColor;
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
 use crate::process::ana_proc::interface::step::SimulationStepKind;
 
 

@@ -15,8 +15,16 @@ limitations under the License.
 */
 
 
-pub mod colors;
-pub mod node;
-pub mod edge;
-pub mod cluster;
-pub mod graph;
+
+use std::collections::HashSet;
+use crate::core::language::syntax::interaction::Interaction;
+
+
+pub trait LifelineEliminable {
+
+    fn eliminate_lifelines(&self, lfs_to_eliminate : &HashSet<usize>) -> Interaction;
+
+}
+
+
+

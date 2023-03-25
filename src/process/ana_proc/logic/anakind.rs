@@ -148,7 +148,7 @@ impl SimulationConfiguration {
 pub enum AnalysisKind {
     Accept,
     Prefix,
-    Hide,
+    Eliminate,
     Simulate(SimulationConfiguration)
 }
 
@@ -231,8 +231,8 @@ impl std::string::ToString for AnalysisKind {
             AnalysisKind::Prefix => {
                 return "prefix".to_string();
             },
-            AnalysisKind::Hide => {
-                return "hide".to_string();
+            AnalysisKind::Eliminate => {
+                return "eliminate no-longer-observed".to_string();
             },
             AnalysisKind::Simulate(sim_config) => {
                 return format!("simulate[{:}]", sim_config.to_string());

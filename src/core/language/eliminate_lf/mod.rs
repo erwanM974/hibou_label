@@ -16,25 +16,10 @@ limitations under the License.
 
 
 
-use crate::io::output::graphviz::colors::DotTranslatable;
-use crate::io::output::graphviz::node::style::GraphvizNodeStyle;
 
+pub mod eliminable;
+mod action;
+mod interaction;
 
-
-pub struct GraphVizNode {
-    pub id : String,
-    pub style : GraphvizNodeStyle
-}
-
-
-impl DotTranslatable for GraphVizNode {
-    fn to_dot_string(&self) -> String {
-        let mut res = String::new();
-        res.push_str(&(self.id));
-        res.push_str(&(self.style.to_dot_string()));
-        res.push_str(";");
-        return res;
-    }
-}
 
 

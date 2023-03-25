@@ -22,6 +22,9 @@ pub static SYNTAX_PAR: &'static str = "par";
 pub static SYNTAX_ALT: &'static str = "alt";
 pub static SYNTAX_SYNC: &'static str = "sync";
 pub static SYNTAX_COREG: &'static str = "creg";
+
+pub static SYNTAX_AND: &'static str = "and";
+
 pub static SYNTAX_LOOP_S: &'static str = "loopS";
 pub static SYNTAX_LOOP_H: &'static str = "loopH";
 pub static SYNTAX_LOOP_W: &'static str = "loopW";

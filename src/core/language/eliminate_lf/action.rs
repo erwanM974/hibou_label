@@ -18,15 +18,15 @@ limitations under the License.
 
 
 use std::collections::HashSet;
-use crate::core::language::hide::hideable::LifelineHideable;
+use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};
 use crate::core::language::syntax::interaction::Interaction;
 
 
 
-impl LifelineHideable for EmissionAction {
+impl LifelineEliminable for EmissionAction {
 
-    fn hide(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
+    fn eliminate_lifelines(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
         if lfs_to_remove.contains(&self.origin_lf_id) {
             let mut has_lf_tars = false;
             let mut target_lfs : Vec<usize> = Vec::new();
@@ -43,11 +43,11 @@ impl LifelineHideable for EmissionAction {
             }
             // ***
             if has_lf_tars {
-                let hidden_act = ReceptionAction::new(None,
+                let new_act = ReceptionAction::new(None,
                                                       self.ms_id,
                                                       self.synchronicity.clone(),
                                                       target_lfs);
-                return Interaction::Reception( hidden_act );
+                return Interaction::Reception( new_act );
             } else {
                 return Interaction::Empty;
             }
@@ -65,19 +65,19 @@ impl LifelineHideable for EmissionAction {
                     }
                 }
             }
-            let hidden_act = EmissionAction::new(self.origin_lf_id,
+            let new_act = EmissionAction::new(self.origin_lf_id,
                                                  self.ms_id,
                                                  self.synchronicity.clone(),
                                                  targets);
-            return Interaction::Emission( hidden_act );
+            return Interaction::Emission( new_act );
         }
     }
 }
 
 
 
-impl LifelineHideable for ReceptionAction {
-    fn hide(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
+impl LifelineEliminable for ReceptionAction {
+    fn eliminate_lifelines(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
         let mut has_lf_tars = false;
         let mut target_lfs : Vec<usize> = Vec::new();
         for tar_lf_id in &self.recipients {
@@ -88,11 +88,11 @@ impl LifelineHideable for ReceptionAction {
         }
         // ***
         if has_lf_tars {
-            let hidden_act = ReceptionAction::new(self.origin_gt_id.clone(),
+            let new_act = ReceptionAction::new(self.origin_gt_id.clone(),
                                                   self.ms_id,
                                                   self.synchronicity.clone(),
                                                   target_lfs);
-            return Interaction::Reception( hidden_act );
+            return Interaction::Reception( new_act );
         } else {
             return Interaction::Empty;
         }

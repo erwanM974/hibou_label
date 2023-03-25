@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
 
 
 pub fn make_graphic_logger_legend(options_as_strs : &Vec<String>) -> GraphVizNode {

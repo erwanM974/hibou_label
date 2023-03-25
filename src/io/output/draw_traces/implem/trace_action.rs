@@ -17,12 +17,12 @@ limitations under the License.
 
 use std::collections::HashSet;
 use image::Rgb;
+use image_colored_text::ttp::TextToPrint;
 use itertools::Itertools;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
-use crate::io::output::draw_commons::colored_text::ttp::TextToPrint;
-use crate::io::output::draw_commons::hibou_color_palette::*;
+use crate::io::output::draw_commons::hibou_color_palette::{HC_Grammar_Symbol, HC_Lifeline, HC_Message};
 use crate::io::textual_convention::*;
 
 
@@ -33,21 +33,21 @@ pub fn diagram_repr_trace_action(action : &TraceAction, gen_ctx : &GeneralContex
     // ***
     {
         let lf_name = gen_ctx.get_lf_name(action.lf_id).unwrap();
-        to_print.push( TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)} );
+        to_print.push( TextToPrint::new(lf_name,Rgb(HC_Lifeline)) );
     }
     // ***
     match &action.act_kind {
         &TraceActionKind::Reception => {
-            to_print.push( TextToPrint{text:SYNTAX_RECEPTION.to_string(),color:Rgb(HC_Grammar_Symbol)} );
+            to_print.push( TextToPrint::new(SYNTAX_RECEPTION.to_string(),Rgb(HC_Grammar_Symbol)) );
         },
         &TraceActionKind::Emission => {
-            to_print.push( TextToPrint{text:SYNTAX_EMISSION.to_string(),color:Rgb(HC_Grammar_Symbol)} );
+            to_print.push( TextToPrint::new(SYNTAX_EMISSION.to_string(),Rgb(HC_Grammar_Symbol)) );
         }
     }
     // ***
     {
         let ms_name = gen_ctx.get_ms_name(action.ms_id).unwrap();
-        to_print.push( TextToPrint{text:ms_name,color:Rgb(HC_Message)} );
+        to_print.push( TextToPrint::new(ms_name,Rgb(HC_Message)) );
     }
     // ***
     return to_print;
@@ -67,15 +67,15 @@ pub fn diagram_repr_trace_actions(actions : &HashSet<TraceAction>,
                 rem = rem - 1;
                 joined.append(&mut sub_repr);
                 if rem > 0 {
-                    joined.push(TextToPrint{text:",".to_string(), color:Rgb(HC_Grammar_Symbol)});
+                    joined.push(TextToPrint::new(",".to_string(), Rgb(HC_Grammar_Symbol)));
                 }
             }
         }
-        //let mut joined = inner_reprs.join(TextToPrint{text:",".to_string(), color:Rgb(HC_Grammar_Symbol)});
+        //let mut joined = inner_reprs.join(TextToPrint::new(",".to_string(), Rgb(HC_Grammar_Symbol)});
         let mut to_print : Vec<TextToPrint> = Vec::new();
-        to_print.push( TextToPrint{text:"{".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+        to_print.push( TextToPrint::new("{".to_string(), Rgb(HC_Grammar_Symbol)) );
         to_print.append(&mut joined);
-        to_print.push( TextToPrint{text:"}".to_string(), color:Rgb(HC_Grammar_Symbol)} );
+        to_print.push( TextToPrint::new("}".to_string(), Rgb(HC_Grammar_Symbol)) );
         return to_print;
     } else if inner_reprs.len() == 1 {
         return inner_reprs.pop().unwrap();

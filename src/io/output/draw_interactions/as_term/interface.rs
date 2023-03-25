@@ -20,6 +20,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
+use graphviz_dot_builder::traits::DotTranslatable;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
@@ -40,7 +41,7 @@ pub fn draw_int_as_term(gen_ctx : &GeneralContext,
     let temp_file_name = format!("{:}.dot", output_file_name);
     let temp_path : PathBuf = [temp_folder, &temp_file_name].iter().collect();
     let mut file = File::create(temp_path.as_path()).unwrap();
-    file.write( interaction_gv_repr(gen_ctx,interaction).as_bytes() );
+    file.write( interaction_gv_repr(gen_ctx,interaction).to_dot_string().as_bytes() );
     // ***
     let output_file_name = format!("{:}.png", output_file_name);
     let output_path : PathBuf = [parent_folder, &output_file_name].iter().collect();

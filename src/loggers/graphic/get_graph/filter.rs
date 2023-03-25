@@ -15,11 +15,13 @@ limitations under the License.
 */
 
 
-use crate::io::output::graphviz::colors::GraphvizColor;
-use crate::io::output::graphviz::edge::edge::GraphVizEdge;
-use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+use graphviz_dot_builder::colors::GraphvizColor;
+use graphviz_dot_builder::edge::edge::GraphVizEdge;
+use graphviz_dot_builder::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle};
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+
+
 use crate::process::abstract_proc::common::FilterEliminationKind;
 
 
@@ -44,13 +46,14 @@ pub fn make_graphic_logger_filter(parent_state_id : u32,
     // ***
     let elim_edge : GraphVizEdge;
     {
-        let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
+        let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ),
+                                    GraphvizEdgeStyleItem::Color( GraphvizColor::burlywood4 ) ];
         // ***
-        tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-        tran_gv_options.push( GraphvizEdgeStyleItem::Color( GraphvizColor::burlywood4 ) );
-        tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-        // ***
-        elim_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),elim_node.id.clone(),tran_gv_options);
+        elim_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),
+                                      Some(format!("n{}",parent_state_id)),
+                                      elim_node.id.clone(),
+                                      None,
+                                      tran_gv_options);
     }
     return (elim_node,elim_edge);
 }

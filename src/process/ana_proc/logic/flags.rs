@@ -29,7 +29,7 @@ use crate::process::ana_proc::logic::anakind::{SimulationActionCriterion, Simula
 #[derive(Clone, PartialEq, Debug)]
 pub struct TraceAnalysisFlags {
     pub consumed : usize,
-    pub hidden : bool,
+    pub no_longer_observed : bool,
     pub dirty4local : bool,
     pub simulated_before : u32,
     pub simulated_after : u32
@@ -38,11 +38,11 @@ pub struct TraceAnalysisFlags {
 impl TraceAnalysisFlags {
     pub fn new(
         consumed : usize,
-        hidden : bool,
+        no_longer_observed : bool,
         dirty4local : bool,
         simulated_before : u32,
         simulated_after : u32) -> TraceAnalysisFlags {
-        return TraceAnalysisFlags{consumed,hidden,dirty4local,simulated_before,simulated_after};
+        return TraceAnalysisFlags{consumed,no_longer_observed,dirty4local,simulated_before,simulated_after};
     }
 
     pub fn new_init() -> TraceAnalysisFlags {
@@ -114,7 +114,7 @@ impl MultiTraceAnalysisFlags {
 
     pub fn is_any_component_hidden(&self) -> bool {
         for canal in &self.canals {
-            if canal.hidden {
+            if canal.no_longer_observed {
                 return true;
             }
         }
@@ -150,8 +150,8 @@ impl MultiTraceAnalysisFlags {
         for (flag_id,old_flag) in self.canals.iter().enumerate() {
             let mut new_flag : TraceAnalysisFlags = old_flag.clone();
             if coloc_ids_to_hide.contains(&flag_id) {
-                assert!(!new_flag.hidden);
-                new_flag.hidden = true;
+                assert!(!new_flag.no_longer_observed);
+                new_flag.no_longer_observed = true;
             }
             new_canal_flags.push(new_flag);
         }

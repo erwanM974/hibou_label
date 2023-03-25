@@ -18,17 +18,16 @@ limitations under the License.
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
-use crate::io::output::graphviz::colors::{DotTranslatable, GraphvizColor};
-use crate::io::output::graphviz::graph::GraphVizDiGraph;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem};
+
+use graphviz_dot_builder::traits::{DotBuildable, DotTranslatable};
+use graphviz_dot_builder::graph::GraphVizDiGraph;
+
 use crate::loggers::graphic::conf::{GraphicProcessLoggerLayout, GraphicProcessLoggerOutputFormat};
 
 
-use crate::loggers::graphic::get_graph::filter::make_graphic_logger_filter;
 use crate::loggers::graphic::get_graph::legend::make_graphic_logger_legend;
-use crate::process::abstract_proc::common::FilterEliminationKind;
 
 // ***
 
@@ -94,7 +93,7 @@ impl GraphicProcessLogger {
                 options_as_strs : &Vec<String>) {
         // *** LEGEND
         if self.display_legend {
-            self.graph.nodes.push(Box::new(make_graphic_logger_legend(options_as_strs)));
+            self.graph.add_node(make_graphic_logger_legend(options_as_strs));
         }
         // ***
         let dot_file_name = format!("{:}.dot", self.output_file_name);

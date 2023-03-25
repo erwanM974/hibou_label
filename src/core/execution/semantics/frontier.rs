@@ -154,6 +154,64 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::Alt(ref i1, ref i2) => {
+            /*
+            let mut match_indices : HashSet<(usize,usize)> = hashset! {};
+            let mut frt1_matched : HashSet<usize> = hashset![];
+            let mut frt2_matched : HashSet<usize> = hashset![];
+            // ***
+            let frt1 = global_frontier_rec(i1,loop_depth);
+            let frt2 = global_frontier_rec(i2,loop_depth);
+            // ***
+            for (frt1_idx,frt1_elt) in frt1.iter().enumerate() {
+                for (frt2_idx,frt2_elt) in frt2.iter().enumerate() {
+                    if frt1_elt.target_actions == frt2_elt.target_actions {
+                        frt1_matched.insert(frt1_idx);
+                        frt2_matched.insert(frt2_idx);
+                        match_indices.insert( (frt1_idx,frt2_idx) );
+                    }
+                }
+            }
+            // ***
+            let mut new_front = vec![];
+            // ***
+            for (frt1_idx,frt2_idx) in match_indices {
+                let frt1_elt : &FrontierElement = frt1.get(frt1_idx).unwrap();
+                let frt2_elt: &FrontierElement = frt2.get(frt2_idx).unwrap();
+                let new_pos = Position::Both( Box::new(frt1_elt.position.clone()), Box::new(frt2_elt.position.clone()));
+                let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
+                let new_target_actions : HashSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
+                let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
+                // ***
+                new_front.push( FrontierElement::new(new_pos,
+                                                     new_target_lf_ids,
+                                                     new_target_actions,
+                                                     new_max_loop_depth ));
+            }
+            // ***
+            for (frt1_idx,frt1_elt) in frt1.into_iter().enumerate() {
+                if !frt1_matched.contains(&frt1_idx) {
+                    let shifted_pos = Position::Left(Box::new(frt1_elt.position));
+                    new_front.push( FrontierElement::new(shifted_pos,
+                                                         frt1_elt.target_lf_ids,
+                                                         frt1_elt.target_actions,
+                                                         frt1_elt.max_loop_depth ));
+                }
+            }
+            // ***
+            for (frt2_idx,frt2_elt) in frt2.into_iter().enumerate() {
+                if !frt2_matched.contains(&frt2_idx) {
+                    let shifted_pos = Position::Right(Box::new(frt2_elt.position));
+                    new_front.push( FrontierElement::new(shifted_pos,
+                                                         frt2_elt.target_lf_ids,
+                                                         frt2_elt.target_actions,
+                                                         frt2_elt.max_loop_depth ));
+                }
+            }
+            // ***
+            return new_front;
+             */
+            // *****
+            // BELOW non-delayed ALT
             let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
             front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
             return front;

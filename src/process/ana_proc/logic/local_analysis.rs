@@ -19,7 +19,7 @@ use std::collections::HashSet;
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace, Trace};
 use crate::core::general_context::GeneralContext;
-use crate::core::language::hide::hideable::LifelineHideable;
+use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::process::abstract_proc::common::HibouSearchStrategy;
 use crate::process::abstract_proc::manager::GenericProcessPriorities;
@@ -49,7 +49,7 @@ pub fn get_local_analysis_starting_data(gen_ctx : &GeneralContext,
         for lf_id in locs_lf_ids {
             lfs_to_remove.remove( lf_id );
         }
-        local_interaction = interaction.hide(&lfs_to_remove);
+        local_interaction = interaction.eliminate_lifelines(&lfs_to_remove);
     }
     // ***
     let canal_trace: &Trace = multi_trace.get(canal_id).unwrap();
@@ -87,7 +87,7 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
                         for lf_id in colocalized_lfs {
                             lfs_to_remove.remove( &lf_id );
                         }
-                        local_interaction = interaction.hide(&lfs_to_remove);
+                        local_interaction = interaction.eliminate_lifelines(&lfs_to_remove);
                     }
                     let local_coloc = CoLocalizations::new(vec![colocalized_lfs.clone()]);
                     match perform_local_analysis(gen_ctx,local_coloc,parent_analysis_kind,local_interaction,local_multi_trace,local_flags,vec![]) {

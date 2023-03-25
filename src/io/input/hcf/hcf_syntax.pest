@@ -96,7 +96,7 @@ OPTION_PRIORITY_reception = { "reception" }
 OPTION_PRIORITY_loop = { "loop" }
 OPTION_PRIORITY_multi_rdv = { "multi_rdv" }
 // ***
-OPTION_PRIORITY_hide = { "hide" }
+OPTION_PRIORITY_elim = { "elim" }
 OPTION_PRIORITY_simu = { "simu" }
 // ***
 OPTION_PRIORITY_simpl = { "simpl" }
@@ -110,7 +110,7 @@ OPTION_PRIORITY_KIND = _{ OPTION_PRIORITY_emission
                             | OPTION_PRIORITY_reception
                             | OPTION_PRIORITY_loop
                             | OPTION_PRIORITY_multi_rdv
-                            | OPTION_PRIORITY_hide
+                            | OPTION_PRIORITY_elim
                             | OPTION_PRIORITY_simu
                             | OPTION_PRIORITY_simpl
                             | OPTION_PRIORITY_flush
@@ -155,7 +155,7 @@ EXPLORE_OPTION_SECTION = { "@explore_option" ~ "{" ~
 
 OPTION_ANA_KIND_accept = { "accept" }
 OPTION_ANA_KIND_prefix = { "prefix" }
-OPTION_ANA_KIND_hide = { "hide" }
+OPTION_ANA_KIND_eliminate = { "eliminate" }
 // ***
 OPTION_ANA_SIMULATE_CONFIG_crit_num = { "num" ~ "=" ~ ARITH_INTEGER }
 OPTION_ANA_SIMULATE_CONFIG_crit_maxnum = { "maxnum" | "max"~"num" }
@@ -170,9 +170,9 @@ OPTION_ANA_SIMULATE_CONFIG_act = { "act" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_maxnum
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_none) }
 // ***
-OPTION_ANA_SIMULATE_CONFIG_simbefore = { "slice" | "before" | "preamble" }
-OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length = { "multiply" | "resized" | "dependent" }
-OPTION_ANA_SIMULATE_CONFIG_reset = { "reset" | "reinitialize" }
+OPTION_ANA_SIMULATE_CONFIG_simbefore = { ("slice" | "before" | "preamble") ~ "=" ~ (HIBOU_true | HIBOU_false) }
+OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length = { ("multiply" | "resized" | "dependent") ~ "=" ~ (HIBOU_true | HIBOU_false) }
+OPTION_ANA_SIMULATE_CONFIG_reset = { ("reset" | "reinitialize") ~ "=" ~ (HIBOU_true | HIBOU_false) }
 OPTION_ANA_SIMULATE_CONFIG_opt = _{ OPTION_ANA_SIMULATE_CONFIG_simbefore
                                     | OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length
                                     | OPTION_ANA_SIMULATE_CONFIG_reset
@@ -184,7 +184,7 @@ OPTION_ANA_SIMULATE_CONFIG_decl = { "[" ~ OPTION_ANA_SIMULATE_CONFIG_opt ~ ("," 
 OPTION_ANA_KIND_simulate = { "simulate" ~ OPTION_ANA_SIMULATE_CONFIG_decl? }
 OPTION_ANALYSIS_KIND = _{ OPTION_ANA_KIND_accept
                           | OPTION_ANA_KIND_prefix
-                          | OPTION_ANA_KIND_hide
+                          | OPTION_ANA_KIND_eliminate
                           | OPTION_ANA_KIND_simulate }
 OPTION_ANALYSIS_KIND_DECL = { "analysis_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
 // ***********************************************
@@ -194,9 +194,7 @@ OPTION_GOAL_none = { "None" }
 OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | OPTION_GOAL_none }
 OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
 // ***********************************************
-OPTION_LOCANA_yes = { "local_analysis" ~ "=" ~ HIBOU_true }
-OPTION_LOCANA_no = { "local_analysis" ~ "=" ~ HIBOU_false }
-OPTION_LOCANA = _{ OPTION_LOCANA_yes | OPTION_LOCANA_no }
+OPTION_LOCANA = { "local_analysis" ~ "=" ~ (HIBOU_true | HIBOU_false)  }
 // ***********************************************
 ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL
                             | OPTION_ANALYSIS_KIND_DECL

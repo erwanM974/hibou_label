@@ -158,14 +158,18 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                     Rule::OPTION_ANA_KIND_prefix => {
                         ana_kind = AnalysisKind::Prefix;
                     },
-                    Rule::OPTION_ANA_KIND_hide => {
-                        ana_kind = AnalysisKind::Hide;
+                    Rule::OPTION_ANA_KIND_eliminate => {
+                        ana_kind = AnalysisKind::Eliminate;
                     },
                     Rule::OPTION_ANA_KIND_simulate => {
                         let mut inner = ana_kind_pair.into_inner();
                         match inner.next() {
                             None => {
-                                let sim_config = SimulationConfiguration::new(false,false,false,SimulationLoopCriterion::MaxDepth,SimulationActionCriterion::None);
+                                let sim_config = SimulationConfiguration::new(false,
+                                                                              false,
+                                                                              false,
+                                                                              SimulationLoopCriterion::MaxDepth,
+                                                                              SimulationActionCriterion::None);
                                 ana_kind = AnalysisKind::Simulate(sim_config);
                             },
                             Some( sim_config_decl_pair) => {
@@ -185,11 +189,19 @@ pub fn parse_analyze_options(option_pair : Pair<Rule>,
                     }
                 }
             },
-            Rule::OPTION_LOCANA_yes => {
-                local_analysis = UseLocalAnalysis::Yes;
-            },
-            Rule::OPTION_LOCANA_no => {
-                local_analysis = UseLocalAnalysis::No;
+            Rule::OPTION_LOCANA => {
+                let locana_as_bool_pair = option_decl_pair.into_inner().next().unwrap();
+                match locana_as_bool_pair.as_rule() {
+                    Rule::HIBOU_true => {
+                        local_analysis = UseLocalAnalysis::Yes;
+                    },
+                    Rule::HIBOU_false => {
+                        local_analysis = UseLocalAnalysis::No;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", locana_as_bool_pair.as_rule() );
+                    }
+                }
             },
             Rule::OPTION_GOAL_DECL => {
                 let goal_pair =  option_decl_pair.into_inner().next().unwrap();
@@ -254,7 +266,7 @@ fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<Analys
     let mut reception : i32 = 0;
     let mut multi_rdv : i32 = 0;
     let mut in_loop : i32 = 0;
-    let mut hide : i32 = 0;
+    let mut elim : i32 = 0;
     let mut simu : i32 = 0;
     // ***
     for priority_pair in priorities_decl_pair.into_inner() {
@@ -279,8 +291,8 @@ fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<Analys
                 in_loop = priority_level;
             },
             // ***
-            Rule::OPTION_PRIORITY_hide => {
-                hide = priority_level;
+            Rule::OPTION_PRIORITY_elim => {
+                elim = priority_level;
             },
             Rule::OPTION_PRIORITY_simu => {
                 simu = priority_level;
@@ -311,7 +323,7 @@ fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<Analys
         }
     }
     // ***
-    let priorities = AnalysisPriorities::new(emission,reception,multi_rdv,in_loop,hide,simu);
+    let priorities = AnalysisPriorities::new(emission,reception,multi_rdv,in_loop,elim,simu);
     return Ok(priorities);
 }
 
@@ -325,13 +337,46 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
     for config_opt_pair in simu_config_decl_pair.into_inner() {
         match config_opt_pair.as_rule() {
             Rule::OPTION_ANA_SIMULATE_CONFIG_simbefore => {
-                sim_before = true;
+                let as_bool_pair = config_opt_pair.into_inner().next().unwrap();
+                match as_bool_pair.as_rule() {
+                    Rule::HIBOU_true => {
+                        sim_before = true;
+                    },
+                    Rule::HIBOU_false => {
+                        sim_before = false;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", as_bool_pair.as_rule() );
+                    }
+                }
             },
             Rule::OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length => {
-                multiply_by_multitrace_length = true;
+                let as_bool_pair = config_opt_pair.into_inner().next().unwrap();
+                match as_bool_pair.as_rule() {
+                    Rule::HIBOU_true => {
+                        multiply_by_multitrace_length = true;
+                    },
+                    Rule::HIBOU_false => {
+                        multiply_by_multitrace_length = false;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", as_bool_pair.as_rule() );
+                    }
+                }
             },
             Rule::OPTION_ANA_SIMULATE_CONFIG_reset => {
-                reset_crit_after_exec = true;
+                let as_bool_pair = config_opt_pair.into_inner().next().unwrap();
+                match as_bool_pair.as_rule() {
+                    Rule::HIBOU_true => {
+                        reset_crit_after_exec = true;
+                    },
+                    Rule::HIBOU_false => {
+                        reset_crit_after_exec = false;
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", as_bool_pair.as_rule() );
+                    }
+                }
             },
             Rule::OPTION_ANA_SIMULATE_CONFIG_act => {
                 let inner : Pair<Rule> = config_opt_pair.into_inner().next().unwrap();

@@ -33,7 +33,7 @@ pub enum SimulationStepKind {
 
 
 pub enum AnalysisStepKind {
-    Hide(HashSet<usize>), // all the ids of all the co-localizations to hide
+    EliminateNoLongerObserved(HashSet<usize>), // all the ids of all the co-localizations to eliminate
     Execute(FrontierElement, // frontier element to execute
              HashSet<usize>, // co-localisations on which multi-trace action consumption must be done
              HashMap<usize,SimulationStepKind>) // co-localisations on which simulation must be done and which kind
@@ -43,7 +43,7 @@ impl AbstractStepKind<AnalysisConfig> for AnalysisStepKind {
 
     fn get_priority(&self, process_priorities: &AnalysisPriorities) -> i32 {
         match self {
-            AnalysisStepKind::Hide(_) => {
+            AnalysisStepKind::EliminateNoLongerObserved(_) => {
                 return 0;
             },
             AnalysisStepKind::Execute(frt_elt,consu_set,sim_map) => {

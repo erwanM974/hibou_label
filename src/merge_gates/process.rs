@@ -22,10 +22,10 @@ use std::collections::{HashSet,HashMap};
 
 use std::process::Command;
 
-use crate::io::output::graphviz::graph::*;
-use crate::io::output::graphviz::node_style::*;
-use crate::io::output::graphviz::edge_style::*;
-use crate::io::output::graphviz::common::*;
+use graphviz_dot_builder::graph::*;
+use graphviz_dot_builder::node_style::*;
+use graphviz_dot_builder::edge_style::*;
+use graphviz_dot_builder::common::*;
 
 
 use crate::core::language::syntax::interaction::{Interaction};

@@ -18,17 +18,17 @@ limitations under the License.
 use std::collections::HashMap;
 
 use image::{Rgb, RgbImage};
+use image_colored_text::draw::single_line::{draw_line_of_colored_text, DrawCoord};
+use image_colored_text::ttp::TextToPrint;
 use imageproc::drawing::{
     draw_filled_rect_mut,
     draw_hollow_rect_mut,
     draw_line_segment_mut
 };
 use imageproc::rect::Rect;
-use rusttype::{Font, Scale};
+
 
 use crate::core::general_context::GeneralContext;
-use crate::io::output::draw_commons::colored_text::draw_ttp::draw_colored_text;
-use crate::io::output::draw_commons::colored_text::ttp::TextToPrint;
 use crate::io::output::draw_commons::hibou_color_palette::*;
 use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_interactions::as_sd::util::lf_coords::DrawingLifelineCoords;
@@ -50,18 +50,18 @@ pub fn draw_lifelines(image : &mut RgbImage,
         // ***
         let lf_name = gen_ctx.get_lf_name(*lf_id).unwrap();
         let lf_name_span = FONT_WIDTH*(lf_name.chars().count() as f32)/2.0;
-        let mut square_span_with_margin = lf_name_span + 2.0*MARGIN;
-
-        let font = Font::try_from_bytes(HIBOU_GRAPHIC_FONT).unwrap();
-
-        let scale = Scale { x: FONT_WIDTH, y: FONT_HEIGHT };
-
-        let label = vec![TextToPrint{text:lf_name,color:Rgb(HC_Lifeline)}];
-        let lf_label_centered_pos = lf_coords.x_middle - lf_name_span/2.0;
-        draw_colored_text(image,&label,lf_label_centered_pos,lifeline_y_start + VERTICAL_SIZE/2.0);
         // ***
-        let mut yshift : usize = 2;
+        let label = vec![TextToPrint::new(lf_name,Rgb(HC_Lifeline))];
+        draw_line_of_colored_text(image,
+                                  &DrawCoord::CenteredAround(lf_coords.x_middle),
+                                  &DrawCoord::CenteredAround(lifeline_y_start + VERTICAL_SIZE),
+                                  &label,
+                                  FONT_WIDTH,
+                                  FONT_HEIGHT);
         // ***
+        let yshift : usize = 2;
+        // ***
+        let square_span_with_margin = lf_name_span + 2.0*MARGIN;
         let actor_x_start : f32 = lf_coords.x_middle - (square_span_with_margin/2.0);
         draw_hollow_rect_mut(image,
                              Rect::at(actor_x_start as i32, lifeline_y_start as i32).of_size(square_span_with_margin as u32, ((yshift as f32)*VERTICAL_SIZE) as u32),

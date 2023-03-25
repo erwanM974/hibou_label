@@ -221,8 +221,8 @@ fn parse_specific_priorities(priorities_decl_pair : Pair<Rule>) -> Result<Explor
                 in_loop = priority_level;
             },
             // ***
-            Rule::OPTION_PRIORITY_hide => {
-                return Err(HibouParsingError::ProcessPriorityError("found hide priority in Exploration".to_string()));
+            Rule::OPTION_PRIORITY_elim => {
+                return Err(HibouParsingError::ProcessPriorityError("found elim priority in Exploration".to_string()));
             },
             Rule::OPTION_PRIORITY_simu => {
                 return Err(HibouParsingError::ProcessPriorityError("found simu priority in Exploration".to_string()));

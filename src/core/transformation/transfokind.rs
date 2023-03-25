@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 use strum_macros::IntoStaticStr;
+
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::transformation::transfofunc::action::transfo_sort_action_content;
 use crate::core::transformation::transfofunc::alt_dedup::alt_dedup_equal::transfo_deduplicate;

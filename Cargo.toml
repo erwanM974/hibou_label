@@ -1,6 +1,6 @@
 [package]
 name = "hibou_label"
-version = "0.8.3"
+version = "0.8.4"
 authors = ["Erwan Mahe"]
 edition = "2021"
 
@@ -12,12 +12,14 @@ description = "Holistic Interaction Behavioral Oracle Utility - hibou provides u
 [dependencies]
 image = "0.24.5"                                # for rendering interactions
 imageproc = "0.23.0"                            # ...
-strum = "0.24.1"                                # for as_static in the graphviz package and others
-strum_macros = "0.24.3"                         # ...
-rusttype = "0.9.3"                              # for fonts and scale for text in images
+image_colored_text = "0.1.0"                    # for drawing colored text
+#rusttype = "0.9.3"                              # for fonts and scale for text in images
 pest = "2.5.6"                                  # for pest parser
 pest_derive = "2.5.6"                           # ...
 clap = {version="3.2.22",features=["yaml"]}     # for the command line interface
 maplit = "1.0.2"                                # for !hashset macro etc
 itertools = "0.10.5"                            # for .sorted() etc
 rand = "0.8.5"                                  # random number generation e.g. for traversal heuristics for interaction semantics exploration and/or multitrace analysis
+graphviz_dot_builder = "0.1.1"                  # for generating dot files to be used with graphviz
+strum = "0.24.1"                                # for IntoStaticStr
+strum_macros = "0.24.3"                         # ...

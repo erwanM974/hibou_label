@@ -18,16 +18,20 @@ limitations under the License.
 
 
 use std::path::PathBuf;
+use graphviz_dot_builder::colors::GraphvizColor;
+
+
+use graphviz_dot_builder::item::cluster::GraphVizCluster;
+use graphviz_dot_builder::traits::{DotBuildable, DotTranslatable};
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyleKind};
+
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
 use crate::io::output::draw_traces::interface::draw_multitrace;
-use crate::io::output::graphviz::cluster::cluster::GraphVizCluster;
-use crate::io::output::graphviz::colors::{DotTranslatable, GraphvizColor};
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape, GvNodeStyle, GvNodeStyleKind};
 use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
 
 
@@ -40,6 +44,7 @@ fn make_anchor_node(state_id : u32) -> GraphVizNode {
         ]};
 }
 
+
 pub fn make_graphic_logger_state(temp_folder : &String,
                                 gen_ctx : &GeneralContext,
                                 state_id : u32,
@@ -47,47 +52,45 @@ pub fn make_graphic_logger_state(temp_folder : &String,
                                 as_sd : bool,
                                 as_term : bool,
                                 with_mu : Option<(&CoLocalizations,&MultiTrace,&MultiTraceAnalysisFlags,bool,bool,bool)>) -> GraphVizCluster {
-    let mut nodes : Vec<Box<dyn DotTranslatable>> = vec![];
+    // ***
+    let cluster_gv_options = vec![ GraphvizNodeStyleItem::FillColor( GraphvizColor::lightgrey ),
+                                   GraphvizNodeStyleItem::Label( "".to_string() )];
+    // ***
+    let mut cluster = GraphVizCluster::new( format!("n{:}", state_id), cluster_gv_options, vec![], vec![]);
     // ***
     let mut anchored = false;
     let mut got = 0;
     if let Some((coloc,mu,flags,is_sim,crit_loop,crit_act)) = with_mu {
         got += 1;
         let node = make_graphic_logger_mu(temp_folder,gen_ctx,state_id,coloc,mu,flags,is_sim,crit_loop,crit_act);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
     }
     if got > 0 {
         let node = make_anchor_node(state_id);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
         anchored = true;
     }
     // ***
     if as_sd {
         got += 1;
         let node = make_graphic_logger_sd(temp_folder,gen_ctx,state_id,interaction);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
     }
     if !anchored && got > 0 {
         let node = make_anchor_node(state_id);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
         anchored = true;
     }
     if as_term {
         let node = make_graphic_logger_tt(temp_folder,gen_ctx,state_id,interaction);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
     }
     if !anchored {
         let node = make_anchor_node(state_id);
-        nodes.push(Box::new(node));
+        cluster.add_node(node);
     }
     // ***
-    let node_id = format!("n{:}", state_id);
-    // ***
-    let mut cluster_gv_options : GraphvizNodeStyle = Vec::new();
-    cluster_gv_options.push(GraphvizNodeStyleItem::FillColor( GraphvizColor::lightgrey ));
-    cluster_gv_options.push(GraphvizNodeStyleItem::Label( "".to_string() ));
-    // ***
-    return GraphVizCluster::new(node_id,cluster_gv_options,nodes,vec![]);
+    return cluster;
 }
 
 

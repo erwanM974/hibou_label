@@ -410,6 +410,21 @@ fn execute_interaction_both(my_int : &Interaction,
                             tar_lf_ids : &HashSet<usize>,
                             get_affected : bool) -> ExecutionResult {
     match my_int {
+        Interaction::Alt(i1,i2) => {
+            let exres1 = execute_interaction(i1,sub_p1, tar_lf_ids,get_affected);
+            let exres2 = execute_interaction(i2,sub_p2, tar_lf_ids,get_affected);
+            // ***
+            let mut new_aff = exres1.affected_lifelines;
+            new_aff.extend(exres2.affected_lifelines);
+            // ***
+            if exres1.interaction == Interaction::Empty && exres2.interaction == Interaction::Empty {
+                return ExecutionResult::new(Interaction::Empty,new_aff);
+            } else {
+                return ExecutionResult::new(Interaction::Alt(Box::new(exres1.interaction),
+                                                        Box::new(exres2.interaction)),
+                                       new_aff);
+            }
+        },
         Interaction::Sync(sync_acts, i1, i2) => {
             let exres1 = execute_interaction(i1,sub_p1, tar_lf_ids,get_affected);
             let exres2 = execute_interaction(i2,sub_p2, tar_lf_ids,get_affected);

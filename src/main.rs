@@ -14,16 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-extern crate strum;
 
-#[macro_use]
-extern crate strum_macros;
 
-extern crate rusttype;
 
 extern crate image;
 
 extern crate imageproc;
+
+extern crate image_colored_text;
 
 extern crate pest;
 
@@ -37,6 +35,13 @@ extern crate clap;
 extern crate maplit;
 
 extern crate rand;
+
+extern crate strum;
+
+#[macro_use]
+extern crate strum_macros;
+
+extern crate graphviz_dot_builder;
 
 // **********
 

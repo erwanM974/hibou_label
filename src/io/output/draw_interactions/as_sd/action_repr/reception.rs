@@ -19,15 +19,15 @@ limitations under the License.
 use std::collections::HashMap;
 
 use image::{Rgb, RgbImage};
+use image_colored_text::draw::single_line::{draw_line_of_colored_text, DrawCoord};
+use image_colored_text::ttp::TextToPrint;
 use imageproc::drawing::draw_filled_rect_mut;
 use imageproc::rect::Rect;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::ReceptionAction;
-use crate::io::output::draw_commons::colored_text::draw_ttp::draw_colored_text;
-use crate::io::output::draw_commons::colored_text::ttp::TextToPrint;
 use crate::io::output::draw_commons::hibou_color_palette::{HC_Message, HCP_Black};
-use crate::io::output::draw_commons::sd_drawing_conf::{FONT_WIDTH, GATE_SIZE, HORIZONTAL_SIZE};
+use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_interactions::as_sd::action_repr::common::draw_line_for_message_exchange;
 use crate::io::output::draw_interactions::as_sd::util::arrow_heads::draw_arrowhead_rightward;
 use crate::io::output::draw_interactions::as_sd::util::dimensions_tools::get_y_pos_from_yshift;
@@ -47,12 +47,12 @@ pub fn draw_reception( image : &mut RgbImage,
     let msg_to_print : Vec<TextToPrint>;
     {
         let msg_label = gen_ctx.get_ms_name(rc_act.ms_id).unwrap();
-        msg_to_print = vec![TextToPrint{text:msg_label,color:Rgb(HC_Message)}];
+        msg_to_print = vec![TextToPrint::new(msg_label,Rgb(HC_Message))];
     }
     // ***
-    let text_y_pos = get_y_pos_from_yshift(yshift);
+    let text_y_pos = get_y_pos_from_yshift(yshift) + VERTICAL_SIZE/2.0;
     let arrow_y_pos = get_y_pos_from_yshift(yshift+2);
-    let msg_to_print_width : f32 = (TextToPrint::char_count(&msg_to_print) as f32)*FONT_WIDTH/2.0;
+    let msg_to_print_width = TextToPrint::get_text_width(&msg_to_print,FONT_WIDTH);
     // ***
     let (img_width,_) = image.dimensions();
     // ***
@@ -70,7 +70,12 @@ pub fn draw_reception( image : &mut RgbImage,
                 draw_arrowhead_rightward(image, tar_x_right, arrow_y_pos,Rgb(HCP_Black));
                 draw_line_for_message_exchange(image,&rc_act.synchronicity,tar_x_left,tar_x_right,arrow_y_pos);
                 let msg_x_middle = (tar_x_left + tar_x_right)/2.0;
-                draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
+                draw_line_of_colored_text(image,
+                                          &DrawCoord::CenteredAround(msg_x_middle),
+                                          &DrawCoord::CenteredAround(text_y_pos),
+                                          &msg_to_print,
+                                          FONT_WIDTH,
+                                          FONT_HEIGHT);
             }
         },
         Some( orig_gt_id ) => {
@@ -84,7 +89,12 @@ pub fn draw_reception( image : &mut RgbImage,
                 draw_line_for_message_exchange(image,&rc_act.synchronicity,orig_x_left,orig_x_right,arrow_y_pos);
                 draw_arrowhead_rightward(image, orig_x_right, arrow_y_pos,Rgb(HCP_Black));
                 let msg_x_middle = (orig_x_left + orig_x_right)/2.0;
-                draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
+                draw_line_of_colored_text(image,
+                                          &DrawCoord::CenteredAround(msg_x_middle),
+                                          &DrawCoord::CenteredAround(text_y_pos),
+                                          &msg_to_print,
+                                          FONT_WIDTH,
+                                          FONT_HEIGHT);
             }
             for rcv_lf_id in &rc_act.recipients {
                 {
@@ -98,7 +108,12 @@ pub fn draw_reception( image : &mut RgbImage,
                 draw_arrowhead_rightward(image, tar_x_right, arrow_y_pos,Rgb(HCP_Black));
                 draw_line_for_message_exchange(image,&rc_act.synchronicity,tar_x_left,tar_x_right,arrow_y_pos);
                 let msg_x_middle = (tar_x_left + tar_x_right)/2.0;
-                draw_colored_text(image,&msg_to_print,msg_x_middle - msg_to_print_width/2.0,text_y_pos);
+                draw_line_of_colored_text(image,
+                                          &DrawCoord::CenteredAround(msg_x_middle),
+                                          &DrawCoord::CenteredAround(text_y_pos),
+                                          &msg_to_print,
+                                          FONT_WIDTH,
+                                          FONT_HEIGHT);
             }
         }
     }

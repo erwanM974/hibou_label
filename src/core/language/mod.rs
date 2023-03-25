@@ -17,7 +17,7 @@ limitations under the License.
 
 pub mod syntax;
 pub mod involve;
-pub mod hide;
+pub mod eliminate_lf;
 pub mod position;
 pub mod avoid;
 pub mod prune;

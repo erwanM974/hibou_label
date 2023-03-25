@@ -17,17 +17,23 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+
+
+
+use graphviz_dot_builder::colors::GraphvizColor;
+use graphviz_dot_builder::edge::edge::GraphVizEdge;
+use graphviz_dot_builder::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle, GvEdgeLineStyle};
+use graphviz_dot_builder::item::node::node::GraphVizNode;
+use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
+use graphviz_dot_builder::traits::DotBuildable;
+
+
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::position::position::Position;
 use crate::core::language::syntax::interaction::Interaction;
-use crate::io::output::graphviz::colors::GraphvizColor;
-use crate::io::output::graphviz::edge::edge::GraphVizEdge;
-use crate::io::output::graphviz::edge::style::{GraphvizEdgeStyle, GraphvizEdgeStyleItem, GvArrowHeadSide, GvArrowHeadStyle, GvEdgeLineStyle};
-use crate::io::output::graphviz::node::node::GraphVizNode;
-use crate::io::output::graphviz::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
 use crate::loggers::graphic::conf::GraphicProcessLoggerOutputFormat;
 use crate::loggers::graphic::get_graph::filter::make_graphic_logger_filter;
 use crate::loggers::graphic::get_graph::state::make_graphic_logger_state;
@@ -61,7 +67,7 @@ impl AnalysisLogger for GraphicProcessLogger {
                                                   self.int_repr_sd,
                                                   self.int_repr_tt,
                                                   Some((co_localizations,multi_trace,flags,is_simulation,sim_crit_loop,sim_crit_act)));
-        self.graph.nodes.push(Box::new(init_node));
+        self.graph.add_cluster(init_node);
     }
 
     fn log_term(&mut self,
@@ -94,10 +100,12 @@ impl AnalysisLogger for GraphicProcessLogger {
         // *** Transition To Firing
         let tran_to_firing : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-            tran_to_firing = GraphVizEdge::new(format!("a{:}", parent_state_id),state_firing.id.clone(),tran_gv_options);
+            let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) ];
+            tran_to_firing = GraphVizEdge::new(format!("a{:}", parent_state_id),
+                                               Some(format!("n{}",parent_state_id)),
+                                               state_firing.id.clone(),
+                                               None,
+                                               tran_gv_options);
         }
         // *** Resulting New Node
         let new_node = make_graphic_logger_state(&self.temp_folder,
@@ -110,16 +118,18 @@ impl AnalysisLogger for GraphicProcessLogger {
         // *** Transition To New Node
         let tran_to_new : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",new_state_id) ) );
-            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),format!("a{:}", new_state_id),tran_gv_options);
+            let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) ];
+            tran_to_new = GraphVizEdge::new(state_firing.id.clone(),
+                                            None,
+                                            format!("a{:}", new_state_id),
+                                            Some(format!("n{}",new_state_id)),
+                                            tran_gv_options);
         }
         // ***
-        self.graph.nodes.push(Box::new(state_firing));
-        self.graph.edges.push(tran_to_firing);
-        self.graph.nodes.push(Box::new(new_node));
-        self.graph.edges.push(tran_to_new);
+        self.graph.add_node(state_firing);
+        self.graph.add_edge(tran_to_firing);
+        self.graph.add_cluster(new_node);
+        self.graph.add_edge(tran_to_new);
     }
 
     fn log_hide(&mut self,
@@ -138,11 +148,13 @@ impl AnalysisLogger for GraphicProcessLogger {
         // *** Transition To Hiding
         let tran_to_hiding : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-            tran_to_hiding = GraphVizEdge::new(format!("a{:}", parent_state_id),state_hiding.id.clone(),tran_gv_options);
+            let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ),
+                                        GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) ];
+            tran_to_hiding = GraphVizEdge::new(format!("a{:}", parent_state_id),
+                                               Some(format!("n{}",parent_state_id)),
+                                               state_hiding.id.clone(),
+                                               None,
+                                               tran_gv_options);
         }
         // *** Resulting New Node
         let new_node = make_graphic_logger_state(&self.temp_folder,
@@ -155,17 +167,19 @@ impl AnalysisLogger for GraphicProcessLogger {
         // *** Transition To New Node
         let tran_to_new : GraphVizEdge;
         {
-            let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-            tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed ) );
-            tran_gv_options.push( GraphvizEdgeStyleItem::LHead( format!("cluster_n{}",new_state_id) ) );
-            tran_to_new = GraphVizEdge::new(state_hiding.id.clone(),format!("a{:}", new_state_id),tran_gv_options);
+            let tran_gv_options = vec![ GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ),
+                                        GraphvizEdgeStyleItem::LineStyle( GvEdgeLineStyle::Dashed )];
+            tran_to_new = GraphVizEdge::new(state_hiding.id.clone(),
+                                            None,
+                                            format!("a{:}", new_state_id),
+                                            Some(format!("n{}",new_state_id)),
+                                            tran_gv_options);
         }
         // ***
-        self.graph.nodes.push(Box::new(state_hiding));
-        self.graph.edges.push(tran_to_hiding);
-        self.graph.nodes.push(Box::new(new_node));
-        self.graph.edges.push(tran_to_new);
+        self.graph.add_node(state_hiding);
+        self.graph.add_edge(tran_to_hiding);
+        self.graph.add_cluster(new_node);
+        self.graph.add_edge(tran_to_new);
     }
 
     fn log_filtered(&mut self,
@@ -173,16 +187,16 @@ impl AnalysisLogger for GraphicProcessLogger {
                     new_state_id: u32,
                     elim_kind: &FilterEliminationKind) {
         let (elim_node,elim_edge) = make_graphic_logger_filter(parent_state_id,new_state_id,elim_kind);
-        self.graph.nodes.push(Box::new(elim_node));
-        self.graph.edges.push(elim_edge);
+        self.graph.add_node(elim_node);
+        self.graph.add_edge(elim_edge);
     }
 
     fn log_verdict(&mut self,
                    parent_state_id: u32,
                    verdict: &CoverageVerdict) {
         let (verd_node,verd_edge) = make_graphic_logger_verdict(parent_state_id,verdict);
-        self.graph.nodes.push(Box::new(verd_node));
-        self.graph.edges.push(verd_edge);
+        self.graph.add_node(verd_node);
+        self.graph.add_edge(verd_edge);
     }
 
     fn log_out_on_local_analysis(&mut self,
@@ -228,22 +242,22 @@ impl AnalysisLogger for GraphicProcessLogger {
                 gv_node_options.push( GraphvizNodeStyleItem::PenWidth(3) );
                 gv_node_options.push(GraphvizNodeStyleItem::Color( verdict_color.clone() ));
                 // ***
-                locana_node = GraphVizNode{id:subproc_image_file_name,style:gv_node_options};
+                locana_node = GraphVizNode::new(subproc_image_file_name,gv_node_options);
             }
             // ***
             let locana_edge : GraphVizEdge;
             {
-                let mut tran_gv_options : GraphvizEdgeStyle = Vec::new();
-                // ***
-                tran_gv_options.push( GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ) );
-                tran_gv_options.push( GraphvizEdgeStyleItem::Color( verdict_color ) );
-                tran_gv_options.push( GraphvizEdgeStyleItem::LTail( format!("cluster_n{}",parent_state_id) ) );
-                // ***
-                locana_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),locana_node.id.clone(),tran_gv_options);
+                let tran_gv_options = vec![GraphvizEdgeStyleItem::Head( GvArrowHeadStyle::Vee(GvArrowHeadSide::Both) ),
+                                           GraphvizEdgeStyleItem::Color( verdict_color )];
+                locana_edge = GraphVizEdge::new(format!("a{:}", parent_state_id),
+                                                Some(format!("n{}",parent_state_id)),
+                                                locana_node.id.clone(),
+                                                None,
+                                                tran_gv_options);
             }
             // ***
-            self.graph.nodes.push(Box::new(locana_node));
-            self.graph.edges.push(locana_edge);
+            self.graph.add_node(locana_node);
+            self.graph.add_edge(locana_edge);
             // ***
         } else {
             self.log_verdict(parent_state_id,verdict);

@@ -25,9 +25,8 @@ use crate::core::execution::semantics::execute::execute_interaction;
 use crate::core::execution::trace::multitrace::{multi_trace_length, MultiTrace, Trace};
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::position::position::Position;
-use crate::core::language::syntax::util::check_interaction::InteractionCharacteristics;
 use crate::core::execution::trace::trace::TraceAction;
-use crate::core::language::hide::hideable::LifelineHideable;
+use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
 use crate::process::abstract_proc::generic::*;
@@ -40,7 +39,6 @@ use crate::process::ana_proc::interface::node::AnalysisNodeKind;
 use crate::process::ana_proc::interface::step::{AnalysisStepKind, SimulationStepKind};
 use crate::process::ana_proc::logic::flags::{MultiTraceAnalysisFlags, WasMultiTraceConsumedWithSimulation};
 use crate::process::ana_proc::logic::local_analysis::{get_local_analysis_starting_data, is_dead_local_analysis};
-//use crate::process::ana_proc::logic::local_analysis::is_dead_local_analysis;
 use crate::process::ana_proc::logic::verdicts::{CoverageVerdict, GlobalVerdict, InconcReason, update_global_verdict_from_new_coverage_verdict};
 
 
@@ -196,11 +194,11 @@ impl AnalysisProcessManager {
                 &AnalysisKind::Prefix => {
                     self.add_action_matches_in_analysis(parent_id,&node_kind.interaction,&node_kind.flags,&mut id_as_child, &mut to_enqueue);
                 },
-                &AnalysisKind::Hide => {
+                &AnalysisKind::Eliminate => {
                     let mut canals_ids_to_hide : HashSet<usize> = HashSet::new();
                     for (canal_id,canal_flags) in node_kind.flags.canals.iter().enumerate() {
                         let trace : &Trace = self.multi_trace.get(canal_id).unwrap();
-                        if (canal_flags.hidden == false) && (trace.len() == canal_flags.consumed) {
+                        if (canal_flags.no_longer_observed == false) && (trace.len() == canal_flags.consumed) {
                             canals_ids_to_hide.insert( canal_id );
                         }
                     }
@@ -219,7 +217,7 @@ impl AnalysisProcessManager {
                     //
                     if insert_hide_step {
                         id_as_child = id_as_child + 1;
-                        let generic_step = GenericStep{parent_id, id_as_child:id_as_child, kind:AnalysisStepKind::Hide(canals_ids_to_hide)};
+                        let generic_step = GenericStep{parent_id, id_as_child:id_as_child, kind:AnalysisStepKind::EliminateNoLongerObserved(canals_ids_to_hide)};
                         to_enqueue.push( generic_step );
                     } else {
                         self.add_action_matches_in_analysis(parent_id,&node_kind.interaction,&node_kind.flags,&mut id_as_child, &mut to_enqueue);
@@ -288,7 +286,7 @@ impl AnalysisProcessManager {
                     new_state_id : u32,
                     node_counter : u32) -> Option<(AnalysisNodeKind,u32)> {
         match &(to_process.kind) {
-            &AnalysisStepKind::Hide( ref coloc_ids_to_hide ) => {
+            &AnalysisStepKind::EliminateNoLongerObserved( ref coloc_ids_to_hide ) => {
                 let new_ana_depth = parent_state.depth + 1;
                 // ***
                 match self.manager.apply_filters(new_ana_depth,
@@ -296,7 +294,7 @@ impl AnalysisProcessManager {
                                                  &AnalysisFilterCriterion{loop_depth:parent_state.kind.ana_loop_depth}) {
                     None => {
                         let lfs_to_remove = self.co_localizations.get_lf_ids_from_coloc_ids(coloc_ids_to_hide);
-                        let new_interaction = (parent_state.kind.interaction).hide(&lfs_to_remove);
+                        let new_interaction = (parent_state.kind.interaction).eliminate_lifelines(&lfs_to_remove);
                         // ***
                         let new_flags = parent_state.kind.flags.update_on_hide(&self.manager.gen_ctx,coloc_ids_to_hide);
                         // ***
@@ -371,12 +369,12 @@ impl AnalysisProcessManager {
                     AnalysisKind::Prefix => {
                         return CoverageVerdict::Cov;
                     },
-                    AnalysisKind::Hide => {
+                    AnalysisKind::Eliminate => {
                         if flags.is_any_component_hidden() {
                             if self.co_localizations.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
                             } else {
-                                return CoverageVerdict::Inconc(InconcReason::HideWithColocs);
+                                return CoverageVerdict::Inconc(InconcReason::UsingLifelineRemovalWithCoLocalizations);
                             }
                         } else {
                             return CoverageVerdict::Cov;
@@ -404,12 +402,12 @@ impl AnalysisProcessManager {
                     AnalysisKind::Prefix => {
                         return CoverageVerdict::TooShort;
                     },
-                    AnalysisKind::Hide => {
+                    AnalysisKind::Eliminate => {
                         if flags.is_any_component_hidden() {
                             if self.co_localizations.are_colocalizations_singletons() {
                                 return CoverageVerdict::MultiPref;
                             } else {
-                                return CoverageVerdict::Inconc(InconcReason::HideWithColocs);
+                                return CoverageVerdict::Inconc(InconcReason::UsingLifelineRemovalWithCoLocalizations);
                             }
                         } else {
                             return CoverageVerdict::TooShort;
@@ -442,7 +440,7 @@ impl AnalysisProcessManager {
                         return CoverageVerdict::Out(false);
                     }
                 },
-                AnalysisKind::Hide => {
+                AnalysisKind::Eliminate => {
                     return CoverageVerdict::Out(false);
                 },
                 AnalysisKind::Simulate(_) => {

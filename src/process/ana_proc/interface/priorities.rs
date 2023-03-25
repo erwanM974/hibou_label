@@ -23,7 +23,7 @@ pub struct AnalysisPriorities {
     pub reception : i32,
     pub multi_rdv : i32,
     pub in_loop : i32,
-    pub hide : i32,
+    pub elim : i32,
     pub simu : i32
 }
 
@@ -33,9 +33,9 @@ impl AnalysisPriorities {
                reception : i32,
                multi_rdv : i32,
                in_loop : i32,
-               hide : i32,
+               elim : i32,
                simu : i32) -> AnalysisPriorities {
-        return AnalysisPriorities{emission,reception,multi_rdv,in_loop,hide,simu};
+        return AnalysisPriorities{emission,reception,multi_rdv,in_loop,elim,simu};
     }
 
     pub fn default() -> AnalysisPriorities {
@@ -51,7 +51,7 @@ impl AbstractPriorities for AnalysisPriorities {
         my_str.push_str( &format!("reception={:},",self.reception) );
         my_str.push_str( &format!("multi-rdv={:},",self.multi_rdv) );
         my_str.push_str( &format!("loop={:},",self.in_loop) );
-        my_str.push_str( &format!("hide={:},",self.hide) );
+        my_str.push_str( &format!("elim={:},",self.elim) );
         my_str.push_str( &format!("simu={:}]",self.simu) );
         return my_str;
     }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod graphviz;
+
 mod draw_commons;
 
 pub mod draw_interactions;

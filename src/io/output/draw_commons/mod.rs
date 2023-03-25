@@ -17,5 +17,4 @@ limitations under the License.
 
 pub mod hibou_color_palette;
 pub mod sd_drawing_conf;
-
-pub mod colored_text;
+pub mod make_image_of_text;

@@ -19,7 +19,7 @@ use std::fs::File;
 use std::io::Write;
 
 use crate::core::general_context::GeneralContext;
-use crate::core::language::hide::hideable::LifelineHideable;
+use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::syntax::util::get_recursive_frag::*;
 
@@ -34,7 +34,7 @@ pub fn to_plant_uml_ap(output_path : &String,
         let lf_name = gen_ctx.get_lf_name(lf_id).unwrap();
         let mut lfs_to_remove : HashSet<usize> = (0..(gen_ctx.get_lf_num())).collect();
         lfs_to_remove.remove(&lf_id);
-        let projected_int = interaction.hide(&lfs_to_remove);
+        let projected_int = interaction.eliminate_lifelines(&lfs_to_remove);
         output_file.write( format!("state lf_{} {{\n",lf_name).as_bytes() );
         let (last_state_id,_) = to_plant_uml_ap_rec(&mut output_file, &projected_int, gen_ctx, lf_id, 0, 1);
         output_file.write( format!("lf{}_s{} --> [*]\n",lf_id,last_state_id).as_bytes() );

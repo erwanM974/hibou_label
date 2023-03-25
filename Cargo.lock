@@ -324,6 +324,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphviz_dot_builder"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0abc26ea5e0ded87f93af64d024b52091b4cf2eb045e9064294cd7160fc3a39c"
+dependencies = [
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "half"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -355,17 +365,18 @@ dependencies = [
 
 [[package]]
 name = "hibou_label"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "clap",
+ "graphviz_dot_builder",
  "image",
+ "image_colored_text",
  "imageproc",
  "itertools",
  "maplit",
  "pest",
  "pest_derive",
  "rand 0.8.5",
- "rusttype",
  "strum",
  "strum_macros",
 ]
@@ -387,6 +398,17 @@ dependencies = [
  "png",
  "scoped_threadpool",
  "tiff",
+]
+
+[[package]]
+name = "image_colored_text"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c61546e92db9e2655421697ede980e82e5dff0417d4da97492357c9f9e92951d"
+dependencies = [
+ "image",
+ "imageproc",
+ "rusttype",
 ]
 
 [[package]]

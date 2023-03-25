@@ -18,12 +18,13 @@ limitations under the License.
 use std::path::Path;
 
 use image::Rgb;
+use image_colored_text::draw::multi_line::MultiLineTextAlignment;
+use image_colored_text::ttp::TextToPrint;
 use crate::core::language::position::position::Position;
 use crate::core::transformation::transfokind::InteractionTransformationKind;
 
-use crate::io::output::draw_commons::colored_text::draw_ttp::{DrawnColoredTextAlignment, new_image_with_colored_text};
-use crate::io::output::draw_commons::colored_text::ttp::TextToPrint;
 use crate::io::output::draw_commons::hibou_color_palette::*;
+use crate::io::output::draw_commons::make_image_of_text::new_image_with_colored_text;
 use crate::io::output::draw_commons::sd_drawing_conf::*;
 
 
@@ -40,19 +41,15 @@ pub fn draw_transformation(path : &Path,
     {
         let mut ttp = Vec::new();
         // ***
-        ttp.push( TextToPrint{text:transfo_kind.to_string(),color:Rgb(HCP_Black)} );
-        ttp.push( TextToPrint{text:"@".to_string(),color:Rgb(HCP_StandardPurple)} );
-        ttp.push( TextToPrint{text:position.to_string(),color:Rgb(HCP_Black)} );
+        ttp.push( TextToPrint::new(transfo_kind.to_string(),Rgb(HCP_Black)) );
+        ttp.push( TextToPrint::new("@".to_string(),Rgb(HCP_StandardPurple)) );
+        ttp.push( TextToPrint::new(position.to_string(),Rgb(HCP_Black)) );
         text_lines.push( ttp );
     }
     // ***
-    let line_lens : Vec<usize> = text_lines.iter().map(|x| TextToPrint::char_count(x) ).collect();
-    let max_x_shift = *line_lens.iter().max().unwrap();
-    // ***
-    let img_width : f32 = 2.0*MARGIN + (max_x_shift as f32)*FONT_WIDTH/2.0;
-    let img_height : f32 = 2.0*MARGIN + (text_lines.len() as f32)*FONT_HEIGHT/2.0;
-    // ***
-    new_image_with_colored_text(path,&DrawnColoredTextAlignment::Center,img_width,img_height,text_lines)
+    new_image_with_colored_text(path,
+                                &MultiLineTextAlignment::Center,
+                                &text_lines);
 }
 
 
