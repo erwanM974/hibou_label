@@ -15,10 +15,8 @@ limitations under the License.
 */
 
 
-pub mod abstract_proc;
-pub mod explo_proc;
-pub mod ana_proc;
-pub mod canon_proc;
+pub mod explo;
+pub mod ana;
 
 
 

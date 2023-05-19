@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::from_model::from_model::{InteractionInterpretableAsTraceAction, PrimitiveInterpretableAsTraceAction};
 use crate::core::execution::trace::trace::{TraceAction};
 use crate::core::language::syntax::interaction::Interaction;
 
 impl InteractionInterpretableAsTraceAction for Interaction {
-    fn get_all_trace_actions(&self) -> HashSet<TraceAction> {
+    fn get_all_trace_actions(&self) -> BTreeSet<TraceAction> {
         match &self {
             &Interaction::Empty => {
-                return hashset!{};
+                return btreeset!{};
             },
             &Interaction::Emission(ref em_act) => {
                 return em_act.get_all_atomic_actions();
@@ -76,10 +76,10 @@ impl InteractionInterpretableAsTraceAction for Interaction {
         }
     }
 
-    fn get_trace_actions_outside_loops(&self) -> HashSet<TraceAction> {
+    fn get_trace_actions_outside_loops(&self) -> BTreeSet<TraceAction> {
         match &self {
             &Interaction::Empty => {
-                return hashset!{};
+                return btreeset!{};
             },
             &Interaction::Emission(ref em_act) => {
                 return em_act.get_all_atomic_actions();
@@ -118,7 +118,7 @@ impl InteractionInterpretableAsTraceAction for Interaction {
                 return acts1;
             },
             &Interaction::Loop(_, i1) => {
-                return hashset!{};
+                return btreeset!{};
             },
             &Interaction::Sync(_, ref i1, ref i2) => {
                 let mut acts1 = i1.get_all_trace_actions();

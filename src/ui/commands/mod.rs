@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 pub mod cli_analyze;
-pub mod cli_canonize;
+//pub mod cli_canonize;
 pub mod cli_draw;
 pub mod cli_explore;
 pub mod cli_puml_ap;
@@ -24,6 +24,7 @@ pub mod cli_slice;
 pub mod cli_mutate_insert_noise;
 pub mod cli_mutate_swap_actions;
 pub mod cli_mutate_swap_components;
+pub mod cli_glosem;
 //pub mod cli_term_repr;
 
 

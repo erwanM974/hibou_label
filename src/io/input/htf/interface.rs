@@ -52,18 +52,18 @@ pub fn parse_htf_file(gen_ctx : &GeneralContext,
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::trace::TraceAction;
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::htf::parser::{HtfParser,Rule};
 use crate::io::input::htf::trace::trace_element_from_pair;
 
 
 pub fn multi_action_from_text(gen_ctx : &GeneralContext,
-                            multiact_str : &String) -> Result<HashSet<TraceAction>,HibouParsingError> {
+                            multiact_str : &String) -> Result<BTreeSet<TraceAction>,HibouParsingError> {
     match HtfParser::parse(Rule::TRACE_SEQUENCE_elt, multiact_str) {
         Err(e) => {
             return Err( HibouParsingError::MatchError(e.to_string()) );

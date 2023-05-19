@@ -15,6 +15,6 @@ limitations under the License.
 */
 
 
-pub mod graphic;
+pub mod graphviz;
 pub mod tracegen;
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::from_model::from_model::PrimitiveInterpretableAsTraceAction;
 use crate::core::execution::trace::trace::{TraceAction};
 use crate::core::language::avoid::avoids::AvoidsLifelines;
@@ -30,7 +30,7 @@ use crate::core::language::syntax::interaction::Interaction;
 pub struct FrontierElement {
     pub position : Position,
     pub target_lf_ids : HashSet<usize>,
-    pub target_actions : HashSet<TraceAction>,
+    pub target_actions : BTreeSet<TraceAction>,
     pub max_loop_depth : u32
 }
 
@@ -38,7 +38,7 @@ pub struct FrontierElement {
 impl FrontierElement {
     pub fn new(position : Position,
                target_lf_ids : HashSet<usize>,
-               target_actions : HashSet<TraceAction>,
+               target_actions : BTreeSet<TraceAction>,
                max_loop_depth : u32) -> FrontierElement {
         return FrontierElement{position,target_lf_ids,target_actions,max_loop_depth};
     }
@@ -81,7 +81,7 @@ fn frontier_on_emission(em_act : &EmissionAction, loop_depth : u32) -> Vec<Front
             let emission_tract = em_act.get_first_atomic_action();
             return vec![FrontierElement::new(Position::Epsilon(None),
                                              hashset!{em_act.origin_lf_id},
-                                             hashset!{emission_tract},
+                                             btreeset!{emission_tract},
                                              loop_depth)];
         }
     }
@@ -103,7 +103,7 @@ fn frontier_on_reception(rc_act : &ReceptionAction, loop_depth : u32) -> Vec<Fro
                 let reception_tract = rc_act.get_specific_atomic_action(rcp_idx);
                 frt.push( FrontierElement::new(Position::Epsilon(Some(rcp_idx)),
                                                hashset!{*rcp_lf_id},
-                                               hashset!{reception_tract},
+                                               btreeset!{reception_tract},
                                                loop_depth) );
             }
             return frt;
@@ -154,6 +154,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::Alt(ref i1, ref i2) => {
+            // BELOW with delayed alt
             /*
             let mut match_indices : HashSet<(usize,usize)> = hashset! {};
             let mut frt1_matched : HashSet<usize> = hashset![];
@@ -222,35 +223,35 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::Sync(ref sync_acts,ref i1, ref i2) => {
-            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
+            let sync_acts_as_set : BTreeSet<TraceAction> = BTreeSet::from_iter(sync_acts.iter().cloned());
             // ***
             let mut new_front = vec![];
             let mut rem_frt1 = vec![];
             let mut rem_frt2 = vec![];
             // ***
             for frt1_elt in global_frontier_rec(i1,loop_depth) {
-                let intersect : HashSet<TraceAction> = frt1_elt.target_actions.intersection(&sync_acts_as_hashset).cloned().collect();
-                if intersect.len() > 0 {
-                    rem_frt1.push((frt1_elt, intersect) );
-                } else {
+                let intersect : BTreeSet<TraceAction> = frt1_elt.target_actions.intersection(&sync_acts_as_set).cloned().collect();
+                if intersect.is_empty() {
                     let shifted_pos = Position::Left(Box::new(frt1_elt.position));
                     new_front.push( FrontierElement::new(shifted_pos,
                                                          frt1_elt.target_lf_ids,
                                                          frt1_elt.target_actions,
                                                          frt1_elt.max_loop_depth ));
+                } else {
+                    rem_frt1.push((frt1_elt, intersect) );
                 }
             }
             // ***
             for frt2_elt in global_frontier_rec(i2,loop_depth) {
-                let intersect : HashSet<TraceAction> = frt2_elt.target_actions.intersection(&sync_acts_as_hashset).cloned().collect();
-                if intersect.len() > 0 {
-                    rem_frt2.push((frt2_elt,intersect) );
-                } else {
+                let intersect : BTreeSet<TraceAction> = frt2_elt.target_actions.intersection(&sync_acts_as_set).cloned().collect();
+                if intersect.is_empty() {
                     let shifted_pos = Position::Right(Box::new(frt2_elt.position));
                     new_front.push( FrontierElement::new(shifted_pos,
                                                          frt2_elt.target_lf_ids,
                                                          frt2_elt.target_actions,
                                                          frt2_elt.max_loop_depth ));
+                } else {
+                    rem_frt2.push((frt2_elt,intersect) );
                 }
             }
             // ***
@@ -260,7 +261,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                         let new_pos = Position::Both(Box::new(frt1_elt.position.clone()),
                                                      Box::new(frt2_elt.position.clone()));
                         let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
-                        let new_target_actions : HashSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
+                        let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
                         let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
                         // ***
                         new_front.push( FrontierElement::new(new_pos,
@@ -270,7 +271,8 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                     }
                 }
             }
-            return new_front;
+            // ***
+            new_front
         },
         Interaction::Loop(_, ref i1) => {
             return push_frontier_left( &mut global_frontier_rec(i1,loop_depth+1) );

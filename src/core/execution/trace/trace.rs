@@ -18,15 +18,15 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Copy, Ord, Hash, Debug)]
 pub enum TraceActionKind {
     Reception,
     Emission
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Copy, Ord, Hash, Debug)]
 pub struct TraceAction {
     pub lf_id : usize,
     pub act_kind : TraceActionKind,
@@ -41,7 +41,7 @@ impl TraceAction {
         return TraceAction{lf_id,act_kind,ms_id};
     }
 
-    pub fn get_actions_kinds(set_of_actions : &HashSet<TraceAction>) -> (i32,i32) {
+    pub fn get_actions_kinds(set_of_actions : &BTreeSet<TraceAction>) -> (i32,i32) {
         let mut num_emissions = 0;
         let mut num_receptions = 0;
         for tract in set_of_actions {

@@ -22,7 +22,7 @@ use crate::core::general_context::GeneralContext;
 use crate::io::input::error::HibouParsingError;
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::hsf::parser::*;
 

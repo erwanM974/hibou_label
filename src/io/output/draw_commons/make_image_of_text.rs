@@ -19,6 +19,7 @@ use image_colored_text::draw::single_line::DrawCoord;
 use image_colored_text::ttp::TextToPrint;
 use imageproc::drawing::{draw_filled_rect_mut, draw_text_mut};
 use imageproc::rect::Rect;
+use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 
 use crate::io::output::draw_commons::hibou_color_palette::HCP_White;
 use crate::io::output::draw_commons::sd_drawing_conf::{FONT_HEIGHT, FONT_WIDTH, MARGIN, VERTICAL_SIZE};
@@ -29,7 +30,7 @@ pub fn new_image_with_colored_text(path : &Path,
                                    text_lines : &Vec<Vec<TextToPrint>>) {
     //
     let lines_widths : Vec<f32> = text_lines.iter()
-        .map(|x| TextToPrint::get_text_width(x, FONT_WIDTH) ).collect();
+        .map(|x| TextToPrint::get_text_width(x, &get_hibou_font(), &HIBOU_FONT_SCALE) ).collect();
     let max_line_width = lines_widths.into_iter()
         .max_by(|x, y| x.abs().partial_cmp(&y.abs()).unwrap() )
         .unwrap();
@@ -47,8 +48,8 @@ pub fn new_image_with_colored_text(path : &Path,
                                 &DrawCoord::StartingAt(MARGIN),
                                 alignment,
                                 text_lines,
-                                FONT_WIDTH,
-                                FONT_HEIGHT);
+                                &get_hibou_font(),
+                                &HIBOU_FONT_SCALE);
     // ***
     image.save(path).unwrap();
 }

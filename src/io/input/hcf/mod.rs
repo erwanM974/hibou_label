@@ -16,8 +16,8 @@ limitations under the License.
 
 
 mod parser;
-mod proc_options;
-mod implem_explo;
-mod implem_ana;
-mod implem_canon;
-pub mod interface;
+
+pub mod loggers;
+
+pub mod explo;
+pub mod ana;

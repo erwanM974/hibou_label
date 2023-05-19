@@ -29,6 +29,7 @@ use imageproc::rect::Rect;
 
 
 use crate::core::general_context::GeneralContext;
+use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 use crate::io::output::draw_commons::hibou_color_palette::*;
 use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_interactions::as_sd::util::lf_coords::DrawingLifelineCoords;
@@ -56,8 +57,8 @@ pub fn draw_lifelines(image : &mut RgbImage,
                                   &DrawCoord::CenteredAround(lf_coords.x_middle),
                                   &DrawCoord::CenteredAround(lifeline_y_start + VERTICAL_SIZE),
                                   &label,
-                                  FONT_WIDTH,
-                                  FONT_HEIGHT);
+                                  &get_hibou_font(),
+                                  &HIBOU_FONT_SCALE);
         // ***
         let yshift : usize = 2;
         // ***

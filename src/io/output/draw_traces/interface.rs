@@ -22,9 +22,8 @@ use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::core::general_context::GeneralContext;
 use crate::io::output::draw_commons::make_image_of_text::new_image_with_colored_text;
-use crate::io::output::draw_commons::sd_drawing_conf::{FONT_WIDTH, MARGIN, VERTICAL_SIZE};
 use crate::io::output::draw_traces::implem::ext_mu::extract_texts_on_multi_trace;
-use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
+use crate::process::ana::node::flags::MultiTraceAnalysisFlags;
 
 
 pub fn draw_multitrace(gen_ctx : &GeneralContext,

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
+pub mod font;
 pub mod hibou_color_palette;
 pub mod sd_drawing_conf;
 pub mod make_image_of_text;

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use pest::iterators::Pair;
 
@@ -26,7 +26,7 @@ use crate::io::input::error::HibouParsingError;
 
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::htf::parser::{HtfParser,Rule};
 
@@ -56,13 +56,13 @@ pub fn trace_element_from_pair(gen_ctx : &GeneralContext,
                                trace_elt_pair : Pair<Rule>,
                                unavailable_lifelines : &HashSet<usize>,
                                lifelines : &mut HashSet<usize>,
-                               add_lfs : bool) -> Result<HashSet<TraceAction>,HibouParsingError> {
+                               add_lfs : bool) -> Result<BTreeSet<TraceAction>,HibouParsingError> {
     match trace_elt_pair.as_rule() {
         Rule::TRACE_ACTION => {
             match get_trace_action(gen_ctx,trace_elt_pair,unavailable_lifelines,lifelines,add_lfs) {
                 Err(e) => {return Err(e);},
                 Ok( action ) => {
-                    return Ok(hashset!{action});
+                    return Ok(btreeset!{action});
                 }
             }
         },
@@ -85,8 +85,8 @@ fn get_trace_multi_action(gen_ctx : &GeneralContext,
                           multi_act_pair : Pair<Rule>,
                           unavailable_lifelines : &HashSet<usize>,
                           lifelines : &mut HashSet<usize>,
-                          add_lfs : bool) -> Result<HashSet<TraceAction>,HibouParsingError> {
-    let mut multi_action = hashset!{};
+                          add_lfs : bool) -> Result<BTreeSet<TraceAction>,HibouParsingError> {
+    let mut multi_action = btreeset!{};
     for action_pair in multi_act_pair.into_inner() {
         match get_trace_action(gen_ctx,action_pair,unavailable_lifelines,lifelines,add_lfs) {
             Err(e) => {return Err(e);},

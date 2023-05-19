@@ -15,15 +15,15 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::from_model::from_model::{PrimitiveInterpretableAsTraceAction};
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};
 
 
 impl PrimitiveInterpretableAsTraceAction for EmissionAction {
-    fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
-        let mut contents : HashSet<TraceAction> = HashSet::new();
+    fn get_all_atomic_actions(&self) -> BTreeSet<TraceAction> {
+        let mut contents : BTreeSet<TraceAction> = btreeset!{};
         contents.insert( self.get_first_atomic_action() );
         for target_ref in &self.targets {
             match target_ref {
@@ -65,8 +65,8 @@ impl PrimitiveInterpretableAsTraceAction for EmissionAction {
 
 
 impl PrimitiveInterpretableAsTraceAction for ReceptionAction {
-    fn get_all_atomic_actions(&self) -> HashSet<TraceAction> {
-        let mut contents : HashSet<TraceAction> = HashSet::new();
+    fn get_all_atomic_actions(&self) -> BTreeSet<TraceAction> {
+        let mut contents : BTreeSet<TraceAction> = btreeset!{};
         for rc_lf_id in &self.recipients {
             contents.insert( TraceAction::new(*rc_lf_id,
                                               TraceActionKind::Reception,

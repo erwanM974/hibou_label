@@ -17,15 +17,24 @@ limitations under the License.
 use std::time::Instant;
 
 use clap::ArgMatches;
+use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
+use graph_process_manager_core::handler::filter::AbstractFilter;
+use graph_process_manager_core::manager::manager::GenericProcessManager;
 use crate::core::execution::trace::multitrace::multi_trace_length;
+use crate::io::input::hcf::ana::interface::parse_hcf_file_for_ana;
+use crate::io::input::hcf::ana::options::HibouAnalyzeOptions;
 
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
-use crate::io::input::hcf::interface::{parse_hcf_file_for_ana,HibouAnalyzeOptions};
 use crate::io::input::htf::interface::parse_htf_file;
-use crate::process::ana_proc::logic::flags::MultiTraceAnalysisFlags;
-
-use crate::process::ana_proc::manager::AnalysisProcessManager;
+use crate::process::ana::conf::AnalysisConfig;
+use crate::process::ana::context::AnalysisContext;
+use crate::process::ana::filter::elim::AnalysisFilterEliminationKind;
+use crate::process::ana::filter::filter::AnalysisFilterCriterion;
+use crate::process::ana::node::flags::MultiTraceAnalysisFlags;
+use crate::process::ana::node::node::AnalysisNodeKind;
+use crate::process::ana::priorities::AnalysisPriorities;
+use crate::process::ana::step::AnalysisStepKind;
 
 
 pub fn cli_analyze(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -71,32 +80,35 @@ pub fn cli_analyze(matches : &ArgMatches) -> (Vec<String>,u32) {
                             ret_print.push( format!("from file '{}'",hsf_file_path) );
                             ret_print.push( "".to_string());
                             // ***
-                            let mut manager = AnalysisProcessManager::new(gen_ctx,
-                                                                          co_localizations,
-                                                                          multi_trace,
-                                                                          ana_opts.strategy,
-                                                                          ana_opts.filters,
-                                                                          ana_opts.priorities,
-                                                                          ana_opts.loggers,
-                                                                          ana_opts.ana_kind,
-                                                                          ana_opts.local_analysis,
-                                                                          ana_opts.goal);
-                            // ***
+                            let ana_ctx = AnalysisContext::new(gen_ctx,co_localizations,multi_trace,multi_trace_length);
+                            let delegate : GenericProcessDelegate<AnalysisStepKind,AnalysisNodeKind,AnalysisPriorities> = GenericProcessDelegate::new(ana_opts.strategy,ana_opts.priorities);
+
                             let init_flags : MultiTraceAnalysisFlags;
-                            match manager.ana_kind.get_sim_config() {
+                            match ana_opts.ana_param.ana_kind.get_sim_config() {
                                 None => {
-                                    init_flags = MultiTraceAnalysisFlags::new_init(manager.co_localizations.num_colocs(),
+                                    init_flags = MultiTraceAnalysisFlags::new_init(ana_ctx.co_localizations.num_colocs(),
                                                                                    0,
                                                                                    0);
                                 },
                                 Some( sim_config ) => {
-                                    init_flags = MultiTraceAnalysisFlags::new_init(manager.co_localizations.num_colocs(),
+                                    init_flags = MultiTraceAnalysisFlags::new_init(ana_ctx.co_localizations.num_colocs(),
                                                                                    sim_config.get_reset_rem_loop(multi_trace_length,&int),
                                                                                    sim_config.get_reset_rem_act(multi_trace_length,&int));
                                 }
                             }
+                            let mut analysis_manager : GenericProcessManager<AnalysisConfig> = GenericProcessManager::new(ana_ctx,
+                                                                                                                          ana_opts.ana_param,
+                                                                                                                                delegate,
+                                                                                                                          ana_opts.filters,
+                                                                                                                          ana_opts.loggers,
+                                                                                                                          ana_opts.goal,
+                                                                                                                          ana_opts.use_memoization);
+
+
+                            let init_node = AnalysisNodeKind::new(int,init_flags,0);
+                            // ***
                             let now = Instant::now();
-                            let (verdict,node_count) = manager.analyze(int,init_flags);
+                            let (node_count,verdict) = analysis_manager.start_process(init_node);
                             let elapsed_time = now.elapsed();
                             ret_print.push( format!("verdict    : '{}'", verdict.to_string() ) );
                             ret_print.push( format!("node count : {:?}", node_count ) );

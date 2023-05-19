@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -27,11 +27,10 @@ use crate::core::colocalizations::CoLocalizations;
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::position::position::Position;
-use crate::process::ana_proc::interface::step::SimulationStepKind;
 use crate::io::output::draw_commons::hibou_color_palette::*;
 use crate::io::output::draw_commons::make_image_of_text::new_image_with_colored_text;
-use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_action;
+use crate::process::ana::step::SimulationStepKind;
 
 // **********
 
@@ -40,7 +39,7 @@ use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_act
 pub fn draw_firing_simple(path : &Path,
                    gen_ctx : &GeneralContext,
                    action_position : &Position,
-                   executed_actions : &HashSet<TraceAction>) {
+                   executed_actions : &BTreeSet<TraceAction>) {
     let mut text_lines : Vec<Vec<TextToPrint>> = Vec::new();
     // ***
     draw_firing_finalize(path,text_lines, gen_ctx, action_position, executed_actions);
@@ -50,7 +49,7 @@ pub fn draw_firing_simple(path : &Path,
 pub fn draw_firing_analysis(path : &Path,
                             gen_ctx : &GeneralContext,
                             action_position : &Position,
-                            executed_actions : &HashSet<TraceAction>,
+                            executed_actions : &BTreeSet<TraceAction>,
                             co_localizations : &CoLocalizations,
                             consu_set : &HashSet<usize>,
                             sim_map : &HashMap<usize,SimulationStepKind>) {
@@ -90,7 +89,7 @@ fn draw_firing_finalize(path : &Path,
                         text_lines : Vec<Vec<TextToPrint>>,
        gen_ctx : &GeneralContext,
        action_position : &Position,
-       executed_actions : &HashSet<TraceAction>,) {
+       executed_actions : &BTreeSet<TraceAction>,) {
     let mut text_lines = text_lines;
     {
         let mut ttp: Vec<TextToPrint> = Vec::new();

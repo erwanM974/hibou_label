@@ -23,7 +23,7 @@ use crate::core::language::position::position::Position;
 use crate::core::transformation::transfokind::InteractionTransformationKind;
 use crate::core::transformation::transfophase::InteractionTransformationPhase;
 use crate::core::transformation::transfores::InteractionTransformationResult;
-use crate::process::abstract_proc::common::{FilterEliminationKind, HibouSearchStrategy};
+use crate::process::abstract_proc::common::{FilterEliminationKind, QueueSearchStrategy};
 use crate::process::abstract_proc::generic::{GenericNode, GenericStep};
 use crate::process::abstract_proc::manager::{GenericProcessManager, GenericProcessPriorities};
 use crate::process::canon_proc::interface::conf::CanonizationConfig;
@@ -64,7 +64,7 @@ impl CanonizationProcessManager {
     }
 
     pub fn new(gen_ctx : GeneralContext,
-               strategy : HibouSearchStrategy,
+               strategy : QueueSearchStrategy,
                filters : Vec<CanonizationFilter>,
                priorities : GenericProcessPriorities<CanonizationConfig>,
                loggers : Vec<Box< dyn CanonizationLogger>>,

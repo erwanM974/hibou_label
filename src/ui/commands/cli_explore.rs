@@ -20,12 +20,18 @@ use std::time::Instant;
 
 
 use clap::ArgMatches;
+use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
+use graph_process_manager_core::manager::manager::GenericProcessManager;
+use crate::io::input::hcf::explo::interface::parse_hcf_file_for_explore;
+use crate::io::input::hcf::explo::options::HibouExploreOptions;
 
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
-use crate::io::input::hcf::interface::{parse_hcf_file_for_explore,HibouExploreOptions};
-
-use crate::process::explo_proc::manager::ExplorationProcessManager;
+use crate::process::explo::conf::ExplorationConfig;
+use crate::process::explo::context::{ExplorationContext, ExplorationParameterization};
+use crate::process::explo::node::ExplorationNodeKind;
+use crate::process::explo::priorities::ExplorationPriorities;
+use crate::process::explo::step::ExplorationStepKind;
 
 
 pub fn cli_explore(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -62,14 +68,22 @@ pub fn cli_explore(matches : &ArgMatches) -> (Vec<String>,u32) {
                     ret_print.push( format!("of interaction from file '{}'",hsf_file_path) );
                     ret_print.push( "".to_string());
                     // ***
-                    let mut manager = ExplorationProcessManager::new(gen_ctx,
-                                                                     explo_opts.strategy,
-                                                                     explo_opts.filters,
-                                                                     explo_opts.priorities,
-                                                                     explo_opts.loggers);
+                    let explo_ctx = ExplorationContext::new(gen_ctx);
+                    let delegate : GenericProcessDelegate<ExplorationStepKind,ExplorationNodeKind,ExplorationPriorities> = GenericProcessDelegate::new(explo_opts.strategy,explo_opts.priorities);
+
+                    let mut exploration_manager : GenericProcessManager<ExplorationConfig> = GenericProcessManager::new(explo_ctx,
+                                                                                                                        ExplorationParameterization{},
+                                                                                                                  delegate,
+                                                                                                                        explo_opts.filters,
+                                                                                                                        explo_opts.loggers,
+                                                                                                                  None,
+                                                                                                                        explo_opts.use_memoization);
+
+                    // ***
+                    let init_node = ExplorationNodeKind::new(int,0);
                     // ***
                     let now = Instant::now();
-                    let node_count = manager.explore(int);
+                    let (node_count,_) = exploration_manager.start_process(init_node);
                     let elapsed_time = now.elapsed();
                     ret_print.push( format!("node count : {:?}", node_count ) );
                     ret_print.push( format!("elapsed    : {:?}", elapsed_time.as_secs_f64() ) );

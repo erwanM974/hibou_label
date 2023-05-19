@@ -16,11 +16,10 @@ limitations under the License.
 
 use graphviz_dot_builder::edge::edge::GraphVizEdge;
 use graphviz_dot_builder::edge::style::{GraphvizEdgeStyleItem, GvArrowHeadStyle};
-use graphviz_dot_builder::graph::GraphVizDiGraph;
-use graphviz_dot_builder::item::item::GraphVizGraphItem;
+use graphviz_dot_builder::graph::graph::GraphVizDiGraph;
 use graphviz_dot_builder::item::node::node::GraphVizNode;
 use graphviz_dot_builder::item::node::style::{GraphvizNodeStyle, GraphvizNodeStyleItem, GvNodeShape};
-use graphviz_dot_builder::traits::{DotBuildable, DotTranslatable};
+use graphviz_dot_builder::traits::{DotBuildable};
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
@@ -33,7 +32,7 @@ use crate::io::textual_convention::{SYNTAX_ALT, SYNTAX_COREG, SYNTAX_LOOP_H, SYN
 
 pub fn interaction_gv_repr(gen_ctx : &GeneralContext,
                         interaction : &Interaction) -> GraphVizDiGraph {
-    let mut digraph = GraphVizDiGraph::new();
+    let mut digraph = GraphVizDiGraph::new(vec![]);
     interaction_gv_repr_rec(gen_ctx, interaction,Position::Epsilon(None), &mut digraph);
     return digraph;
 }

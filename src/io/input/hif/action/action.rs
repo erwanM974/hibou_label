@@ -27,7 +27,7 @@ use crate::io::input::error::HibouParsingError;
 
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::hif::parser::{HifParser,Rule};
 

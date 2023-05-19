@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use itertools::Itertools;
 
@@ -23,7 +23,7 @@ use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::io::textual_convention::{SYNTAX_EMISSION, SYNTAX_RECEPTION};
 
-pub fn trace_actions_as_htf_encoding(gen_ctx : &GeneralContext, actions : &HashSet<TraceAction>) -> String {
+pub fn trace_actions_as_htf_encoding(gen_ctx : &GeneralContext, actions : &BTreeSet<TraceAction>) -> String {
     if actions.len() == 1 {
         return trace_action_as_htf_encoding(gen_ctx,actions.iter().next().unwrap());
     } else {

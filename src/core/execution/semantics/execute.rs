@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::involve::involves::InvolvesLifelines;
@@ -231,9 +231,9 @@ fn execute_interaction_left(my_int : &Interaction,
             let acts1 = exres1.interaction.get_all_trace_actions();
             let acts2 = i2.get_all_trace_actions();
             // ***
-            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
-            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
-            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            let sync_acts_as_set : BTreeSet<TraceAction> = BTreeSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_set.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_set.intersection(&acts2).count();
             // ***
             let new_i : Interaction;
             if intersetc1 == 0 && intersetc2 == 0 {
@@ -376,9 +376,9 @@ fn execute_interaction_right(my_int : &Interaction,
             let acts1 = i1.get_all_trace_actions();
             let acts2 = exres2.interaction.get_all_trace_actions();
             // ***
-            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
-            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
-            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            let sync_acts_as_set : BTreeSet<TraceAction> = BTreeSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_set.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_set.intersection(&acts2).count();
             // ***
             let new_i : Interaction;
             if intersetc1 == 0 && intersetc2 == 0 {
@@ -432,9 +432,9 @@ fn execute_interaction_both(my_int : &Interaction,
             let acts1 = exres1.interaction.get_all_trace_actions();
             let acts2 = exres2.interaction.get_all_trace_actions();
             // ***
-            let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
-            let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
-            let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+            let sync_acts_as_set : BTreeSet<TraceAction> = BTreeSet::from_iter(sync_acts.iter().cloned());
+            let intersetc1 = sync_acts_as_set.intersection(&acts1).count();
+            let intersetc2 = sync_acts_as_set.intersection(&acts2).count();
             // ***
             let new_i : Interaction;
             if intersetc1 == 0 && intersetc2 == 0 {

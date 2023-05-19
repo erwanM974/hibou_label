@@ -17,7 +17,7 @@ limitations under the License.
 
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 
 
 

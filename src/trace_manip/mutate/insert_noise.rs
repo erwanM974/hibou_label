@@ -108,9 +108,9 @@ fn mutate_by_inserting_noise(gen_ctx : &GeneralContext,
             let component : &mut Trace = mutated_mt.get_mut(coloc_id).unwrap();
             let to_insert = generate_random_action_on_coloc(&mut rng,gen_ctx,co_localizations.get_coloc_lfs_ids(coloc_id));
             if only_at_end {
-                component.push(hashset!{to_insert});
+                component.push(btreeset!{to_insert});
             } else {
-                mutate_vector_by_insert(&mut rng,component,hashset!{to_insert});
+                mutate_vector_by_insert(&mut rng,component,btreeset!{to_insert});
             }
             rem_num_inserts -= 1;
         }

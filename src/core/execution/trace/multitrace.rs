@@ -16,10 +16,12 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
+
 use crate::core::execution::trace::trace::TraceAction;
 
-pub type Trace = Vec<HashSet<TraceAction>>;
+
+pub type Trace = Vec<BTreeSet<TraceAction>>;
 
 pub type MultiTrace = Vec<Trace>;
 

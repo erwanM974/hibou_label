@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::PathBuf;
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::Trace;
@@ -44,7 +44,7 @@ pub fn get_all_slices_rec<'a>(gen_ctx : &GeneralContext,
         Some(canal_trace) => {
             let mut slicer = Slicer::new(&canal_trace);
             while let Some(got_slice) = slicer.next() {
-                let mut new_trace = got_slice.iter().cloned().collect::<Vec<HashSet<TraceAction>>>();
+                let mut new_trace = got_slice.iter().cloned().collect::<Vec<BTreeSet<TraceAction>>>();
                 let mut new_ok_canals = ok_canals.clone();
                 new_ok_canals.push(new_trace);
                 get_all_slices_rec(gen_ctx,
@@ -75,7 +75,7 @@ pub fn get_all_prefixes_rec<'a>(gen_ctx : &GeneralContext,
         },
         Some(canal_trace ) => {
             for i in 0..(canal_trace.len()+1) {
-                let mut new_trace = canal_trace[0..i].iter().cloned().collect::<Vec<HashSet<TraceAction>>>();
+                let mut new_trace = canal_trace[0..i].iter().cloned().collect::<Vec<BTreeSet<TraceAction>>>();
                 let mut new_ok_canals = ok_canals.clone();
                 new_ok_canals.push(new_trace);
                 get_all_prefixes_rec(gen_ctx,
@@ -106,7 +106,7 @@ pub fn get_all_suffixes_rec<'a>(gen_ctx : &GeneralContext,
         },
         Some(canal_trace) => {
             for i in 0..(canal_trace.len()+1) {
-                let mut new_trace = canal_trace[i..].iter().cloned().collect::<Vec<HashSet<TraceAction>>>();
+                let mut new_trace = canal_trace[i..].iter().cloned().collect::<Vec<BTreeSet<TraceAction>>>();
                 let mut new_ok_canals = ok_canals.clone();
                 new_ok_canals.push(new_trace);
                 get_all_suffixes_rec(gen_ctx,

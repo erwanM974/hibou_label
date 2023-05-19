@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use image::Rgb;
 use image_colored_text::ttp::TextToPrint;
 use itertools::Itertools;
@@ -54,7 +54,7 @@ pub fn diagram_repr_trace_action(action : &TraceAction, gen_ctx : &GeneralContex
 }
 
 
-pub fn diagram_repr_trace_actions(actions : &HashSet<TraceAction>,
+pub fn diagram_repr_trace_actions(actions : &BTreeSet<TraceAction>,
                                   gen_ctx : &GeneralContext,
                                   draw_brackets : bool) -> Vec<TextToPrint> {
     let mut inner_reprs : Vec<Vec<TextToPrint>> =

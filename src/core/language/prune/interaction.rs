@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::avoid::avoids::AvoidsLifelines;
@@ -72,9 +72,9 @@ impl LifelinePrunable for Interaction {
                 let acts1 = pruned_i1.get_all_trace_actions();
                 let acts2 = pruned_i2.get_all_trace_actions();
                 // ***
-                let sync_acts_as_hashset : HashSet<TraceAction> = HashSet::from_iter(sync_acts.iter().cloned());
-                let intersetc1 = sync_acts_as_hashset.intersection(&acts1).count();
-                let intersetc2 = sync_acts_as_hashset.intersection(&acts2).count();
+                let sync_acts_as_set : BTreeSet<TraceAction> = BTreeSet::from_iter(sync_acts.iter().cloned());
+                let intersetc1 = sync_acts_as_set.intersection(&acts1).count();
+                let intersetc2 = sync_acts_as_set.intersection(&acts2).count();
                 // ***
                 let new_i : Interaction;
                 if intersetc1 == 0 && intersetc2 == 0 {

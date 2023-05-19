@@ -26,7 +26,7 @@ use crate::io::input::hif::action::action::parse_communication_action;
 
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::hif::parser::{HifParser,Rule};
 use crate::io::input::hif::trace::sync_acts_from_pair;

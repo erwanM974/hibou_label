@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 use std::cmp;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use image::{Rgb, RgbImage};
 use image_colored_text::draw::single_line::{draw_line_of_colored_text, DrawCoord};
@@ -26,6 +26,7 @@ use imageproc::drawing::draw_line_segment_mut;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
 use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_strict_frags, get_recursive_par_frags, get_recursive_alt_frags, get_recursive_coreg_frags, get_recursive_sync_frags};
+use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 use crate::io::output::draw_commons::hibou_color_palette::HCP_Black;
 use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_interactions::as_sd::action_repr::emission::draw_emission;
@@ -93,8 +94,8 @@ pub fn draw_interaction_rec(    image : &mut RgbImage,
             let mut frags = get_recursive_sync_frags(sync_acts,i1);
             frags.extend( get_recursive_sync_frags(sync_acts,i2) );
             let mut label = vec![TextToPrint::new(SYNTAX_SYNC.to_string(),Rgb(HCP_Black))];
-            let sync_acts_as_hashset = HashSet::from_iter(sync_acts.iter().cloned());
-            label.append(&mut diagram_repr_trace_actions(&sync_acts_as_hashset,gen_ctx,true));
+            let sync_acts_as_set = BTreeSet::from_iter(sync_acts.iter().cloned());
+            label.append(&mut diagram_repr_trace_actions(&sync_acts_as_set,gen_ctx,true));
             return draw_n_ary_combined_fragment(image, gen_ctx,frags,lf_x_widths, lf_num,label, nest_shift, yshift);
         },
         &Interaction::Loop(ref lkind, ref i1) => {
@@ -250,8 +251,8 @@ fn draw_combined_fragment_frame(    image : &mut RgbImage,
                                       &DrawCoord::StartingAt(x_left + FRAGMENT_TITLE_MARGIN),
                                       &DrawCoord::CenteredAround(y_start + VERTICAL_SIZE+ FRAGMENT_TITLE_MARGIN),
                                       &label,
-                                      FONT_WIDTH,
-                                      FONT_HEIGHT);
+                                      &get_hibou_font(),
+                                      &HIBOU_FONT_SCALE);
         },
         _ => {}
     }

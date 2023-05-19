@@ -27,6 +27,7 @@ use imageproc::rect::Rect;
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef};
+use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 use crate::io::output::draw_commons::hibou_color_palette::{HC_Message, HCP_Black};
 use crate::io::output::draw_commons::sd_drawing_conf::*;
 use crate::io::output::draw_interactions::as_sd::action_repr::common::draw_line_for_message_exchange;
@@ -53,7 +54,7 @@ pub fn draw_emission( image : &mut RgbImage,
     // ***
     let text_y_pos = get_y_pos_from_yshift(yshift) + VERTICAL_SIZE/2.0;
     let arrow_y_pos = get_y_pos_from_yshift(yshift+2);
-    let msg_to_print_width = TextToPrint::get_text_width(&msg_to_print,FONT_WIDTH);
+    let msg_to_print_width = TextToPrint::get_text_width(&msg_to_print,&get_hibou_font(), &HIBOU_FONT_SCALE);
     // ***
     let (img_width,_) = image.dimensions();
     // ***
@@ -70,8 +71,8 @@ pub fn draw_emission( image : &mut RgbImage,
                                       &DrawCoord::CenteredAround(msg_x_middle),
                                       &DrawCoord::CenteredAround(text_y_pos),
                                       &msg_to_print,
-                                      FONT_WIDTH,
-                                      FONT_HEIGHT);
+                                      &get_hibou_font(),
+                                      &HIBOU_FONT_SCALE);
         },
         1 => {
             let origin_lf_id = *(&em_act.origin_lf_id);
@@ -113,8 +114,8 @@ pub fn draw_emission( image : &mut RgbImage,
                                               &DrawCoord::CenteredAround(msg_x_middle),
                                               &DrawCoord::CenteredAround(text_y_pos),
                                               &msg_to_print,
-                                              FONT_WIDTH,
-                                              FONT_HEIGHT);
+                                              &get_hibou_font(),
+                                              &HIBOU_FONT_SCALE);
                 },
                 EmissionTargetRef::Gate(target_gt_id) => {
                     draw_filled_rect_mut(image,
@@ -131,8 +132,8 @@ pub fn draw_emission( image : &mut RgbImage,
                                               &DrawCoord::CenteredAround(msg_x_middle),
                                               &DrawCoord::CenteredAround(text_y_pos),
                                               &msg_to_print,
-                                              FONT_WIDTH,
-                                              FONT_HEIGHT);
+                                              &get_hibou_font(),
+                                              &HIBOU_FONT_SCALE);
                     // ***
                 }
             }
@@ -151,8 +152,8 @@ pub fn draw_emission( image : &mut RgbImage,
                                           &DrawCoord::CenteredAround(msg_x_middle),
                                           &DrawCoord::CenteredAround(text_y_pos),
                                           &msg_to_print,
-                                          FONT_WIDTH,
-                                          FONT_HEIGHT);
+                                          &get_hibou_font(),
+                                          &HIBOU_FONT_SCALE);
                 // ***
             }
             for target_ref in &em_act.targets {

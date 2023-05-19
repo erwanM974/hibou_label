@@ -15,16 +15,6 @@ limitations under the License.
 */
 
 
-
-
-extern crate image;
-
-extern crate imageproc;
-
-extern crate image_colored_text;
-
-extern crate pest;
-
 #[macro_use]
 extern crate pest_derive;
 
@@ -34,14 +24,8 @@ extern crate clap;
 #[macro_use]
 extern crate maplit;
 
-extern crate rand;
-
-extern crate strum;
-
 #[macro_use]
 extern crate strum_macros;
-
-extern crate graphviz_dot_builder;
 
 // **********
 

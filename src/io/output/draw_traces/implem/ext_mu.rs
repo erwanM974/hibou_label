@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use image::Rgb;
 use image_colored_text::ttp::TextToPrint;
@@ -28,7 +28,7 @@ use crate::core::execution::trace::trace::TraceAction;
 use crate::io::output::draw_commons::hibou_color_palette::{HC_Grammar_Symbol, HC_Lifeline, HCP_Black, HCP_LightGray};
 use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_actions;
 use crate::io::output::draw_commons::hibou_color_palette::*;
-use crate::process::ana_proc::logic::flags::{MultiTraceAnalysisFlags, TraceAnalysisFlags};
+use crate::process::ana::node::flags::{MultiTraceAnalysisFlags, TraceAnalysisFlags};
 
 fn extract_texts_on_canal_hidden(gen_ctx : &GeneralContext,
                                  lifelines : &HashSet<usize>,
@@ -177,7 +177,7 @@ fn add_lifelines_text_to_canal(gen_ctx : &GeneralContext,
 fn add_trace_text_to_canal<'a>(gen_ctx: &GeneralContext,
                                canal_text : &mut Vec<TextToPrint>,
                                init_len : usize,
-                               rem_actions : &mut impl Iterator<Item = &'a HashSet<TraceAction>> ) {
+                               rem_actions : &mut impl Iterator<Item = &'a BTreeSet<TraceAction>> ) {
     let mut rem_len = init_len;
     while let Some(actions) = rem_actions.next() {
         canal_text.append(&mut diagram_repr_trace_actions(actions,gen_ctx,false));

@@ -16,12 +16,12 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::execution::trace::trace::TraceAction;
 
 pub trait PrimitiveInterpretableAsTraceAction {
 
-    fn get_all_atomic_actions(&self) -> HashSet<TraceAction>;
+    fn get_all_atomic_actions(&self) -> BTreeSet<TraceAction>;
 
     fn get_first_atomic_action(&self) -> TraceAction;
 
@@ -32,9 +32,9 @@ pub trait PrimitiveInterpretableAsTraceAction {
 
 pub trait InteractionInterpretableAsTraceAction {
 
-    fn get_all_trace_actions(&self) -> HashSet<TraceAction>;
+    fn get_all_trace_actions(&self) -> BTreeSet<TraceAction>;
 
-    fn get_trace_actions_outside_loops(&self) -> HashSet<TraceAction>;
+    fn get_trace_actions_outside_loops(&self) -> BTreeSet<TraceAction>;
 
     fn get_atomic_actions_number(&self) -> usize;
 

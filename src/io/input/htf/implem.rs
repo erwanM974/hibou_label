@@ -29,7 +29,7 @@ use crate::io::input::htf::trace::trace_sequence_from_pair;
 
 
 #[allow(unused_imports)]
-use crate::pest::Parser;
+use pest::Parser;
 #[allow(unused_imports)]
 use crate::io::input::htf::parser::{HtfParser,Rule};
 
