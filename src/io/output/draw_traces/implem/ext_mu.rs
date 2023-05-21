@@ -27,7 +27,6 @@ use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::io::output::draw_commons::hibou_color_palette::{HC_Grammar_Symbol, HC_Lifeline, HCP_Black, HCP_LightGray};
 use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_actions;
-use crate::io::output::draw_commons::hibou_color_palette::*;
 use crate::process::ana::node::flags::{MultiTraceAnalysisFlags, TraceAnalysisFlags};
 
 fn extract_texts_on_canal_hidden(gen_ctx : &GeneralContext,

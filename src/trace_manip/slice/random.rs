@@ -16,15 +16,15 @@ limitations under the License.
 
 
 
-use std::cmp::{max, min};
+use std::cmp::min;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
 use rand::distributions::{Distribution, Uniform};
 use rand::rngs::ThreadRng;
+
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::{MultiTrace, Trace};
-
 use crate::core::general_context::GeneralContext;
 use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
 use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;

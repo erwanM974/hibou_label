@@ -17,6 +17,7 @@ limitations under the License.
 
 
 
+use std::fmt;
 use graph_process_manager_core::delegate::priorities::AbstractPriorities;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::process::ana::step::AnalysisStepKind;
@@ -47,16 +48,16 @@ impl AnalysisPriorities {
     }
 }
 
-impl std::string::ToString for AnalysisPriorities {
-    fn to_string(&self) -> String {
-        let mut my_str = String::new();
-        my_str.push_str( &format!("[emission={:},",self.emission) );
-        my_str.push_str( &format!("reception={:},",self.reception) );
-        my_str.push_str( &format!("multi-rdv={:},",self.multi_rdv) );
-        my_str.push_str( &format!("loop={:},",self.in_loop) );
-        my_str.push_str( &format!("elim={:},",self.elim) );
-        my_str.push_str( &format!("simu={:}]",self.simu) );
-        return my_str;
+impl fmt::Display for AnalysisPriorities {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,
+               "[emission={:},reception={:},multi-rdv={:},loop={:},elim={:},simu={:}]",
+            self.emission,
+            self.reception,
+            self.multi_rdv,
+            self.in_loop,
+            self.elim,
+            self.simu)
     }
 }
 

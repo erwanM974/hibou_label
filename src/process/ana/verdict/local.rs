@@ -1,3 +1,4 @@
+use std::fmt;
 use crate::process::ana::verdict::inconc::InconcReason;
 
 pub enum AnalysisLocalVerdict{
@@ -10,37 +11,37 @@ pub enum AnalysisLocalVerdict{
     OutSim(bool) // bool for if it's known via local analysis}
 }
 
-impl std::string::ToString for AnalysisLocalVerdict {
+impl fmt::Display for AnalysisLocalVerdict {
 
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnalysisLocalVerdict::Cov => {
-                return "Cov".to_string();
+                write!(f,"Cov")
             },
             AnalysisLocalVerdict::TooShort => {
-                return "TooShort".to_string();
+                write!(f,"TooShort")
             },
             AnalysisLocalVerdict::MultiPref => {
-                return "MultiPref".to_string();
+                write!(f,"MultiPref")
             },
             AnalysisLocalVerdict::Slice => {
-                return "Slice".to_string();
+                write!(f,"Slice")
             },
             AnalysisLocalVerdict::Inconc(reason) => {
-                return format!("Inconc {:}", reason.to_string());
+                write!(f,"Inconc {:}", reason)
             },
             AnalysisLocalVerdict::Out(ref loc) => {
                 if *loc {
-                    return "Out-l".to_string();
+                    write!(f,"Out-l")
                 } else {
-                    return "Out".to_string();
+                    write!(f,"Out")
                 }
             },
             AnalysisLocalVerdict::OutSim(ref loc) => {
                 if *loc {
-                    return "OutSim-l".to_string();
+                    write!(f,"OutSim-l")
                 } else {
-                    return "OutSim".to_string();
+                    write!(f,"OutSim")
                 }
             }
         }

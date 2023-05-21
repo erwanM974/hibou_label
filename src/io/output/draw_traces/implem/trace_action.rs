@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
+
 use image::Rgb;
 use image_colored_text::ttp::TextToPrint;
 use itertools::Itertools;
@@ -24,8 +25,6 @@ use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::io::output::draw_commons::hibou_color_palette::{HC_Grammar_Symbol, HC_Lifeline, HC_Message};
 use crate::io::textual_convention::*;
-
-
 
 
 pub fn diagram_repr_trace_action(action : &TraceAction, gen_ctx : &GeneralContext) -> Vec<TextToPrint> {

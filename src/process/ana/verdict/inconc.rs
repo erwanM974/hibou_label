@@ -1,5 +1,4 @@
-
-
+use std::fmt;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Hash)]
 pub enum InconcReason {
@@ -26,18 +25,18 @@ impl InconcReason {
 
 }
 
-impl std::string::ToString for InconcReason {
+impl fmt::Display for InconcReason {
 
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InconcReason::LackObs => {
-                return "LackObs".to_string();
+                write!(f,"LackObs")
             },
             InconcReason::UsingLifelineRemovalWithCoLocalizations => {
-                return "UsingLifelineRemovalWithCoLocalizations".to_string();
+                write!(f,"UsingLifelineRemovalWithCoLocalizations")
             },
             InconcReason::FilteredNodes => {
-                return "FilteredNodes".to_string();
+                write!(f,"FilteredNodes")
             }
         }
     }

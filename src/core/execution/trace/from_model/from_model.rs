@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use crate::core::execution::trace::trace::TraceAction;
 
 pub trait PrimitiveInterpretableAsTraceAction {

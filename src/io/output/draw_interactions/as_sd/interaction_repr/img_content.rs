@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 use std::cmp;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 use image::{Rgb, RgbImage};
 use image_colored_text::draw::single_line::{draw_line_of_colored_text, DrawCoord};

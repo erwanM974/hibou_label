@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use std::fmt;
 use crate::core::execution::trace::from_model::from_model::InteractionInterpretableAsTraceAction;
 use crate::core::language::syntax::interaction::Interaction;
 
@@ -25,20 +26,20 @@ pub enum SimulationLoopCriterion {
     None
 }
 
-impl std::string::ToString for SimulationLoopCriterion {
-    fn to_string(&self) -> String {
+impl fmt::Display for SimulationLoopCriterion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SimulationLoopCriterion::MaxNum => {
-                return "total number of loops in interaction".to_string();
+                write!(f,"total number of loops in interaction")
             },
             SimulationLoopCriterion::MaxDepth => {
-                return "maximum depth of nested loops in interaction".to_string();
+                write!(f,"maximum depth of nested loops in interaction")
             },
             SimulationLoopCriterion::SpecificNum(sn) => {
-                return format!("specific number of loops : {:}", sn);
+                write!(f,"specific number of loops : {:}", sn)
             },
             SimulationLoopCriterion::None => {
-                return "no limit on loops".to_string();
+                write!(f,"no limit on loops")
             }
         }
     }
@@ -51,17 +52,17 @@ pub enum SimulationActionCriterion {
     None
 }
 
-impl std::string::ToString for SimulationActionCriterion {
-    fn to_string(&self) -> String {
+impl fmt::Display for SimulationActionCriterion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SimulationActionCriterion::MaxNumOutsideLoops => {
-                return "number of actions outside loops".to_string();
+                write!(f,"number of actions outside loops")
             },
             SimulationActionCriterion::SpecificNum(sn) => {
-                return format!("specific number of actions : {:}", sn);
+                write!(f,"specific number of actions : {:}", sn)
             },
             SimulationActionCriterion::None => {
-                return "no limit on actions".to_string();
+                write!(f,"no limit on actions")
             }
         }
     }
@@ -76,14 +77,15 @@ pub struct SimulationConfiguration {
     pub act_crit : SimulationActionCriterion
 }
 
-impl std::string::ToString for SimulationConfiguration {
-    fn to_string(&self) -> String {
-        return format!("sim before/slice : {:} | reset after exec : {:} | multiply by mu length : {:} | {:} | {:}",
+impl fmt::Display for SimulationConfiguration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,
+               "sim before/slice : {:} | reset after exec : {:} | multiply by mu length : {:} | {:} | {:}",
                        self.sim_before,
                        self.reset_crit_after_exec,
                        self.multiply_by_multitrace_length,
-                       self.loop_crit.to_string(),
-                       self.act_crit.to_string());
+                       self.loop_crit,
+                       self.act_crit)
     }
 }
 
@@ -222,20 +224,20 @@ impl AnalysisKind {
 }
 
 
-impl std::string::ToString for AnalysisKind {
-    fn to_string(&self) -> String {
+impl fmt::Display for AnalysisKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnalysisKind::Accept => {
-                return "accept".to_string();
+                write!(f,"accept")
             },
             AnalysisKind::Prefix => {
-                return "prefix".to_string();
+                write!(f,"prefix")
             },
             AnalysisKind::Eliminate => {
-                return "eliminate no-longer-observed".to_string();
+                write!(f,"eliminate no-longer-observed")
             },
             AnalysisKind::Simulate(sim_config) => {
-                return format!("simulate[{:}]", sim_config.to_string());
+                write!(f,"simulate[{:}]", sim_config)
             }
         }
     }

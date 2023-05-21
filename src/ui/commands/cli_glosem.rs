@@ -24,11 +24,6 @@ use autour_core::traits::translate::AutTranslatable;
 
 
 use clap::ArgMatches;
-use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
-use graph_process_manager_core::delegate::priorities::GenericProcessPriorities;
-use graph_process_manager_core::manager::manager::GenericProcessManager;
-use graph_process_manager_core::queued_steps::queue::strategy::QueueSearchStrategy;
-use graph_process_manager_loggers::nfait::logger::GenericNFAITLogger;
 use graphviz_dot_builder::edge::edge::GraphVizEdge;
 use graphviz_dot_builder::graph::graph::GraphVizDiGraph;
 use graphviz_dot_builder::item::node::node::GraphVizNode;
@@ -39,13 +34,7 @@ use crate::core::execution::trace::trace::TraceAction;
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
-use crate::process::explo::conf::ExplorationConfig;
-use crate::process::explo::context::{ExplorationContext, ExplorationParameterization};
-use crate::process::explo::filter::filter::ExplorationFilter;
-use crate::process::explo::loggers::nfait::printer::ActionNFAITPrinter;
-use crate::process::explo::node::ExplorationNodeKind;
-use crate::process::explo::priorities::ExplorationPriorities;
-use crate::process::explo::step::ExplorationStepKind;
+use crate::ui::commands::get_nfa_from_logger::get_nfa_from_interaction_exploration;
 
 
 pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -84,6 +73,12 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                         }
                     }
 
+                    let (nfa,printer,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
+                        "glosem".to_string(),
+                        &gen_ctx,
+                        &int,
+                        max_loop_depth);
+
                     let mut ret_print = vec![];
                     // ***
                     ret_print.push( "".to_string());
@@ -92,36 +87,7 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     ret_print.push( format!("with max loop depth '{}'",max_loop_depth) );
                     ret_print.push( "".to_string());
                     // ***
-                    let nfa_logger = GenericNFAITLogger::new(ActionNFAITPrinter::new(vec![],gen_ctx.clone()),
-                                                             "glosem".to_string(),
-                                                             None,
-                                                             ".".to_string(),);
-                    let explo_ctx = ExplorationContext::new(gen_ctx.clone());
-                    let delegate : GenericProcessDelegate<ExplorationStepKind,ExplorationNodeKind,ExplorationPriorities> =
-                        GenericProcessDelegate::new(QueueSearchStrategy::BFS,GenericProcessPriorities::new(ExplorationPriorities::default(),false));
 
-                    let mut exploration_manager : GenericProcessManager<ExplorationConfig> =
-                        GenericProcessManager::new(explo_ctx,
-                                                   ExplorationParameterization{},
-                                                   delegate,
-                                                   vec![Box::new(ExplorationFilter::MaxLoopInstanciation(max_loop_depth))],
-                                                   vec![Box::new(nfa_logger)],
-                                                   None,
-                                                   true);
-
-                    // ***
-                    // ***
-                    let init_node = ExplorationNodeKind::new(int,0);
-                    // ***
-                    let now = Instant::now();
-                    let (node_count,_) = exploration_manager.start_process(init_node);
-                    let elapsed_get_nfa = now.elapsed();
-                    // ***
-                    let raw_logger = exploration_manager.get_logger(0).unwrap();
-                    let nfa_logger : &GenericNFAITLogger<ExplorationConfig,usize,ActionNFAITPrinter> =
-                        raw_logger.as_any().downcast_ref::<GenericNFAITLogger<ExplorationConfig,usize,ActionNFAITPrinter>>().unwrap();
-                    // ***
-                    let nfa = nfa_logger.get_nfait();
                     let mut min_nfa = nfa.clone();
                     let now = Instant::now();
                     min_nfa = min_nfa.minimize();
@@ -130,11 +96,11 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     ret_print.push( format!("orig NFA : time : {:?} , num states {:?}", elapsed_get_nfa, nfa.transitions.len() ) );
                     ret_print.push( format!("min NFA : time : {:?} , num states {:?}", elapsed_min_nfa, min_nfa.transitions.len() ) );
                     // ***
-                    let orig_nfa_as_dot = nfa.to_dot(false,&hashset!{},&nfa_logger.builder_printer);
+                    let orig_nfa_as_dot = nfa.to_dot(false,&hashset!{},&printer);
                     orig_nfa_as_dot.print_dot(&[".".to_string()],
                                               &orig_nfa_name,
                                               &GraphVizOutputFormat::png);
-                    let mini_nfa_as_dot = min_nfa.to_dot(false,&hashset!{},&nfa_logger.builder_printer);
+                    let mini_nfa_as_dot = min_nfa.to_dot(false,&hashset!{},&printer);
                     mini_nfa_as_dot.print_dot(&[".".to_string()],
                                               &min_nfa_name,
                                               &GraphVizOutputFormat::png);
@@ -184,12 +150,12 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     for lf_id in 0..gen_ctx.get_lf_num() {
                         let closure =
                             |x : &usize| -> bool {
-                                nfa_logger.builder_printer.index_to_action_map.get(*x).unwrap()
+                                printer.index_to_action_map.get(*x).unwrap()
                                     .iter().any(|a : &TraceAction| a.lf_id == lf_id)
                             };
-                        let hid_nfa = min_nfa.clone().hide_letters(false, &closure);
+                        let hid_nfa = min_nfa.clone().to_nfait().hide_letters(false, &closure);
                         let hid_nfa_name = format!("{}_hid_{}_nfa", file_name, lf_id);
-                        hid_nfa.to_dot(false,&hashset!{},&nfa_logger.builder_printer)
+                        hid_nfa.to_dot(false,&hashset!{},&printer)
                             .print_dot(&[".".to_string()],
                                                   &hid_nfa_name,
                                                   &GraphVizOutputFormat::png);
@@ -209,9 +175,9 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                                               None,
                                               vec![])
                         );
-                        let epsilon_closed = hid_nfa.to_nfa().to_nfait();
+                        let epsilon_closed = hid_nfa.to_nfa();
                         let epsilon_closed_name = format!("{}_hid_{}_closed_nfa", file_name, lf_id);
-                        epsilon_closed.to_dot(false,&hashset!{},&nfa_logger.builder_printer)
+                        epsilon_closed.to_dot(false,&hashset!{},&printer)
                             .print_dot(&[".".to_string()],
                                                   &epsilon_closed_name,
                                                   &GraphVizOutputFormat::png);

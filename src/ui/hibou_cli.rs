@@ -22,8 +22,10 @@ use crate::ui::commands::cli_draw::cli_draw;
 use crate::ui::commands::cli_explore::cli_explore;
 use crate::ui::commands::cli_glosem::cli_glosem;
 use crate::ui::commands::cli_mutate_insert_noise::cli_mutate_insert_noise;
+use crate::ui::commands::cli_mutate_remove_actions::cli_mutate_remove_actions;
 use crate::ui::commands::cli_mutate_swap_actions::cli_mutate_swap_actions;
 use crate::ui::commands::cli_mutate_swap_components::cli_mutate_swap_components;
+use crate::ui::commands::cli_nfa_ana::cli_nfa_ana;
 use crate::ui::commands::cli_puml_ap::cli_puml_ap;
 use crate::ui::commands::cli_puml_sd::cli_puml_sd;
 use crate::ui::commands::cli_slice::cli_slice;
@@ -53,6 +55,10 @@ pub fn hibou_cli() -> i32 {
         let mut got = cli_glosem(matches);
         ret_print = got.0;
         ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("nfa_analyze") {
+        let mut got = cli_nfa_ana(matches);
+        ret_print = got.0;
+        ret_code = got.1;
     }/* else if let Some(matches) = matches.subcommand_matches("canonize") {
 
     }*//* else if let Some(matches) = matches.subcommand_matches("merge") {
@@ -77,6 +83,10 @@ pub fn hibou_cli() -> i32 {
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("mutate_insert_noise") {
         let mut got = cli_mutate_insert_noise(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("mutate_remove_actions") {
+        let mut got = cli_mutate_remove_actions(matches);
         ret_print = got.0;
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("mutate_swap_actions") {

@@ -16,7 +16,10 @@ limitations under the License.
 
 
 
+use std::fmt;
+
 use graph_process_manager_core::handler::filter::AbstractFilter;
+
 use crate::process::explo::filter::elim::ExplorationFilterEliminationKind;
 
 
@@ -24,9 +27,9 @@ pub struct ExplorationFilterCriterion {
     pub loop_depth : u32
 }
 
-impl std::string::ToString for ExplorationFilterCriterion {
-    fn to_string(&self) -> String {
-        format!("max loop depth : {:}", self.loop_depth)
+impl fmt::Display for ExplorationFilterCriterion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"max loop depth : {:}", self.loop_depth)
     }
 }
 
@@ -36,17 +39,17 @@ pub enum ExplorationFilter {
     MaxNodeNumber(u32)
 }
 
-impl std::string::ToString for ExplorationFilter {
-    fn to_string(&self) -> String {
+impl fmt::Display for ExplorationFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExplorationFilter::MaxLoopInstanciation(num) => {
-                return format!("MaxLoop={}",num);
+                write!(f,"MaxLoop={}",num)
             },
             ExplorationFilter::MaxProcessDepth(num) => {
-                return format!("MaxDepth={}",num);
+                write!(f,"MaxDepth={}",num)
             },
             ExplorationFilter::MaxNodeNumber(num) => {
-                return format!("MaxNum={}",num);
+                write!(f,"MaxNum={}",num)
             }
         }
     }

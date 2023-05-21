@@ -54,11 +54,11 @@ impl GraphVizProcessDrawer<ExplorationConfig> for InteractionProcessDrawer {
     }
 
     fn make_static_analysis_as_gvcluster(&self,
-                                         context: &ExplorationContext,
-                                         param : &ExplorationParameterization,
+                                         _context: &ExplorationContext,
+                                         _param : &ExplorationParameterization,
                                          parent_state_id: u32,
                                          verdict: &ExplorationLocalVerdict,
-                                         data_proof: &ExplorationStaticLocalVerdictAnalysisProof) -> GraphVizCluster {
+                                         _data_proof: &ExplorationStaticLocalVerdictAnalysisProof) -> GraphVizCluster {
 
         let verdict_color = <InteractionProcessDrawer as GraphVizProcessDrawer<ExplorationConfig>>::get_verdict_color(self, verdict);
         let (cluster_id,anchor_id) = self.get_static_analysis_ids(parent_state_id);
@@ -83,7 +83,7 @@ impl GraphVizProcessDrawer<ExplorationConfig> for InteractionProcessDrawer {
 
     fn make_step_gvnode(&self,
                         context: &ExplorationContext,
-                        param : &ExplorationParameterization,
+                        _param : &ExplorationParameterization,
                         origin_state_id: u32,
                         target_state_id: u32,
                         step: &ExplorationStepKind) -> GraphVizNode {
@@ -102,7 +102,7 @@ impl GraphVizProcessDrawer<ExplorationConfig> for InteractionProcessDrawer {
 
     fn make_node_gvitem_as_gvcluster(&self,
                                      context: &ExplorationContext,
-                                     parameterization: &ExplorationParameterization,
+                                     _parem: &ExplorationParameterization,
                                      new_state_id: u32,
                                      new_node: &ExplorationNodeKind) -> GraphVizCluster {
         self.make_graphic_logger_state(&context.gen_ctx,
@@ -114,7 +114,7 @@ impl GraphVizProcessDrawer<ExplorationConfig> for InteractionProcessDrawer {
 
     fn make_node_gvitem_as_gvnode(&self,
                                   context: &ExplorationContext,
-                                  parameterization: &ExplorationParameterization,
+                                  _param: &ExplorationParameterization,
                                   new_state_id: u32,
                                   new_node: &ExplorationNodeKind) -> GraphVizNode {
         if self.int_repr_sd && !self.int_repr_tt {

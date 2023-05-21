@@ -31,8 +31,8 @@ pub enum CanonizationFilter {
     MaxNodeNumber(u32)
 }
 
-impl std::string::ToString for CanonizationFilter {
-    fn to_string(&self) -> String {
+impl fmt::Display for CanonizationFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CanonizationFilter::MaxProcessDepth(num) => {
                 return format!("MaxDepth={}",num);

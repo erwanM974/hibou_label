@@ -16,23 +16,25 @@ limitations under the License.
 
 
 
+use std::fmt;
+
 pub enum AnalysisFilterEliminationKind {
     MaxLoopInstanciation,
     MaxProcessDepth,
     MaxNodeNumber
 }
 
-impl std::string::ToString for AnalysisFilterEliminationKind {
-    fn to_string(&self) -> String {
+impl fmt::Display for AnalysisFilterEliminationKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnalysisFilterEliminationKind::MaxLoopInstanciation => {
-                return "MaxLoop".to_string();
+                write!(f,"MaxLoop")
             },
             AnalysisFilterEliminationKind::MaxProcessDepth => {
-                return "MaxDepth".to_string();
+                write!(f,"MaxDepth")
             },
             AnalysisFilterEliminationKind::MaxNodeNumber => {
-                return "MaxNum".to_string();
+                write!(f,"MaxNum")
             }
         }
     }

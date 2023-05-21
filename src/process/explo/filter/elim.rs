@@ -1,6 +1,4 @@
-
-
-
+use std::fmt;
 
 pub enum ExplorationFilterEliminationKind {
     MaxLoopInstanciation,
@@ -8,17 +6,17 @@ pub enum ExplorationFilterEliminationKind {
     MaxNodeNumber
 }
 
-impl std::string::ToString for ExplorationFilterEliminationKind {
-    fn to_string(&self) -> String {
+impl fmt::Display for ExplorationFilterEliminationKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExplorationFilterEliminationKind::MaxLoopInstanciation => {
-                return "MaxLoop".to_string();
+                write!(f,"MaxLoop")
             },
             ExplorationFilterEliminationKind::MaxProcessDepth => {
-                return "MaxDepth".to_string();
+                write!(f,"MaxDepth")
             },
             ExplorationFilterEliminationKind::MaxNodeNumber => {
-                return "MaxNum".to_string();
+                write!(f,"MaxNum")
             }
         }
     }

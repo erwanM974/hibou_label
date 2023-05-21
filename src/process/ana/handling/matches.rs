@@ -18,7 +18,6 @@ limitations under the License.
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 
-use graph_process_manager_core::queued_steps::step::GenericStep;
 use crate::core::execution::semantics::frontier::{FrontierElement, global_frontier};
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::language::syntax::interaction::Interaction;
@@ -69,13 +68,11 @@ impl AnalysisParameterization {
         }
     }
 
-    pub fn add_simulation_matches_in_analysis(&self,
+    pub fn get_simulation_matches_in_analysis(&self,
                                               context : &AnalysisContext,
-                                              parent_id    : u32,
                                               interaction : &Interaction,
-                                              flags : &MultiTraceAnalysisFlags,
-                                              next_child_id : &mut u32,
-                                              to_enqueue : &mut Vec<GenericStep<AnalysisStepKind>>) {
+                                              flags : &MultiTraceAnalysisFlags) -> Vec<AnalysisStepKind> {
+        let mut next_steps = vec![];
         // ***
         for frt_elt in global_frontier(&interaction,&None) {
             let canal_ids_of_targets = context.co_localizations.get_coloc_ids_from_lf_ids(&frt_elt.target_lf_ids);
@@ -147,18 +144,14 @@ impl AnalysisParameterization {
             // ***
             if ok_to_simulate {
                 {
-                    *next_child_id = *next_child_id +1;
                     let consu_set : HashSet<usize>;
                     {
                         let simu_set : HashSet<usize> = HashSet::from_iter(to_simulate.keys().cloned());
                         consu_set = HashSet::from_iter( canal_ids_of_targets.difference( &simu_set ).cloned() );
                     }
-                    let generic_step = GenericStep::new(parent_id,
-                        *next_child_id,
-                        AnalysisStepKind::Execute(frt_elt.clone(),
-                                                       consu_set,
-                                                       to_simulate.clone()));
-                    to_enqueue.push( generic_step );
+                    next_steps.push( AnalysisStepKind::Execute(frt_elt.clone(),
+                                                               consu_set,
+                                                               to_simulate.clone()) );
                 }
                 if match_on_canal.len() > 0 && self.is_ok_to_simulate(&frt_elt,interaction,flags) {
                     for combinations in powerset(&match_on_canal) {
@@ -186,18 +179,14 @@ impl AnalysisParameterization {
                             }
                             if ok_to_simulate {
                                 {
-                                    *next_child_id = *next_child_id +1;
                                     let consu_set : HashSet<usize>;
                                     {
                                         let simu_set : HashSet<usize> = HashSet::from_iter(to_simulate_more.keys().cloned());
                                         consu_set = HashSet::from_iter( canal_ids_of_targets.difference( &simu_set ).cloned() );
                                     }
-                                    let generic_step = GenericStep::new(parent_id,
-                                        *next_child_id,
-                                        AnalysisStepKind::Execute(frt_elt.clone(),
-                                                                       consu_set,
-                                                                       to_simulate_more.clone()));
-                                    to_enqueue.push( generic_step );
+                                    next_steps.push( AnalysisStepKind::Execute(frt_elt.clone(),
+                                                                               consu_set,
+                                                                               to_simulate_more.clone()) );
                                 }
                             }
                         }
@@ -205,16 +194,14 @@ impl AnalysisParameterization {
                 }
             }
         }
+        next_steps
     }
 
 
-    pub fn add_action_matches_in_analysis(&self,
+    pub fn get_action_matches_in_analysis(&self,
                                           context : &AnalysisContext,
-                                          parent_id    : u32,
                                           interaction : &Interaction,
-                                          flags : &MultiTraceAnalysisFlags,
-                                          id_as_child : &mut u32,
-                                          to_enqueue : &mut Vec<GenericStep<AnalysisStepKind>>) {
+                                          flags : &MultiTraceAnalysisFlags) -> Vec<AnalysisStepKind> {
         // ***
         let mut head_actions : HashSet<&TraceAction> = HashSet::new();
         for (canal_id,canal_flags) in flags.canals.iter().enumerate() {
@@ -225,16 +212,18 @@ impl AnalysisParameterization {
             }
         }
         // ***
+        let mut next_steps = vec![];
         for frt_elt in global_frontier(&interaction,&Some(&head_actions)) {
-            *id_as_child = *id_as_child +1;
             // ***
             let canal_ids_of_targets = context.co_localizations.get_coloc_ids_from_lf_ids(&frt_elt.target_lf_ids);
-            let generic_step = GenericStep{parent_id,
-                id_as_child:*id_as_child,
-                kind:AnalysisStepKind::Execute(frt_elt,canal_ids_of_targets,hashmap!{})};
+            let kind = AnalysisStepKind::Execute(frt_elt,
+                                                 canal_ids_of_targets,
+                                                 hashmap!{});
             // ***
-            to_enqueue.push( generic_step );
+            next_steps.push( kind );
         }
+        // ***
+        next_steps
     }
 
 }

@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 
+use std::fmt;
 use graph_process_manager_core::manager::verdict::AbstractGlobalVerdict;
 
 use crate::process::explo::verdict::local::ExplorationLocalVerdict;
@@ -25,14 +26,14 @@ pub enum ExplorationGlobalVerdict{
     FoundNoDeadLocks
 }
 
-impl std::string::ToString for ExplorationGlobalVerdict {
-    fn to_string(&self) -> String {
+impl fmt::Display for ExplorationGlobalVerdict {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExplorationGlobalVerdict::HasDeadLocks => {
-                "HasDeadLocks".to_string()
+                write!(f,"HasDeadLocks")
             },
             ExplorationGlobalVerdict::FoundNoDeadLocks => {
-                "FoundNoDeadLocks".to_string()
+                write!(f,"FoundNoDeadLocks")
             }
         }
     }

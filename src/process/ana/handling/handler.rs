@@ -93,31 +93,20 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
 
     fn collect_next_steps(context: &AnalysisContext,
                           param : &AnalysisParameterization,
-                          parent_node_id: u32,
                           parent_node_kind: &AnalysisNodeKind)
-                -> (u32, Vec<GenericStep<AnalysisStepKind>>) {
-
-        let mut id_as_child : u32 = 0;
-        let mut to_enqueue : Vec<GenericStep<AnalysisStepKind>> = Vec::new();
-        // ***
+                -> Vec<AnalysisStepKind> {
 
         if !parent_node_kind.flags.is_multi_trace_empty(&context.multi_trace) {
             match &param.ana_kind {
                 AnalysisKind::Accept => {
-                    param.add_action_matches_in_analysis(context,
-                                                         parent_node_id,
+                    param.get_action_matches_in_analysis(context,
                                                    &parent_node_kind.interaction,
-                                                   &parent_node_kind.flags,
-                                                   &mut id_as_child,
-                                                   &mut to_enqueue);
+                                                   &parent_node_kind.flags)
                 },
                 AnalysisKind::Prefix => {
-                    param.add_action_matches_in_analysis(context,
-                                                         parent_node_id,
-                                                   &parent_node_kind.interaction,
-                                                   &parent_node_kind.flags,
-                                                   &mut id_as_child,
-                                                   &mut to_enqueue);
+                    param.get_action_matches_in_analysis(context,
+                                                        &parent_node_kind.interaction,
+                                                        &parent_node_kind.flags)
                 },
                 AnalysisKind::Eliminate => {
                     let mut canals_ids_to_hide : HashSet<usize> = hashset!{};
@@ -141,32 +130,22 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
                     }
                     //
                     if insert_hide_step {
-                        id_as_child = id_as_child + 1;
-                        let generic_step = GenericStep::new(parent_node_id,
-                                                            id_as_child,
-                                                            AnalysisStepKind::EliminateNoLongerObserved(canals_ids_to_hide));
-                        to_enqueue.push( generic_step );
+                        vec![ AnalysisStepKind::EliminateNoLongerObserved(canals_ids_to_hide) ]
                     } else {
-                        param.add_action_matches_in_analysis(context,
-                                                             parent_node_id,
+                        param.get_action_matches_in_analysis(context,
                                                        &parent_node_kind.interaction,
-                                                       &parent_node_kind.flags,
-                                                       &mut id_as_child,
-                                                       &mut to_enqueue);
+                                                       &parent_node_kind.flags)
                     }
                 },
                 AnalysisKind::Simulate(_) => {
-                    param.add_simulation_matches_in_analysis(context,
-                                                             parent_node_id,
+                    param.get_simulation_matches_in_analysis(context,
                                                        &parent_node_kind.interaction,
-                                                       &parent_node_kind.flags,
-                                                       &mut id_as_child,
-                                                       &mut to_enqueue);
+                                                       &parent_node_kind.flags)
                 }
             }
+        } else {
+            vec![]
         }
-
-        (id_as_child,to_enqueue)
     }
 
     fn get_local_verdict_when_no_child(context: &AnalysisContext,

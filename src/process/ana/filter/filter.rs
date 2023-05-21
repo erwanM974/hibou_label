@@ -16,6 +16,7 @@ limitations under the License.
 
 
 
+use std::fmt;
 use graph_process_manager_core::handler::filter::AbstractFilter;
 use crate::process::ana::filter::elim::AnalysisFilterEliminationKind;
 
@@ -24,9 +25,9 @@ pub struct AnalysisFilterCriterion {
     pub loop_depth : u32
 }
 
-impl std::string::ToString for AnalysisFilterCriterion {
-    fn to_string(&self) -> String {
-        format!("max loop depth : {:}", self.loop_depth)
+impl fmt::Display for AnalysisFilterCriterion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"max loop depth : {:}", self.loop_depth)
     }
 }
 
@@ -36,17 +37,17 @@ pub enum AnalysisFilter {
     MaxNodeNumber(u32)
 }
 
-impl std::string::ToString for AnalysisFilter {
-    fn to_string(&self) -> String {
+impl fmt::Display for AnalysisFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnalysisFilter::MaxLoopInstanciation(num) => {
-                return format!("MaxLoop={}",num);
+                write!(f,"MaxLoop={}",num)
             },
             AnalysisFilter::MaxProcessDepth(num) => {
-                return format!("MaxDepth={}",num);
+                write!(f,"MaxDepth={}",num)
             },
             AnalysisFilter::MaxNodeNumber(num) => {
-                return format!("MaxNum={}",num);
+                write!(f,"MaxNum={}",num)
             }
         }
     }

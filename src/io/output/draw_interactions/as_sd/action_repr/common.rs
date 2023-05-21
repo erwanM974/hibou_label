@@ -17,7 +17,6 @@ limitations under the License.
 use image::{Rgb, RgbImage};
 use imageproc::drawing::draw_line_segment_mut;
 
-use crate::core::language::syntax::action::*;
 use crate::core::language::syntax::action::CommunicationSynchronicity;
 use crate::io::output::draw_commons::hibou_color_palette::HCP_Black;
 

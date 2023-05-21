@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 
+use std::fmt;
 use graph_process_manager_core::manager::verdict::AbstractGlobalVerdict;
 
 use crate::process::ana::verdict::inconc::InconcReason;
@@ -29,23 +30,23 @@ pub enum AnalysisGlobalVerdict{
     Pass
 }
 
-impl std::string::ToString for AnalysisGlobalVerdict {
-    fn to_string(&self) -> String {
+impl fmt::Display for AnalysisGlobalVerdict {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnalysisGlobalVerdict::Pass => {
-                "Pass".to_string()
+                write!(f,"Pass")
             },
             AnalysisGlobalVerdict::WeakPass => {
-                "WeakPass".to_string()
+                write!(f,"WeakPass")
             },
             AnalysisGlobalVerdict::Inconc(reason) => {
-                format!("Inconc {:}", reason.to_string())
+                write!(f,"Inconc {:}", reason.to_string())
             },
             AnalysisGlobalVerdict::WeakFail => {
-                "WeakFail".to_string()
+                write!(f,"WeakFail")
             },
             AnalysisGlobalVerdict::Fail => {
-                "Fail".to_string()
+                write!(f,"Fail")
             }
         }
     }

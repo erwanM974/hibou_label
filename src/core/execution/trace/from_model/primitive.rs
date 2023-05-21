@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
+
 use crate::core::execution::trace::from_model::from_model::{PrimitiveInterpretableAsTraceAction};
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};

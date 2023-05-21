@@ -22,10 +22,10 @@ use clap::ArgMatches;
 
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::htf::interface::parse_htf_file;
-use crate::trace_manip::mutate::insert_noise::generate_insert_noise_mutant;
+use crate::trace_manip::mutate::remove_actions::generate_remove_actions_mutant;
 
 
-pub fn cli_mutate_insert_noise(matches : &ArgMatches) -> (Vec<String>,u32) {
+pub fn cli_mutate_remove_actions(matches : &ArgMatches) -> (Vec<String>,u32) {
     let hsf_file_path = matches.value_of("hsf").unwrap();
     match parse_hsf_file(hsf_file_path) {
         Err(e) => {
@@ -49,39 +49,31 @@ pub fn cli_mutate_insert_noise(matches : &ArgMatches) -> (Vec<String>,u32) {
                         }
                     }
                     // ***
-                    let max_num_inserts : u32;
-                    if matches.is_present("max_num_inserts") {
-                        let extracted = matches.value_of("max_num_inserts").unwrap();
+                    let max_num_removes : u32 = if matches.is_present("max_num_removes") {
+                        let extracted = matches.value_of("max_num_removes").unwrap();
                         let content_str : String = extracted.chars().filter(|c| !c.is_whitespace()).collect();
-                        max_num_inserts = content_str.parse::<u32>().unwrap();
-                        // ***
+                        content_str.parse::<u32>().unwrap()
                     } else {
-                        max_num_inserts = 1;
-                    }
-                    // ***
-                    let only_at_end : bool = matches.is_present("only_at_end");
-                    // ***
-                    let one_per_compo_max : bool = matches.is_present("one_per_compo_max");
+                        1
+                    };
                     // ***
                     let mutant_name : String = if matches.is_present("name") {
                         let extracted = matches.value_of("name").unwrap();
                         extracted.chars().filter(|c| !c.is_whitespace()).collect()
                     } else {
                         let mu_name : &str = Path::new(htf_file_path).file_stem().unwrap().to_str().unwrap();
-                        format!("{}_insert_noise_mutant",mu_name)
+                        format!("{}_remove_actions_mutant",mu_name)
                     };
                     // ***
-                    let mutant_file_path = generate_insert_noise_mutant(&gen_ctx,
-                                                                        &co_localizations,
-                                                                        &multi_trace,
-                                                                        parent_folder,
-                                                                        &mutant_name,
-                                                                        max_num_inserts,
-                                                                        one_per_compo_max,
-                                                                        only_at_end);
+                    let mutant_file_path = generate_remove_actions_mutant(&gen_ctx,
+                                                                          &co_localizations,
+                                                                          &multi_trace,
+                                                                          parent_folder,
+                                                                          &mutant_name,
+                                                                          max_num_removes);
                     // ***
                     let mut ret_print = vec![];
-                    ret_print.push( "GENERATED INSERT NOISE ACTIONS MUTANT".to_string());
+                    ret_print.push( "GENERATED REMOVE ACTIONS MUTANT".to_string());
                     ret_print.push( "FOR MULTITRACE".to_string());
                     ret_print.push( format!("from file '{}'",htf_file_path) );
                     ret_print.push( format!("into file '{}'",mutant_file_path) );

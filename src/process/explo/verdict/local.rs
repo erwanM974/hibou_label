@@ -16,20 +16,22 @@ limitations under the License.
 
 
 
+use std::fmt;
+
 pub enum ExplorationLocalVerdict{
     Accepting,
     DeadLocked
 }
 
-impl std::string::ToString for ExplorationLocalVerdict {
+impl fmt::Display for ExplorationLocalVerdict {
 
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExplorationLocalVerdict::Accepting => {
-                "Accepting".to_string()
+                write!(f,"Accepting")
             },
             ExplorationLocalVerdict::DeadLocked => {
-                "DeadLocked".to_string()
+                write!(f,"DeadLocked")
             }
         }
     }

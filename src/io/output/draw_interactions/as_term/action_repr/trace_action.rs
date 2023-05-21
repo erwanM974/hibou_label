@@ -15,8 +15,6 @@ limitations under the License.
 */
 
 
-
-use std::collections::HashSet;
 use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 use crate::core::general_context::GeneralContext;
 use crate::io::textual_convention::{SYNTAX_EMISSION,SYNTAX_RECEPTION};

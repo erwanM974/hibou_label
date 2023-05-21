@@ -17,12 +17,12 @@ use image::{Rgb, RgbImage};
 use image_colored_text::draw::multi_line::{draw_multiline_colored_text, MultiLineTextAlignment};
 use image_colored_text::draw::single_line::DrawCoord;
 use image_colored_text::ttp::TextToPrint;
-use imageproc::drawing::{draw_filled_rect_mut, draw_text_mut};
+use imageproc::drawing::draw_filled_rect_mut;
 use imageproc::rect::Rect;
-use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 
+use crate::io::output::draw_commons::font::{get_hibou_font, HIBOU_FONT_SCALE};
 use crate::io::output::draw_commons::hibou_color_palette::HCP_White;
-use crate::io::output::draw_commons::sd_drawing_conf::{FONT_HEIGHT, FONT_WIDTH, MARGIN, VERTICAL_SIZE};
+use crate::io::output::draw_commons::sd_drawing_conf::{FONT_HEIGHT, MARGIN};
 
 
 pub fn new_image_with_colored_text(path : &Path,

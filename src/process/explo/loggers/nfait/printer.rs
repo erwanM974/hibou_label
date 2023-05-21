@@ -31,6 +31,7 @@ use crate::process::explo::node::ExplorationNodeKind;
 use crate::process::explo::step::ExplorationStepKind;
 
 
+#[derive(Debug, Clone)]
 pub struct ActionNFAITPrinter {
     pub index_to_action_map : Vec<BTreeSet<TraceAction>>,
     pub gen_ctx : GeneralContext
@@ -70,7 +71,15 @@ impl AbstractLanguagePrinter<usize> for ActionNFAITPrinter {
     }
 
     fn get_letter_string_repr(&self, letter: &usize) -> String {
-        trace_actions_as_htf_encoding(&self.gen_ctx, self.index_to_action_map.get(*letter).unwrap())
+        match self.index_to_action_map.get(*letter) {
+            Some( acts ) => {
+                trace_actions_as_htf_encoding(&self.gen_ctx, acts)
+            },
+            None => {
+                SYNTAX_WILDCARD_HASHTAG.to_string()
+            }
+        }
+
     }
 
     fn get_concatenation_separator(&self, use_html: bool) -> &'static str {

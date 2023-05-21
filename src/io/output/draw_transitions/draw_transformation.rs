@@ -25,7 +25,6 @@ use crate::core::transformation::transfokind::InteractionTransformationKind;
 
 use crate::io::output::draw_commons::hibou_color_palette::*;
 use crate::io::output::draw_commons::make_image_of_text::new_image_with_colored_text;
-use crate::io::output::draw_commons::sd_drawing_conf::*;
 
 
 // **********

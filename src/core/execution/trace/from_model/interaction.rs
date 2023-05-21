@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
+
 use crate::core::execution::trace::from_model::from_model::{InteractionInterpretableAsTraceAction, PrimitiveInterpretableAsTraceAction};
 use crate::core::execution::trace::trace::{TraceAction};
 use crate::core::language::syntax::interaction::Interaction;

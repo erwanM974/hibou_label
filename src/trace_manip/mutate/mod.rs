@@ -19,3 +19,4 @@ limitations under the License.
 pub mod swap_actions;
 pub mod swap_component;
 pub mod insert_noise;
+pub mod remove_actions;

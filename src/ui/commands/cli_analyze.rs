@@ -18,19 +18,16 @@ use std::time::Instant;
 
 use clap::ArgMatches;
 use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
-use graph_process_manager_core::handler::filter::AbstractFilter;
 use graph_process_manager_core::manager::manager::GenericProcessManager;
+
 use crate::core::execution::trace::multitrace::multi_trace_length;
 use crate::io::input::hcf::ana::interface::parse_hcf_file_for_ana;
 use crate::io::input::hcf::ana::options::HibouAnalyzeOptions;
-
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::input::htf::interface::parse_htf_file;
 use crate::process::ana::conf::AnalysisConfig;
 use crate::process::ana::context::AnalysisContext;
-use crate::process::ana::filter::elim::AnalysisFilterEliminationKind;
-use crate::process::ana::filter::filter::AnalysisFilterCriterion;
 use crate::process::ana::node::flags::MultiTraceAnalysisFlags;
 use crate::process::ana::node::node::AnalysisNodeKind;
 use crate::process::ana::priorities::AnalysisPriorities;

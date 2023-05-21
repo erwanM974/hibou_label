@@ -30,7 +30,7 @@ limitations under the License.
 
 
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::MultiTrace;
@@ -79,8 +79,7 @@ impl MultiTraceProcessPrinter {
                 depth % modulo_depth == 0
             },
             TracegenProcessLoggerGeneration::terminal => {
-                // todo : not implemented
-                false
+                unimplemented!();
             }
         }
     }

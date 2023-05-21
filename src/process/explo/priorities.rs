@@ -17,6 +17,7 @@ limitations under the License.
 
 
 
+use std::fmt;
 use graph_process_manager_core::delegate::priorities::AbstractPriorities;
 use crate::core::execution::trace::trace::TraceAction;
 use crate::process::explo::step::ExplorationStepKind;
@@ -43,14 +44,14 @@ impl ExplorationPriorities {
     }
 }
 
-impl std::string::ToString for ExplorationPriorities {
-    fn to_string(&self) -> String {
-        let mut my_str = String::new();
-        my_str.push_str( &format!("[emission={:},",self.emission) );
-        my_str.push_str( &format!("reception={:},",self.reception) );
-        my_str.push_str( &format!("multi-rdv={:},",self.multi_rdv) );
-        my_str.push_str( &format!("loop={:}]",self.in_loop) );
-        return my_str;
+impl fmt::Display for ExplorationPriorities {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,
+               "[emission={:},reception={:},multi-rdv={:},loop={:}]",
+               self.emission,
+               self.reception,
+               self.multi_rdv,
+               self.in_loop)
     }
 }
 

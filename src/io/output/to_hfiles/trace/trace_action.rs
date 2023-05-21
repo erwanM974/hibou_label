@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 use itertools::Itertools;
 

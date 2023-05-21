@@ -18,7 +18,6 @@ limitations under the License.
 use std::path::Path;
 use graph_process_manager_loggers::stepstrace::printer::StepsTraceProcessPrinter;
 
-use crate::core::execution::trace::multitrace::MultiTrace;
 use crate::io::output::to_hfiles::trace::to_htf::write_multi_trace_into_file;
 use crate::loggers::tracegen::object::TraceGenLoggerObject;
 use crate::loggers::tracegen::printer::MultiTraceProcessPrinter;

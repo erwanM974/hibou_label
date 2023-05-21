@@ -19,16 +19,22 @@ limitations under the License.
 
 use std::fs;
 use std::path::Path;
+use std::collections::BTreeSet;
 
 use crate::core::colocalizations::CoLocalizations;
-
-
 use crate::core::general_context::GeneralContext;
 use crate::core::execution::trace::multitrace::MultiTrace;
+use crate::core::execution::trace::trace::TraceAction;
+
 use crate::io::input::error::HibouParsingError;
 use crate::io::input::htf::implem::multitrace_from_text;
 use crate::io::file_extensions::HIBOU_TRACE_FILE_EXTENSION;
+use crate::io::input::htf::trace::trace_element_from_pair;
 
+#[allow(unused_imports)]
+use pest::Parser;
+#[allow(unused_imports)]
+use crate::io::input::htf::parser::{HtfParser,Rule};
 
 
 pub fn parse_htf_file(gen_ctx : &GeneralContext,
@@ -52,14 +58,6 @@ pub fn parse_htf_file(gen_ctx : &GeneralContext,
 
 
 
-use std::collections::{BTreeSet, HashSet};
-use crate::core::execution::trace::trace::TraceAction;
-
-#[allow(unused_imports)]
-use pest::Parser;
-#[allow(unused_imports)]
-use crate::io::input::htf::parser::{HtfParser,Rule};
-use crate::io::input::htf::trace::trace_element_from_pair;
 
 
 pub fn multi_action_from_text(gen_ctx : &GeneralContext,

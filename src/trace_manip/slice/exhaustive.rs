@@ -16,8 +16,9 @@ limitations under the License.
 
 
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::path::PathBuf;
+
 use crate::core::colocalizations::CoLocalizations;
 use crate::core::execution::trace::multitrace::Trace;
 

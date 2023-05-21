@@ -95,6 +95,33 @@ subcommands:
               required: false
               index: 3
               help: input hibou configuration file
+    - nfa_analyze:
+        about: analyze a global trace against a NFA extracted from the exploration of an input interaction
+        version: "0.8.5"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - htf:
+              required: true
+              index: 3
+              help: input hibou trace file
+          - draw_transformation:
+              required: false
+              short: t
+              takes_value: false
+              help: whether to represent the transformation interaction to nfa
+          - draw_analysis:
+              required: false
+              short: a
+              takes_value: false
+              help: whether to represent the analysis of trace against nfa
     - analyze:
         about: utility to analyze a (multi-)trace w.r.t. an interaction
         version: "0.8.5"
@@ -154,6 +181,34 @@ subcommands:
               short: n
               takes_value: true
               help: a name for prefixing generated files names
+    - mutate_remove_actions:
+        about: utility to generate generate a mutant from a multi-trace by inserting noise actions
+        version: "0.8.5"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - htf:
+              required: true
+              index: 2
+              help: input hibou trace file
+          - name:
+              required: false
+              short: n
+              takes_value: true
+              help: name of the mutant
+          - parent_folder:
+              required: false
+              short: p
+              takes_value: true
+              help: parent folder in which to generate mutant
+          - max_num_removes:
+              required: false
+              short: m
+              takes_value: true
+              help: maximum number of inserts (default 1), actual number can be lower due other parameters
     - mutate_insert_noise:
         about: utility to generate generate a mutant from a multi-trace by inserting noise actions
         version: "0.8.5"

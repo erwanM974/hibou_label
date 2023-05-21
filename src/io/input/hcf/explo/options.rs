@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 
-use clap::builder::TypedValueParser;
 use graph_process_manager_core::delegate::priorities::GenericProcessPriorities;
 use graph_process_manager_core::handler::filter::AbstractFilter;
 use graph_process_manager_core::manager::logger::AbstractProcessLogger;

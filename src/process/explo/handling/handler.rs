@@ -67,29 +67,18 @@ impl AbstractProcessHandler<ExplorationConfig> for ExplorationProcessHandler {
 
     fn collect_next_steps(context: &ExplorationContext,
                           param : &ExplorationParameterization,
-                          parent_state_id: u32,
                           parent_node_kind: &ExplorationNodeKind)
-                -> (u32, Vec<GenericStep<ExplorationStepKind>>) {
+                -> Vec<ExplorationStepKind> {
         
         let mut glob_front = global_frontier(&parent_node_kind.interaction,&None);
         // reverse so that when one pops from right to left the actions appear from the top to the bottom
         glob_front.reverse();
         // ***
-        let mut id_as_child : u32 = 0;
-        // ***
-        let mut to_enqueue : Vec<GenericStep<ExplorationStepKind>> = vec![];
-        for front_pos in glob_front {
-            let step = GenericStep::new(parent_state_id,
-                                        id_as_child,
-                                        ExplorationStepKind::Execute(front_pos));
-            id_as_child = id_as_child + 1;
-            to_enqueue.push( step );
-        }
-        return (id_as_child,to_enqueue);
+        glob_front.into_iter().map(|x| ExplorationStepKind::Execute(x)).collect()
     }
 
-    fn get_local_verdict_when_no_child(context: &ExplorationContext,
-                                       param : &ExplorationParameterization,
+    fn get_local_verdict_when_no_child(_context: &ExplorationContext,
+                                       _param : &ExplorationParameterization,
                                        node_kind: &ExplorationNodeKind) -> ExplorationLocalVerdict {
         if node_kind.interaction.express_empty() {
             ExplorationLocalVerdict::Accepting
@@ -98,8 +87,8 @@ impl AbstractProcessHandler<ExplorationConfig> for ExplorationProcessHandler {
         }
     }
 
-    fn get_local_verdict_from_static_analysis(context: &ExplorationContext,
-                                              param : &ExplorationParameterization,
+    fn get_local_verdict_from_static_analysis(_context: &ExplorationContext,
+                                              _param : &ExplorationParameterization,
                                               node_kind: &mut ExplorationNodeKind)
                 -> Option<(ExplorationLocalVerdict,ExplorationStaticLocalVerdictAnalysisProof)> {
         if node_kind.interaction.express_empty() {
@@ -109,8 +98,8 @@ impl AbstractProcessHandler<ExplorationConfig> for ExplorationProcessHandler {
         }
     }
 
-    fn pursue_process_after_static_verdict(context: &ExplorationContext,
-                                           param : &ExplorationParameterization,
+    fn pursue_process_after_static_verdict(_context: &ExplorationContext,
+                                           _param : &ExplorationParameterization,
                                            loc_verd: &ExplorationLocalVerdict) -> bool {
         match loc_verd {
             ExplorationLocalVerdict::Accepting => {
