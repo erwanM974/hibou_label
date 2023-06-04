@@ -15,34 +15,17 @@ limitations under the License.
 */
 
 
-#[macro_use]
-extern crate pest_derive;
+use std::collections::BTreeSet;
+use crate::core::general_context::GeneralContext;
+use crate::core::execution::trace::trace::{TraceAction, TraceActionKind};
 
-#[macro_use]
-extern crate clap;
-
-#[macro_use]
-extern crate maplit;
-
-#[macro_use]
-extern crate strum_macros;
-
-// **********
-
-pub mod core;
-pub mod io;
-pub mod ui;
-pub mod plantuml;
-pub mod process;
-pub mod loggers;
-pub mod util;
-pub mod trace_manip;
-pub mod nfa_translation;
-
-// **********
-
-use crate::ui::hibou_cli::hibou_cli;
-
-fn main() {
-    hibou_cli();
+pub fn get_alphabet_from_gen_ctx(gen_ctx : &GeneralContext) -> Vec<BTreeSet<TraceAction>> {
+    let mut alphabet = vec![];
+    for lf in 0..gen_ctx.get_lf_num() {
+        for ms in 0..gen_ctx.get_ms_num() {
+            alphabet.push(btreeset!{TraceAction::new(lf,TraceActionKind::Emission,ms)});
+            alphabet.push(btreeset!{TraceAction::new(lf,TraceActionKind::Reception,ms)});
+        }
+    }
+    alphabet
 }

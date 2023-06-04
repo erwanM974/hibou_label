@@ -26,6 +26,7 @@ use crate::ui::commands::cli_mutate_remove_actions::cli_mutate_remove_actions;
 use crate::ui::commands::cli_mutate_swap_actions::cli_mutate_swap_actions;
 use crate::ui::commands::cli_mutate_swap_components::cli_mutate_swap_components;
 use crate::ui::commands::cli_nfa_ana::cli_nfa_ana;
+use crate::ui::commands::cli_nfa_experiment::cli_nfa_experiment;
 use crate::ui::commands::cli_puml_ap::cli_puml_ap;
 use crate::ui::commands::cli_puml_sd::cli_puml_sd;
 use crate::ui::commands::cli_slice::cli_slice;
@@ -53,6 +54,10 @@ pub fn hibou_cli() -> i32 {
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("glosem") {
         let mut got = cli_glosem(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("nfa_experiment") {
+        let mut got = cli_nfa_experiment(matches);
         ret_print = got.0;
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("nfa_analyze") {

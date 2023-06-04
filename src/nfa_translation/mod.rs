@@ -14,35 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+pub mod alphabet;
+pub mod get_nfa_from_logger;
+pub mod compositional;
+pub mod experiments;
 
-#[macro_use]
-extern crate pest_derive;
-
-#[macro_use]
-extern crate clap;
-
-#[macro_use]
-extern crate maplit;
-
-#[macro_use]
-extern crate strum_macros;
-
-// **********
-
-pub mod core;
-pub mod io;
-pub mod ui;
-pub mod plantuml;
-pub mod process;
-pub mod loggers;
-pub mod util;
-pub mod trace_manip;
-pub mod nfa_translation;
-
-// **********
-
-use crate::ui::hibou_cli::hibou_cli;
-
-fn main() {
-    hibou_cli();
-}

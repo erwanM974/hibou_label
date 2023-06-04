@@ -21,9 +21,10 @@ use std::time::Instant;
 
 use autour_core::traits::repr::AutGraphvizDrawable;
 use autour_process::autana::conf::NfaWordAnalysisConfig;
-use autour_process::autana::context::{NfaWordAnalysisContext, NfaWordAnalysisParameterization, NfaWordAnalysisResetOn};
+use autour_process::autana::context::NfaWordAnalysisContext;
 use autour_process::autana::loggers::glog::drawer::NfaWordAnalysisProcessDrawer;
 use autour_process::autana::node::NfaWordAnalysisNodeKind;
+use autour_process::autana::param::{NfaWordAnalysisParameterization, NfaWordAnalysisPolicy, NfaWordAnalysisResetOn};
 use autour_process::autana::priorities::NfaWordAnalysisPriorities;
 use autour_process::autana::step::NfaWordAnalysisStepKind;
 
@@ -47,8 +48,10 @@ use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::input::htf::interface::parse_htf_file;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
+use crate::nfa_translation::alphabet::get_alphabet_from_gen_ctx;
+use crate::nfa_translation::get_nfa_from_logger::get_nfa_from_interaction_exploration;
 use crate::process::explo::loggers::nfait::printer::ActionNFAITPrinter;
-use crate::ui::commands::get_nfa_from_logger::get_nfa_from_interaction_exploration;
+
 
 
 pub fn cli_nfa_ana(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -81,17 +84,18 @@ pub fn cli_nfa_ana(matches : &ArgMatches) -> (Vec<String>,u32) {
                             let trace = multi_trace.remove(0);
 
                             let max_loop_depth = int.max_nested_loop_depth()*2;
-                            let (nfa,printer,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
-                                "glosem".to_string(),
+                            let (nfa,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
                                 &gen_ctx,
                                 &int,
-                                max_loop_depth);
+                                get_alphabet_from_gen_ctx(&gen_ctx));
                             let initial_active_states : BTreeSet<usize> = nfa.initials.iter().cloned().collect();
+
+                            let printer = ActionNFAITPrinter::new(get_alphabet_from_gen_ctx(&gen_ctx),gen_ctx);
 
                             if matches.is_present("draw_transformation") {
                                 let int_name = format!("{}_int",file_name);
                                 let nfa_name = format!("{}_nfa",file_name);
-                                draw_interaction(&gen_ctx,
+                                draw_interaction(&printer.gen_ctx,
                                                  &int,
                                                  &InteractionGraphicalRepresentation::AsSequenceDiagram,
                                                  &".".to_string(),
@@ -146,8 +150,9 @@ pub fn cli_nfa_ana(matches : &ArgMatches) -> (Vec<String>,u32) {
                                 vec![]
                             };
 
-
-                            let init_node = NfaWordAnalysisNodeKind::new(initial_active_states,false,0);
+                            let param = NfaWordAnalysisParameterization::new(NfaWordAnalysisResetOn::Initials,
+                                                                             NfaWordAnalysisPolicy::StopAtDeviation);
+                            let init_node = param.make_init_node(&nfa);
 
                             let outside_letter = printer.index_to_action_map.len();
 
@@ -162,8 +167,9 @@ pub fn cli_nfa_ana(matches : &ArgMatches) -> (Vec<String>,u32) {
                             let priorities : GenericProcessPriorities<NfaWordAnalysisPriorities> = GenericProcessPriorities::new(NfaWordAnalysisPriorities{},false);
                             let delegate : GenericProcessDelegate<NfaWordAnalysisStepKind,NfaWordAnalysisNodeKind,NfaWordAnalysisPriorities> = GenericProcessDelegate::new(QueueSearchStrategy::BFS,
                                                                                                                                                                            priorities);
+
                             let mut manager : GenericProcessManager<NfaWordAnalysisConfig<ActionNFAITPrinter>> = GenericProcessManager::new(process_ctx,
-                                                                                                                                        NfaWordAnalysisParameterization::new(NfaWordAnalysisResetOn::AllStates),
+                                                                                                                                        param,
                                                                                                                                         delegate,
                                                                                                                                         vec![],
                                                                                                                                         loggers,

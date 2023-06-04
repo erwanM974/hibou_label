@@ -16,7 +16,7 @@ limitations under the License.
 
 pub mod cli_analyze;
 pub mod cli_nfa_ana;
-pub mod get_nfa_from_logger;
+pub mod cli_nfa_experiment;
 //pub mod cli_canonize;
 pub mod cli_draw;
 pub mod cli_explore;

@@ -61,6 +61,34 @@ subcommands:
               short: l
               takes_value: true
               help: maximum number of loops consecutively instantiated
+    - nfa_experiment:
+        about: experiment for generating fas from interactions
+        version: "0.8.5"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - num_tries:
+              required: false
+              short: n
+              takes_value: true
+              help: number of tries to get the median time
+          - draw:
+              required: false
+              short: d
+              takes_value: false
+              help: whether to draw the automata
+          - states_lim:
+              required: false
+              short: k
+              takes_value: true
+              help: maximum number of states of NFA to try Kameda-Weiner
     - canonize:
         about: utility to compute the normal form of an interaction
         version: "0.8.5"

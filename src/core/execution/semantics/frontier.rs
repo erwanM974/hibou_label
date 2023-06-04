@@ -155,7 +155,6 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
         },
         Interaction::Alt(ref i1, ref i2) => {
             // BELOW with delayed alt
-            /*
             let mut match_indices : HashSet<(usize,usize)> = hashset! {};
             let mut frt1_matched : HashSet<usize> = hashset![];
             let mut frt2_matched : HashSet<usize> = hashset![];
@@ -180,7 +179,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                 let frt2_elt: &FrontierElement = frt2.get(frt2_idx).unwrap();
                 let new_pos = Position::Both( Box::new(frt1_elt.position.clone()), Box::new(frt2_elt.position.clone()));
                 let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
-                let new_target_actions : HashSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
+                let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
                 let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
                 // ***
                 new_front.push( FrontierElement::new(new_pos,
@@ -210,12 +209,11 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             }
             // ***
             return new_front;
-             */
             // *****
             // BELOW non-delayed ALT
-            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            /*let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
             front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
-            return front;
+            return front;*/
         },
         Interaction::Par(ref i1, ref i2) => {
             let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );

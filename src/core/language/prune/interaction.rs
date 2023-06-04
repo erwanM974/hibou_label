@@ -123,7 +123,23 @@ impl LifelinePrunable for Interaction {
             Interaction::Alt(i1, i2) => {
                 if i1.avoids_all_of(lf_ids) {
                     if i2.avoids_all_of(lf_ids) {
-                        return Interaction::Alt( Box::new( i1.prune(lf_ids)), Box::new( i2.prune(lf_ids)) );
+                        let pruned_i1 = i1.prune(lf_ids);
+                        let pruned_i2 = i2.prune(lf_ids);
+                        match (pruned_i1,pruned_i2) {
+                            (Interaction::Empty,Interaction::Empty) => {
+                                Interaction::Empty
+                            },
+                            (Interaction::Empty,Interaction::Loop(lk,i21)) => {
+                                Interaction::Loop(lk,i21)
+                            },
+                            (Interaction::Loop(lk,i11),Interaction::Empty) => {
+                                Interaction::Loop(lk,i11)
+                            },
+                            (pi1,pi2) => {
+                                Interaction::Alt( Box::new( pi1),
+                                                  Box::new( pi2) )
+                            }
+                        }
                     } else {
                         return i1.prune(lf_ids);
                     }

@@ -34,7 +34,9 @@ use crate::core::execution::trace::trace::TraceAction;
 use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
-use crate::ui::commands::get_nfa_from_logger::get_nfa_from_interaction_exploration;
+use crate::nfa_translation::alphabet::get_alphabet_from_gen_ctx;
+use crate::nfa_translation::get_nfa_from_logger::get_nfa_from_interaction_exploration;
+use crate::process::explo::loggers::nfait::printer::ActionNFAITPrinter;
 
 
 pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -73,11 +75,12 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                         }
                     }
 
-                    let (nfa,printer,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
-                        "glosem".to_string(),
+                    let (nfa,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
                         &gen_ctx,
                         &int,
-                        max_loop_depth);
+                        get_alphabet_from_gen_ctx(&gen_ctx));
+
+                    let printer = ActionNFAITPrinter::new(get_alphabet_from_gen_ctx(&gen_ctx),gen_ctx);
 
                     let mut ret_print = vec![];
                     // ***
@@ -87,21 +90,18 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     ret_print.push( format!("with max loop depth '{}'",max_loop_depth) );
                     ret_print.push( "".to_string());
                     // ***
-
-                    let mut min_nfa = nfa.clone();
-                    let now = Instant::now();
-                    min_nfa = min_nfa.minimize();
-                    let elapsed_min_nfa = now.elapsed();
-                    // ***
                     ret_print.push( format!("orig NFA : time : {:?} , num states {:?}", elapsed_get_nfa, nfa.transitions.len() ) );
-                    ret_print.push( format!("min NFA : time : {:?} , num states {:?}", elapsed_min_nfa, min_nfa.transitions.len() ) );
+                    let now = Instant::now();
+                    let min_dfa = nfa.to_dfa().minimize().to_nfa();
+                    let elapsed_min_nfa = now.elapsed();
+                    ret_print.push( format!("min DFA : time : {:?} , num states {:?}", elapsed_min_nfa, min_dfa.transitions.len() ) );
                     // ***
                     let orig_nfa_as_dot = nfa.to_dot(false,&hashset!{},&printer);
                     orig_nfa_as_dot.print_dot(&[".".to_string()],
                                               &orig_nfa_name,
                                               &GraphVizOutputFormat::png);
-                    let mini_nfa_as_dot = min_nfa.to_dot(false,&hashset!{},&printer);
-                    mini_nfa_as_dot.print_dot(&[".".to_string()],
+                    let min_dfa_as_dot = min_dfa.to_dot(false,&hashset!{},&printer);
+                    min_dfa_as_dot.print_dot(&[".".to_string()],
                                               &min_nfa_name,
                                               &GraphVizOutputFormat::png);
                     // ***
@@ -147,13 +147,13 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                                           None,
                                           vec![])
                     );
-                    for lf_id in 0..gen_ctx.get_lf_num() {
+                    for lf_id in 0..printer.gen_ctx.get_lf_num() {
                         let closure =
                             |x : &usize| -> bool {
                                 printer.index_to_action_map.get(*x).unwrap()
                                     .iter().any(|a : &TraceAction| a.lf_id == lf_id)
                             };
-                        let hid_nfa = min_nfa.clone().to_nfait().hide_letters(false, &closure);
+                        let hid_nfa = min_dfa.to_nfait().hide_letters(false, &closure);
                         let hid_nfa_name = format!("{}_hid_{}_nfa", file_name, lf_id);
                         hid_nfa.to_dot(false,&hashset!{},&printer)
                             .print_dot(&[".".to_string()],

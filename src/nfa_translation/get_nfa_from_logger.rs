@@ -17,6 +17,7 @@ limitations under the License.
 
 
 
+use std::collections::{BTreeSet, HashSet};
 use std::time::{Duration, Instant};
 use autour_core::nfa::nfa::AutNFA;
 use autour_core::traits::translate::AutTranslatable;
@@ -25,6 +26,7 @@ use graph_process_manager_core::delegate::priorities::GenericProcessPriorities;
 use graph_process_manager_core::manager::manager::GenericProcessManager;
 use graph_process_manager_core::queued_steps::queue::strategy::QueueSearchStrategy;
 use graph_process_manager_loggers::nfait::logger::GenericNFAITLogger;
+use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::process::explo::conf::ExplorationConfig;
@@ -36,16 +38,19 @@ use crate::process::explo::priorities::ExplorationPriorities;
 use crate::process::explo::step::ExplorationStepKind;
 
 
-pub fn get_nfa_from_interaction_exploration(name : String,
-                                            gen_ctx : &GeneralContext,
+pub fn get_nfa_from_interaction_exploration(gen_ctx : &GeneralContext,
                                             int : &Interaction,
-                                            max_loop_depth : u32) -> (AutNFA<usize>,ActionNFAITPrinter,Duration) {
+                                            base_alphabet : Vec<BTreeSet<TraceAction>>)
+            -> (AutNFA<usize>,Duration) {
 
+    let usize_alphabet : HashSet<usize> = (0..base_alphabet.len()).collect();
+    let max_loop_depth = int.total_loop_num()*2;
     let nfa_logger = GenericNFAITLogger::new(
-        ActionNFAITPrinter::new(vec![],gen_ctx.clone()),
-                                             name,
+        ActionNFAITPrinter::new(base_alphabet,
+                                gen_ctx.clone()),
+                                             "nfa".to_string(),
                                              None,
-                                             ".".to_string(),);
+                                             ".".to_string());
     let explo_ctx = ExplorationContext::new(gen_ctx.clone());
     let delegate : GenericProcessDelegate<ExplorationStepKind,ExplorationNodeKind,ExplorationPriorities> =
         GenericProcessDelegate::new(QueueSearchStrategy::BFS,
@@ -72,8 +77,10 @@ pub fn get_nfa_from_interaction_exploration(name : String,
     let nfa_logger : &GenericNFAITLogger<ExplorationConfig,usize,ActionNFAITPrinter> =
         raw_logger.as_any().downcast_ref::<GenericNFAITLogger<ExplorationConfig,usize,ActionNFAITPrinter>>().unwrap();
     // ***
-    let nfa = nfa_logger.get_nfait().to_nfa();
+    let mut nfa = nfa_logger.get_nfait().to_nfa();
     let printer = nfa_logger.builder_printer.clone();
     // ***
-    return (nfa, printer, elapsed_get_nfa);
+    nfa.alphabet = usize_alphabet;
+    // ***
+    return (nfa, elapsed_get_nfa);
 }
