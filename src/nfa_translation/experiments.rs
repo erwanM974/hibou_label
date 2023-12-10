@@ -65,7 +65,7 @@ pub fn run_nfa_generation_experiment(int : Interaction,
                                      gen_ctx : GeneralContext,
                                      num_tries_for_median : u32,
                                      state_lim : usize) -> NfaGenerationExperimentResults {
-    assert!(num_tries_for_median >= 3);
+
     let alphabet = get_alphabet_from_gen_ctx(&gen_ctx);
 
     let mut nfa_operational = AutNFA::new_void_object(hashset!{0});

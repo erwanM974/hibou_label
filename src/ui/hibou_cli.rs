@@ -18,6 +18,7 @@ limitations under the License.
 use clap::App;
 
 use crate::ui::commands::cli_analyze::cli_analyze;
+use crate::ui::commands::cli_canonize::cli_canonize;
 use crate::ui::commands::cli_draw::cli_draw;
 use crate::ui::commands::cli_explore::cli_explore;
 use crate::ui::commands::cli_glosem::cli_glosem;
@@ -26,6 +27,7 @@ use crate::ui::commands::cli_mutate_remove_actions::cli_mutate_remove_actions;
 use crate::ui::commands::cli_mutate_swap_actions::cli_mutate_swap_actions;
 use crate::ui::commands::cli_mutate_swap_components::cli_mutate_swap_components;
 use crate::ui::commands::cli_nfa_ana::cli_nfa_ana;
+use crate::ui::commands::cli_nfa_experiment2::cli_nfa_experiment2;
 use crate::ui::commands::cli_nfa_experiment::cli_nfa_experiment;
 use crate::ui::commands::cli_puml_ap::cli_puml_ap;
 use crate::ui::commands::cli_puml_sd::cli_puml_sd;
@@ -60,6 +62,10 @@ pub fn hibou_cli() -> i32 {
         let mut got = cli_nfa_experiment(matches);
         ret_print = got.0;
         ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("nfa_experiment2") {
+        let mut got = cli_nfa_experiment2(matches);
+        ret_print = got.0;
+        ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("nfa_analyze") {
         let mut got = cli_nfa_ana(matches);
         ret_print = got.0;
@@ -74,11 +80,11 @@ pub fn hibou_cli() -> i32 {
         let mut got = cli_explore(matches);
         ret_print = got.0;
         ret_code = got.1;
-    }/* else if let Some(matches) = matches.subcommand_matches("canonize") {
+    } else if let Some(matches) = matches.subcommand_matches("canonize") {
         let mut got = cli_canonize(matches);
         ret_print = got.0;
         ret_code = got.1;
-    }*/ else if let Some(matches) = matches.subcommand_matches("analyze") {
+    } else if let Some(matches) = matches.subcommand_matches("analyze") {
         let mut got = cli_analyze(matches);
         ret_print = got.0;
         ret_code = got.1;

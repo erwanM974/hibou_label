@@ -35,6 +35,7 @@ use crate::io::input::hsf::interface::parse_hsf_file;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
 use crate::nfa_translation::alphabet::get_alphabet_from_gen_ctx;
+use crate::nfa_translation::compositional::get_nfa_from_interaction_via_composition;
 use crate::nfa_translation::get_nfa_from_logger::get_nfa_from_interaction_exploration;
 use crate::process::explo::loggers::nfait::printer::ActionNFAITPrinter;
 
@@ -56,7 +57,8 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                 Ok( int) => {
                     let int_name = format!("{}_int",file_name);
                     let orig_nfa_name = format!("{}_orig_nfa",file_name);
-                    let min_nfa_name = format!("{}_mini_nfa",file_name);
+                    let compositional_nfa_name = format!("{}_compositional_nfa",file_name);
+                    let min_dfa_name = format!("{}_mini_dfa",file_name);
 
                     draw_interaction(&gen_ctx,
                                      &int,
@@ -96,13 +98,22 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     let elapsed_min_nfa = now.elapsed();
                     ret_print.push( format!("min DFA : time : {:?} , num states {:?}", elapsed_min_nfa, min_dfa.transitions.len() ) );
                     // ***
+                    let (compositional_nfa,duration) = get_nfa_from_interaction_via_composition(&printer.gen_ctx,
+                                                                                                &int,
+                                                                                                get_alphabet_from_gen_ctx(&printer.gen_ctx));
+                    ret_print.push( format!("compositional NFA : time : {:?} , num states {:?}", duration, compositional_nfa.transitions.len() ) );
+                    // ***
                     let orig_nfa_as_dot = nfa.to_dot(false,&hashset!{},&printer);
                     orig_nfa_as_dot.print_dot(&[".".to_string()],
                                               &orig_nfa_name,
                                               &GraphVizOutputFormat::png);
+                    let compo_nfa_as_dot = compositional_nfa.to_dot(false,&hashset!{},&printer);
+                    compo_nfa_as_dot.print_dot(&[".".to_string()],
+                                              &compositional_nfa_name,
+                                              &GraphVizOutputFormat::png);
                     let min_dfa_as_dot = min_dfa.to_dot(false,&hashset!{},&printer);
                     min_dfa_as_dot.print_dot(&[".".to_string()],
-                                              &min_nfa_name,
+                                              &min_dfa_name,
                                               &GraphVizOutputFormat::png);
                     // ***
                     let mut graph = GraphVizDiGraph::new(vec![]);
@@ -118,7 +129,16 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     graph.add_node(
                         GraphVizNode::new("orig_nfa".to_string(),
                                           vec![
+                                              GraphvizNodeStyleItem::Label("NFA by incremental method".to_string()),
                                               GraphvizNodeStyleItem::Image(format!("{}.png",orig_nfa_name)),
+                                              GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle)
+                                          ]
+                        )
+                    );
+                    graph.add_node(
+                        GraphVizNode::new("compo_nfa".to_string(),
+                                          vec![
+                                              GraphvizNodeStyleItem::Image(format!("{}.png",compositional_nfa_name)),
                                               GraphvizNodeStyleItem::Label("".to_string()),
                                               GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle)
                                           ]
@@ -127,7 +147,7 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                     graph.add_node(
                         GraphVizNode::new("min_nfa".to_string(),
                                           vec![
-                                              GraphvizNodeStyleItem::Image(format!("{}.png",min_nfa_name)),
+                                              GraphvizNodeStyleItem::Image(format!("{}.png",min_dfa_name)),
                                               GraphvizNodeStyleItem::Label("".to_string()),
                                               GraphvizNodeStyleItem::Shape(GvNodeShape::Rectangle)
                                           ]
@@ -137,6 +157,13 @@ pub fn cli_glosem(matches : &ArgMatches) -> (Vec<String>,u32) {
                         GraphVizEdge::new("int".to_string(),
                                           None,
                                           "orig_nfa".to_string(),
+                                          None,
+                                          vec![])
+                    );
+                    graph.add_edge(
+                        GraphVizEdge::new("int".to_string(),
+                                          None,
+                                          "compo_nfa".to_string(),
                                           None,
                                           vec![])
                     );

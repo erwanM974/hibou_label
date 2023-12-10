@@ -83,12 +83,10 @@ pub fn cli_nfa_ana(matches : &ArgMatches) -> (Vec<String>,u32) {
                             }
                             let trace = multi_trace.remove(0);
 
-                            let max_loop_depth = int.max_nested_loop_depth()*2;
                             let (nfa,elapsed_get_nfa) = get_nfa_from_interaction_exploration(
                                 &gen_ctx,
                                 &int,
                                 get_alphabet_from_gen_ctx(&gen_ctx));
-                            let initial_active_states : BTreeSet<usize> = nfa.initials.iter().cloned().collect();
 
                             let printer = ActionNFAITPrinter::new(get_alphabet_from_gen_ctx(&gen_ctx),gen_ctx);
 

@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod alphabet;
-pub mod get_nfa_from_logger;
-pub mod compositional;
-pub mod experiments;
-pub mod canonize;
-pub mod experiments2;
+use crate::core::execution::semantics::frontier::FrontierElement;
+use crate::core::transformation::transfores::InteractionTransformationResult;
+
+pub enum CanonizationStepKind {
+    Transform(InteractionTransformationResult),
+    GoToNextPhase
+}
+
 

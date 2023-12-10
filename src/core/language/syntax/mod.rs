@@ -19,5 +19,6 @@ limitations under the License.
 pub mod action;
 pub mod interaction;
 pub mod util;
+pub mod metrics;
 
 

@@ -18,10 +18,20 @@ limitations under the License.
 
 use std::time::Instant;
 use clap::ArgMatches;
-use crate::io::input::hcf::interface::{HibouCanonizeOptions, parse_hcf_file_for_canonize};
+use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
+use graph_process_manager_core::manager::manager::GenericProcessManager;
+use graph_process_manager_core::queued_steps::queue::strategy::QueueSearchStrategy;
+use crate::io::input::hcf::canon::interface::parse_hcf_file_for_canonize;
+use crate::io::input::hcf::canon::options::HibouCanonizeOptions;
 use crate::io::input::hif::interface::parse_hif_file;
 use crate::io::input::hsf::interface::parse_hsf_file;
-use crate::process::canon_proc::manager::CanonizationProcessManager;
+use crate::process::canon::conf::CanonizationConfig;
+use crate::process::canon::context::CanonizationContext;
+use crate::process::canon::node::CanonizationNodeKind;
+use crate::process::canon::param::default::DefaultCanonizationProcess;
+use crate::process::canon::param::phase::CanonizationParameterization;
+use crate::process::canon::priorities::CanonizationPriorities;
+use crate::process::canon::step::CanonizationStepKind;
 
 
 pub fn cli_canonize(matches : &ArgMatches) -> (Vec<String>,u32) {
@@ -58,18 +68,37 @@ pub fn cli_canonize(matches : &ArgMatches) -> (Vec<String>,u32) {
                     ret_print.push( format!("from file '{}'",hif_file_path) );
                     ret_print.push( "".to_string());
                     // ***
-                    let mut manager = CanonizationProcessManager::new(gen_ctx,
-                                                                      canon_opts.strategy,
-                                                                      canon_opts.filters,
-                                                                      canon_opts.priorities,
-                                                                      canon_opts.loggers,
-                                                                      canon_opts.search_all);
+
+                    let canon_ctx = CanonizationContext::new(gen_ctx);
+                    let delegate : GenericProcessDelegate<CanonizationStepKind,CanonizationNodeKind,CanonizationPriorities> =
+                        GenericProcessDelegate::new(
+                            canon_opts.strategy,
+                            canon_opts.priorities
+                        );
+
+                    let canon_param = CanonizationParameterization::from_default(
+                        DefaultCanonizationProcess::FivePhases,
+                        canon_opts.search_all
+                    );
+
+                    let mut canon_manager : GenericProcessManager<CanonizationConfig> = GenericProcessManager::new(
+                        canon_ctx,
+                        canon_param,
+                        delegate,
+                        canon_opts.filters,
+                        canon_opts.loggers,
+                        None,
+                        true
+                    );
+                    // ***
+                    let init_node = CanonizationNodeKind::new(int,0);
                     // ***
                     let now = Instant::now();
-                    let node_count = manager.canonize(int);
+                    let (node_count,_) = canon_manager.start_process(init_node);
                     let elapsed_time = now.elapsed();
                     ret_print.push( format!("node count : {:?}", node_count ) );
                     ret_print.push( format!("elapsed    : {:?}", elapsed_time.as_secs_f64() ) );
+                    // ***
                     return (ret_print,0);
                 }
             }

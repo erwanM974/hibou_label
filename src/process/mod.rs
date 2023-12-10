@@ -17,7 +17,7 @@ limitations under the License.
 
 pub mod explo;
 pub mod ana;
-
+pub mod canon;
 
 
 

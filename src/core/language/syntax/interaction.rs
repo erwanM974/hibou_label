@@ -47,37 +47,75 @@ pub enum Interaction {
 
 impl Interaction {
 
+    pub fn reverse(&self) -> Interaction {
+        match *self {
+            Interaction::Empty => {
+                Interaction::Empty
+            },
+            Interaction::Emission(ref em_act) => {
+                Interaction::Emission(em_act.clone())
+            },
+            Interaction::Reception(ref rc_act) => {
+                Interaction::Reception(rc_act.clone())
+            },
+            Interaction::Strict(ref i1, ref i2) => {
+                Interaction::Strict(Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            Interaction::Seq(ref i1, ref i2) => {
+                Interaction::Seq(Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            Interaction::CoReg(ref cr, ref i1, ref i2) => {
+                Interaction::CoReg(cr.clone(),Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            Interaction::Par(ref i1, ref i2) => {
+                Interaction::Par(Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            Interaction::Alt(ref i1, ref i2) => {
+                Interaction::Alt(Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            Interaction::Loop(ref lk, ref i1) => {
+                Interaction::Loop(lk.clone(), Box::new(i1.reverse()))
+            },
+            Interaction::Sync(ref s,ref i1, ref i2) => {
+                Interaction::Sync(s.clone(),Box::new(i2.reverse()),Box::new(i1.reverse()))
+            },
+            _ => {
+                panic!("non-conform interaction");
+            }
+        }
+    }
+
     pub fn express_empty(&self) -> bool {
-        match self {
-            &Interaction::Empty => {
-                return true;
+        match *self {
+            Interaction::Empty => {
+                true
             },
-            &Interaction::Emission(_) => {
-                return false;
+            Interaction::Emission(_) => {
+                false
             },
-            &Interaction::Reception(ref rc_act) => {
-                return rc_act.recipients.len() == 0;
+            Interaction::Reception(ref rc_act) => {
+                rc_act.recipients.len() == 0
             },
-            &Interaction::Strict(ref i1, ref i2) => {
-                return i1.express_empty() && i2.express_empty();
+            Interaction::Strict(ref i1, ref i2) => {
+                i1.express_empty() && i2.express_empty()
             },
-            &Interaction::Seq(ref i1, ref i2) => {
-                return i1.express_empty() && i2.express_empty();
+            Interaction::Seq(ref i1, ref i2) => {
+                i1.express_empty() && i2.express_empty()
             },
-            &Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.express_empty() && i2.express_empty();
+            Interaction::CoReg(_, ref i1, ref i2) => {
+                i1.express_empty() && i2.express_empty()
             },
-            &Interaction::Par(ref i1, ref i2) => {
-                return i1.express_empty() && i2.express_empty();
+            Interaction::Par(ref i1, ref i2) => {
+                i1.express_empty() && i2.express_empty()
             },
-            &Interaction::Alt(ref i1, ref i2) => {
-                return i1.express_empty() || i2.express_empty();
+            Interaction::Alt(ref i1, ref i2) => {
+                i1.express_empty() || i2.express_empty()
             },
-            &Interaction::Loop(_, _) => {
-                return true;
+            Interaction::Loop(_, _) => {
+                true
             },
-            &Interaction::Sync(_,ref i1, ref i2) => {
-                return i1.express_empty() && i2.express_empty();
+            Interaction::Sync(_,ref i1, ref i2) => {
+                i1.express_empty() && i2.express_empty()
             },
             _ => {
                 panic!("non-conform interaction");
@@ -147,63 +185,6 @@ impl Interaction {
         }
     }
 
-    pub fn max_nested_loop_depth(&self) -> u32 {
-        match self {
-            &Interaction::Empty => {
-                return 0;
-            }, &Interaction::Emission(_) => {
-                return 0;
-            }, &Interaction::Reception(_) => {
-                return 0;
-            }, &Interaction::Strict(ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            }, &Interaction::Seq(ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            }, &Interaction::Par(ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            }, &Interaction::Alt(ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            }, &Interaction::Loop(_, ref i1) => {
-                return 1 + i1.max_nested_loop_depth();
-            }, &Interaction::Sync(_, ref i1, ref i2) => {
-                return i1.max_nested_loop_depth().max(i2.max_nested_loop_depth());
-            },
-            _ => {
-                panic!("non-conform interaction");
-            }
-        }
-    }
-
-    pub fn total_loop_num(&self) -> u32 {
-        match self {
-            &Interaction::Empty => {
-                return 0;
-            }, &Interaction::Emission(_) => {
-                return 0;
-            }, &Interaction::Reception(_) => {
-                return 0;
-            }, &Interaction::Strict(ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            }, &Interaction::Seq(ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            }, &Interaction::CoReg(_, ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            }, &Interaction::Par(ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            }, &Interaction::Alt(ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            }, &Interaction::Loop(_, ref i1) => {
-                return 1 + i1.total_loop_num();
-            }, &Interaction::Sync(_, ref i1, ref i2) => {
-                return i1.total_loop_num() + i2.total_loop_num();
-            },
-            _ => {
-                panic!("non-conform interaction");
-            }
-        }
-    }
 
 
 

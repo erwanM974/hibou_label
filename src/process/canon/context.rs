@@ -14,10 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod alphabet;
-pub mod get_nfa_from_logger;
-pub mod compositional;
-pub mod experiments;
-pub mod canonize;
-pub mod experiments2;
+use graph_process_manager_core::manager::config::AbstractProcessParameterization;
 
+use crate::core::general_context::GeneralContext;
+use crate::core::transformation::transfokind::InteractionTransformationKind;
+use crate::core::transformation::transfophase::InteractionTransformationPhase;
+
+
+pub struct CanonizationContext {
+    pub gen_ctx : GeneralContext
+}
+
+impl CanonizationContext {
+    pub fn new(gen_ctx: GeneralContext) -> Self {
+        CanonizationContext { gen_ctx }
+    }
+}

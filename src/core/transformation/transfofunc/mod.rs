@@ -22,3 +22,5 @@ pub mod factorize;
 pub mod flush;
 pub mod invert;
 pub mod loop_simpl;
+pub mod strict_to_seq;
+pub mod par_to_seq;

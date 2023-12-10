@@ -14,10 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod alphabet;
-pub mod get_nfa_from_logger;
-pub mod compositional;
-pub mod experiments;
-pub mod canonize;
-pub mod experiments2;
+
+
+use std::fmt;
+use crate::core::language::syntax::interaction::Interaction;
+
+pub struct CanonizationLocalVerdict {
+    pub got_interaction : Interaction
+}
+
+impl fmt::Display for CanonizationLocalVerdict {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"")
+    }
+
+}
 

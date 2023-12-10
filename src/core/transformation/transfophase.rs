@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 
+use std::fmt::Formatter;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::transformation::get_transfos::get_all_transfos::get_all_transformations_rec;
 use crate::core::transformation::get_transfos::get_one_transfo::get_one_transformation_rec;
@@ -23,16 +24,43 @@ use crate::core::transformation::transfores::InteractionTransformationResult;
 
 pub struct InteractionTransformationPhase {
     pub transfos : Vec<InteractionTransformationKind>,
+    /*
     pub get_all : bool,
-    pub ordered : bool
+    // a priority order in the application of the InteractionTransformationKind
+    pub ordered : bool*/
+}
+
+impl std::fmt::Display for InteractionTransformationPhase {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut got = self.transfos.iter().fold("[".to_string(), |prev,phase|
+            format!("{:},{:}",prev,phase)
+        );
+        got.push_str("]");
+        write!(f, "{}", got)
+    }
 }
 
 impl InteractionTransformationPhase {
-    pub fn new(transfos : Vec<InteractionTransformationKind>,get_all : bool,ordered : bool) -> InteractionTransformationPhase {
-        return InteractionTransformationPhase{transfos,get_all,ordered};
+    pub fn new(transfos : Vec<InteractionTransformationKind>,/*get_all : bool,ordered : bool*/) -> InteractionTransformationPhase {
+        return InteractionTransformationPhase{transfos/*,get_all,ordered*/};
     }
 
-    pub fn apply_phase(&self,interaction : &Interaction) -> Vec<InteractionTransformationResult> {
+    pub fn get_transfos(&self, interaction : &Interaction, get_all : bool) -> Vec<InteractionTransformationResult> {
+        if get_all {
+            return get_all_transformations_rec(&self.transfos,interaction);
+        } else {
+            match get_one_transformation_rec(&self.transfos,interaction) {
+                None => {
+                    return Vec::new();
+                },
+                Some( got ) => {
+                    return vec![got];
+                }
+            }
+        }
+    }
+
+    /*pub fn apply_phase(&self,interaction : &Interaction) -> Vec<InteractionTransformationResult> {
         if self.ordered {
             panic!("not implemented");
         } else {
@@ -55,7 +83,7 @@ impl InteractionTransformationPhase {
                 }
             }
         }
-    }
+    }*/
 }
 
 

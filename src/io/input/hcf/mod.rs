@@ -20,4 +20,5 @@ mod parser;
 pub mod loggers;
 
 pub mod explo;
+pub mod canon;
 pub mod ana;

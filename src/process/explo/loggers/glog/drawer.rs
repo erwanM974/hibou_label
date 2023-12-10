@@ -90,7 +90,7 @@ impl GraphVizProcessDrawer<ExplorationConfig> for InteractionProcessDrawer {
 
         match *step {
             ExplorationStepKind::Execute(ref frt_elt) => {
-                let step_name = format!("s_{}_{}", origin_state_id, target_state_id);
+                let step_name = format!("s_{}_{}_{:?}", origin_state_id, target_state_id, frt_elt.position);
                 self.make_graphic_logger_firing(&context.gen_ctx,
                                                 &frt_elt.position,
                                                 &frt_elt.target_actions,

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use std::fmt::Formatter;
 use strum_macros::IntoStaticStr;
 
 use crate::core::language::syntax::interaction::Interaction;
@@ -26,7 +27,9 @@ use crate::core::transformation::transfofunc::factorize::factorize_suffix::{tran
 use crate::core::transformation::transfofunc::flush::transfo_flush_right;
 use crate::core::transformation::transfofunc::invert::{transfo_invert_alt_sorted, transfo_invert_par_sorted};
 use crate::core::transformation::transfofunc::loop_simpl::{transfo_loop_empty_simpl, transfo_loop_unnest};
+use crate::core::transformation::transfofunc::par_to_seq::transfo_par_to_seq;
 use crate::core::transformation::transfofunc::simpl::transfo_simpl;
+use crate::core::transformation::transfofunc::strict_to_seq::transfo_strict_to_seq;
 
 #[derive(IntoStaticStr,Clone, PartialEq, Debug, Eq, Hash)]
 pub enum InteractionTransformationKind {
@@ -45,6 +48,8 @@ pub enum InteractionTransformationKind {
     LoopSimpl,
     LoopUnNest,
     SortActionContent, // sort emission targets OR reception recipients
+    StrictToSeq,
+    ParToSeq
     // ***
     /*MergeShiftLeft1,
     MergeShiftLeft2,
@@ -53,6 +58,13 @@ pub enum InteractionTransformationKind {
     MergeAction,
     MergeSkip,
     MergeSkipInvert,*/
+}
+
+impl std::fmt::Display for InteractionTransformationKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let as_static_str : &'static str = self.into();
+        write!(f,"{}", as_static_str)
+    }
 }
 
 
@@ -108,6 +120,12 @@ impl InteractionTransformationKind {
             InteractionTransformationKind::SortActionContent => {
                 return transfo_sort_action_content;
             },
+            InteractionTransformationKind::StrictToSeq => {
+                return transfo_strict_to_seq;
+            },
+            InteractionTransformationKind::ParToSeq => {
+                return transfo_par_to_seq;
+            }
             // ***
             /*
             InteractionTransformationKind::MergeShiftLeft1 => {

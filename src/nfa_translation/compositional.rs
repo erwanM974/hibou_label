@@ -18,6 +18,7 @@ limitations under the License.
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 use autour_core::nfa::nfa::AutNFA;
+use autour_core::traits::access::AutAccessible;
 use autour_core::traits::build::AutBuildable;
 use autour_core::traits::transform::AutTransformable;
 
@@ -68,7 +69,7 @@ fn get_nfa_from_interaction_via_composition_rec(gen_ctx : &GeneralContext,
                 let nfa2 = get_nfa_from_interaction_via_composition_rec(gen_ctx,
                                                                         i2,
                                                                         alphabet.clone());
-                nfa1.unite(nfa2).unwrap()
+                nfa1.unite(nfa2).unwrap().trim()
             },
             Interaction::Par(i1,i2) => {
                 let nfa1 = get_nfa_from_interaction_via_composition_rec(
@@ -78,7 +79,7 @@ fn get_nfa_from_interaction_via_composition_rec(gen_ctx : &GeneralContext,
                 let nfa2 = get_nfa_from_interaction_via_composition_rec(gen_ctx,
                                                                         i2,
                                                                         alphabet.clone());
-                nfa1.interleave(nfa2).unwrap()
+                nfa1.interleave(nfa2).unwrap().trim()
             },
             Interaction::Seq(i1,i2) => {
                 let nfa1 = get_nfa_from_interaction_via_composition_rec(
@@ -88,7 +89,7 @@ fn get_nfa_from_interaction_via_composition_rec(gen_ctx : &GeneralContext,
                 let nfa2 = get_nfa_from_interaction_via_composition_rec(gen_ctx,
                                                                         i2,
                                                                         alphabet.clone());
-                nfa1.concatenate(nfa2).unwrap()
+                nfa1.concatenate(nfa2).unwrap().trim()
             },
             Interaction::Strict(i1,i2) => {
                 let nfa1 = get_nfa_from_interaction_via_composition_rec(
@@ -98,7 +99,7 @@ fn get_nfa_from_interaction_via_composition_rec(gen_ctx : &GeneralContext,
                 let nfa2 = get_nfa_from_interaction_via_composition_rec(gen_ctx,
                                                                         i2,
                                                                         alphabet.clone());
-                nfa1.concatenate(nfa2).unwrap()
+                nfa1.concatenate(nfa2).unwrap().trim()
             },
             Interaction::Loop(lk,i1) => {
                 let nfa1 = get_nfa_from_interaction_via_composition_rec(
@@ -107,7 +108,7 @@ fn get_nfa_from_interaction_via_composition_rec(gen_ctx : &GeneralContext,
                     alphabet.clone());
                 match lk {
                     LoopKind::SStrictSeq => {
-                        nfa1.kleene()
+                        nfa1.kleene().trim()
                     },
                     _ => {panic!()}
                 }

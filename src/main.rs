@@ -38,9 +38,14 @@ pub mod loggers;
 pub mod util;
 pub mod trace_manip;
 pub mod nfa_translation;
+pub mod experiments;
 
 // **********
 
+use crate::core::general_context::GeneralContext;
+use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, EmissionTargetRef};
+use crate::core::language::syntax::interaction::Interaction;
+use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
 use crate::ui::hibou_cli::hibou_cli;
 
 fn main() {

@@ -89,6 +89,40 @@ subcommands:
               short: k
               takes_value: true
               help: maximum number of states of NFA to try Kameda-Weiner
+    - nfa_experiment2:
+        about: experiment for generating fas from interactions
+        version: "0.8.5"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - num_tries:
+              required: false
+              short: n
+              takes_value: true
+              help: number of tries to get the median time
+          - num_ints:
+              required: false
+              short: i
+              takes_value: true
+              help: number of interactions to generate
+          - gen_depth:
+              required: false
+              short: d
+              takes_value: true
+              help: maximum depth of generated interaction terms (before simplification)
+          - max_symbols:
+              required: false
+              short: s
+              takes_value: true
+              help: maximum number of symbols of generated interaction terms (after simplification)
+          - max_par:
+              required: false
+              short: p
+              takes_value: true
+              help: maximum number of par symbols of generated interaction terms (after simplification)
     - canonize:
         about: utility to compute the normal form of an interaction
         version: "0.8.5"

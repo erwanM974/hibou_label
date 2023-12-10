@@ -67,7 +67,7 @@ pub fn cli_nfa_experiment(matches : &ArgMatches) -> (Vec<String>,u32) {
 
                     let states_lim : usize = match matches.value_of("states_lim") {
                         None => {
-                            30
+                            10
                         },
                         Some( as_str ) => {
                             as_str.trim().parse::<usize>().unwrap()
