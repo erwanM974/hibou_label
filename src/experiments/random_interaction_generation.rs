@@ -17,7 +17,7 @@ limitations under the License.
 
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
-use rand::prelude::{SliceRandom, ThreadRng};
+use rand::prelude::{SliceRandom, StdRng};
 use rand::Rng;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, ReceptionAction};
@@ -29,7 +29,7 @@ use crate::nfa_translation::experiments2::NfaMetrics;
 use crate::nfa_translation::get_nfa_from_logger::get_nfa_from_interaction_exploration;
 
 
-pub fn generate_random_action(signature : &GeneralContext,rng : &mut ThreadRng) -> Interaction {
+pub fn generate_random_action(signature : &GeneralContext,rng : &mut StdRng) -> Interaction {
     let ms_id = rng.gen_range(0..signature.get_ms_num());
     let mut lifelines : Vec<usize> = (0..signature.get_lf_num()).collect();
     lifelines.shuffle(rng);
@@ -55,7 +55,7 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
                                    depth : u32,
                                    gen_depth : u32,
                                    signature : &GeneralContext,
-                                   rng : &mut ThreadRng) -> Interaction {
+                                   rng : &mut StdRng) -> Interaction {
     if depth >= gen_depth {
         return generate_random_action(signature,rng);
     }

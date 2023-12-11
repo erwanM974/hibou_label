@@ -18,3 +18,5 @@ pub mod random_interaction_generation;
 pub mod probas;
 pub mod parstrict_interaction_generation;
 pub mod doors_interactions_generation;
+pub mod loopalt_interaction_generation;
+pub mod next_action;

@@ -18,42 +18,8 @@ limitations under the License.
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction};
 use crate::core::language::syntax::interaction::Interaction;
+use crate::experiments::next_action::NextActionSpec;
 
-
-
-pub struct NextActionSpec {
-    pub next_lf : usize,
-    pub next_ms : usize
-}
-
-impl NextActionSpec {
-    pub fn new(next_lf: usize, next_ms: usize) -> Self {
-        Self { next_lf, next_ms }
-    }
-}
-
-pub fn get_next_action(gen_ctx : &GeneralContext,
-                       nas : &mut NextActionSpec) -> Interaction {
-    let act = EmissionAction::new(
-        nas.next_lf,
-        nas.next_ms,
-        CommunicationSynchronicity::Asynchronous,
-        vec![]
-    );
-    let int = Interaction::Emission(act);
-    if nas.next_ms + 1 < gen_ctx.get_ms_num() {
-        nas.next_ms += 1;
-    } else {
-        if nas.next_lf + 1 < gen_ctx.get_lf_num() {
-            nas.next_ms = 0;
-            nas.next_lf += 1;
-        } else {
-            nas.next_ms = 0;
-            nas.next_lf = 0;
-        }
-    }
-    int
-}
 
 pub fn generate_par_strict_interaction(gen_ctx : &GeneralContext,
                                        nas : &mut NextActionSpec,
@@ -64,11 +30,11 @@ pub fn generate_par_strict_interaction(gen_ctx : &GeneralContext,
             panic!("should not be reached")
         },
         1 => {
-            get_next_action(gen_ctx,nas)
+            nas.get_next_action(gen_ctx)
         },
         2 => {
-            let a1 = Box::new(get_next_action(gen_ctx,nas));
-            let a2 = Box::new(get_next_action(gen_ctx,nas));
+            let a1 = Box::new(nas.get_next_action(gen_ctx));
+            let a2 = Box::new(nas.get_next_action(gen_ctx));
             if num_par > 0 {
                 Interaction::Par(a1,a2)
             } else {
@@ -76,7 +42,7 @@ pub fn generate_par_strict_interaction(gen_ctx : &GeneralContext,
             }
         },
         _ => {
-            let a1 = Box::new(get_next_action(gen_ctx,nas));
+            let a1 = Box::new(nas.get_next_action(gen_ctx));
             if num_par > 0 {
                 let i2 = generate_par_strict_interaction(gen_ctx,nas,num_par - 1, num_act-1);
                 Interaction::Par(a1,Box::new(i2))

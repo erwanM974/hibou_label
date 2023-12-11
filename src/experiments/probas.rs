@@ -18,9 +18,8 @@ limitations under the License.
 use std::collections::{HashMap, HashSet};
 use std::fmt::Formatter;
 use std::hash::Hash;
-use rand::prelude::SliceRandom;
+use rand::prelude::{SliceRandom, StdRng};
 use rand::Rng;
-use rand::rngs::ThreadRng;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, ReceptionAction};
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
@@ -128,7 +127,7 @@ impl InteractionSymbolsProbabilities {
         Self::from_map(map).unwrap()
     }
 
-    pub fn get_random_symbol(&self, rng : &mut ThreadRng) -> InteractionGenerationSymbol {
+    pub fn get_random_symbol(&self, rng : &mut StdRng) -> InteractionGenerationSymbol {
         let got = rng.gen_range(0.0_f32..1.0_f32);
         for (idx,x) in self.ordered_bounds.iter().enumerate() {
             if got <= *x + 1e-6 {

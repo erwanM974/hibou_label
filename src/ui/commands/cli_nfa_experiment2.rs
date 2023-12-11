@@ -62,7 +62,7 @@ pub fn cli_nfa_experiment2(matches : &ArgMatches) -> (Vec<String>,u32) {
 
             let number_of_interactions : u32 = match matches.value_of("num_ints") {
                 None => {
-                    30
+                    350
                 },
                 Some( as_str ) => {
                     as_str.trim().parse::<u32>().unwrap()
@@ -96,11 +96,21 @@ pub fn cli_nfa_experiment2(matches : &ArgMatches) -> (Vec<String>,u32) {
                 }
             };
 
-            println!("num_ints : {:}, gen_depth : {:}, max_symbols : {:}, max_par : {:}",
+            let seed : u64 = match matches.value_of("seed") {
+                None => {
+                    1
+                },
+                Some( as_str ) => {
+                    as_str.trim().parse::<u64>().unwrap()
+                }
+            };
+
+            println!("num_ints : {:}, gen_depth : {:}, max_symbols : {:}, max_par : {:}, seed : {:}",
                      number_of_interactions,
                      gen_depth,
                      max_symbols,
-                     max_par);
+                     max_par,
+                     seed);
 
             /*let output_file_name = if matches.is_present("output") {
                 let extracted = matches.value_of("output").unwrap();
@@ -116,29 +126,14 @@ pub fn cli_nfa_experiment2(matches : &ArgMatches) -> (Vec<String>,u32) {
                                                              num_tries,
                                                              gen_depth,
                                                              max_symbols,
-                                                             max_par);
+                                                             max_par,
+                                                             seed);
 
             let mut file = File::create(output_file_name.clone()).unwrap();
             file.write(csv_results.as_bytes() );
 
             let mut ret_print = vec![];
-            ret_print.push( "".to_string());
-            ret_print.push( format!(
-                "Generated {:} random interactions with gen depth {:}",
-                number_of_interactions,
-                gen_depth)
-            );
-            ret_print.push( format!(
-                "and max symbols {:}",
-                max_symbols)
-            );
-            ret_print.push( format!(
-                "using signature from file '{:}'",
-                hsf_file_path)
-            );
-            ret_print.push( "and default symbols probabilities".to_string());
-            ret_print.push( "".to_string());
-            ret_print.push( "generated incremental and compositional NFAs".to_string());
+            ret_print.push( "generated incremental and compositional NFAs from interactions".to_string());
             ret_print.push( format!(
                 "collected metrics in file '{:}'",
                 output_file_name)

@@ -17,19 +17,23 @@ limitations under the License.
 
 use std::collections::{BTreeSet, HashSet};
 use std::fmt::{format, Formatter, write};
+use std::fs;
 use std::time::Instant;
 use autour_core::dfa::dfa::AutDFA;
 use autour_core::nfa::nfa::AutNFA;
 use autour_core::traits::transform::AutTransformable;
 use autour_core::traits::translate::AutTranslatable;
 use itertools::max;
-use rand::rngs::ThreadRng;
+use rand::rngs::{StdRng, ThreadRng};
+use rand::{Rng, SeedableRng};
 use crate::core::execution::trace::trace::TraceAction;
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::syntax::metrics::{InteractionMetrics, SymbolKind};
 use crate::experiments::doors_interactions_generation::generate_doors_interactions;
-use crate::experiments::parstrict_interaction_generation::{generate_par_strict_interaction, NextActionSpec};
+use crate::experiments::loopalt_interaction_generation::generate_loop_alt_interactions;
+use crate::experiments::next_action::NextActionSpec;
+use crate::experiments::parstrict_interaction_generation::generate_par_strict_interaction;
 use crate::experiments::random_interaction_generation::{generate_random_interaction};
 use crate::experiments::probas::InteractionSymbolsProbabilities;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
@@ -68,8 +72,12 @@ impl NfaMetrics {
 
 pub enum GeneratedInteractionKind {
     Random,
+    RandomNoPar,
     ParStrict(u32),
-    Doors
+    Doors,
+    DoorsNoPar,
+    LoopAlt,
+    LoopAltNoPar
 }
 
 impl std::fmt::Display for GeneratedInteractionKind {
@@ -78,11 +86,23 @@ impl std::fmt::Display for GeneratedInteractionKind {
             GeneratedInteractionKind::Random => {
                 write!(f, "Random")
             },
+            GeneratedInteractionKind::RandomNoPar => {
+                write!(f, "RandomNoPar")
+            },
             GeneratedInteractionKind::ParStrict(ref numpar) => {
                 write!(f, "Par{:}Strict", numpar)
             },
             GeneratedInteractionKind::Doors => {
                 write!(f, "Doors")
+            },
+            GeneratedInteractionKind::DoorsNoPar => {
+                write!(f, "DoorsNoPar")
+            },
+            GeneratedInteractionKind::LoopAlt => {
+                write!(f, "LoopAlt")
+            },
+            GeneratedInteractionKind::LoopAltNoPar => {
+                write!(f, "LoopAltNoPar")
             }
         }
     }
@@ -196,25 +216,10 @@ pub struct ActParLimitation {}
 impl ActParLimitation {
 
     pub fn is_limit_respected(p : u32, a : u32) -> bool {
-        match p {
-            8 => {
-                a <= 45
-            },
-            9 => {
-                //a <= 28
-                false
-            },
-            10 => {
-                //a <= 10
-                false
-            },
-            x => {
-                if x < 8 {
-                    a <= 60
-                } else {
-                    false
-                }
-            }
+        if p < 9 {
+            a <= 50
+        } else {
+            false
         }
     }
 }
@@ -225,39 +230,42 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
                                      num_tries_for_median : u32,
                                       gen_depth : u32,
                                       max_symbols : u32,
-                                      max_par : u32) -> String {
+                                      max_par : u32,
+                                      seed : u64) -> String {
 
 
     let mut csv_results = String::new();
     NfaGenerationExperiment2ResultMetrics::add_csv_title_line(&mut csv_results);
     csv_results.push_str("\n");
 
+
     // ***
-    // parstrict interactions
     {
         let max_actions = 49;
-        let mut context = GeneralContext::new();
-        context.add_lf("l".to_string());
+        let mut default_context = GeneralContext::new();
+        default_context.add_lf("l".to_string());
         for x in 0..max_actions {
-            context.add_msg(format!("m{:}", x));
+            default_context.add_msg(format!("m{:}", x));
         }
-        let alphabet = get_alphabet_from_gen_ctx(&context);
-        for p in 0..=9 {
+        let default_alphabet = get_alphabet_from_gen_ctx(&default_context);
+
+        // parstrict interactions
+        for p in 0..=8 {
             for a in 1..max_actions {
                 if ActParLimitation::is_limit_respected(p,a) {
                     println!("par{:} act{:} parstrict generation", p, a);
                     let mut nas = NextActionSpec::new(0,0);
                     let i = generate_par_strict_interaction(
-                        &context,
+                        &default_context,
                         &mut nas,
                         p,
                         a
                     );
                     let imetrics = InteractionMetrics::extract_from_interaction(&i);
                     let (opmetrics,cmpmetrics) = get_nfa_metrics(
-                        gen_ctx,
+                        &default_context,
                         &i,
-                        &alphabet,
+                        &default_alphabet,
                         num_tries_for_median,
                         None
                     ).unwrap();
@@ -273,6 +281,36 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
                 }
             }
         }
+
+        // loopalt interactions
+        for a in 1..max_actions {
+            let mut nas = NextActionSpec::new(0,0);
+            for (x,i) in generate_loop_alt_interactions(&default_context,&mut nas,a).into_iter().enumerate() {
+                println!("loopalt{:} generation", a);
+                let imetrics = InteractionMetrics::extract_from_interaction(&i);
+                let (opmetrics,cmpmetrics) = get_nfa_metrics(
+                    &default_context,
+                    &i,
+                    &default_alphabet,
+                    num_tries_for_median,
+                    None
+                ).unwrap();
+                let kind = match *imetrics.symbols.get(&SymbolKind::Par).unwrap() {
+                    0 => GeneratedInteractionKind::LoopAltNoPar,
+                    _ => GeneratedInteractionKind::LoopAlt
+                };
+                let metrics = NfaGenerationExperiment2ResultMetrics::new(
+                    format!("loopalt_{:}_{:}",a,x),
+                    kind,
+                    imetrics,
+                    opmetrics,
+                    cmpmetrics
+                );
+                metrics.add_csv_line(&mut csv_results);
+                csv_results.push_str("\n");
+            }
+        }
+
     }
 
 
@@ -282,7 +320,7 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
         let alphabet = get_alphabet_from_gen_ctx(&gen_ctx);
         let mut memoized_ints = HashSet::new();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = StdRng::seed_from_u64(seed);
         let mut x = 0;
         'myloop : while x < number_of_interactions {
             let i = generate_interaction(gen_ctx,&mut rng, gen_depth);
@@ -337,21 +375,29 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
                         for (x,i) in ints.into_iter().enumerate() {
                             println!("door interaction {:} out of {:}", x+1, num_ints);
                             let imetrics = InteractionMetrics::extract_from_interaction(&i);
-                            let opnfa_limit : u32 = if num_doors <= 4 {
-                                5000
-                            } else {
-                                1000
+                            let cond1 = (*imetrics.symbols.get(&SymbolKind::Action).unwrap() < 50);
+                            let cond2 = match num_doors {
+                                5 => {
+                                    (*imetrics.symbols.get(&SymbolKind::Par).unwrap() <= 3)
+                                },
+                                _ => {
+                                    true
+                                }
                             };
-                            if *imetrics.symbols.get(&SymbolKind::Action).unwrap() < 50 {
+                            if cond1 && cond2 {
                                 if let Some((opmetrics,cmpmetrics)) = get_nfa_metrics(
                                     &doors_gen_ctx,
                                     &i,
                                     &alphabet,
                                     num_tries_for_median,
                                     Some(5000)) {
+                                    let kind = match *imetrics.symbols.get(&SymbolKind::Par).unwrap() {
+                                        0 => GeneratedInteractionKind::DoorsNoPar,
+                                        _ => GeneratedInteractionKind::Doors
+                                    };
                                     let metrics = NfaGenerationExperiment2ResultMetrics::new(
                                         format!("doors_{:}_{:}_{:}_{:}_{:}",num_doors,num_possible_letters,length_code,length_after_code,x),
-                                        GeneratedInteractionKind::Doors,
+                                        kind,
                                         imetrics,
                                         opmetrics,
                                         cmpmetrics
@@ -360,7 +406,12 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
                                     csv_results.push_str("\n");
                                 }
                             } else {
-                                println!("doors interaction has more than 50 actions, cancelling..");
+                                if !cond1 {
+                                    println!("doors interaction has more than 50 actions, cancelling..");
+                                }
+                                if !cond2 {
+                                    println!("doors interaction has 5 doors and more than 3 par operators, cancelling..");
+                                }
                             }
                         }
                     }
@@ -389,22 +440,23 @@ fn random_respects_specifications(imetrics : &InteractionMetrics,
         return false;
     }
     let p = *imetrics.symbols.get(&SymbolKind::Par).unwrap();
-    let a = *imetrics.symbols.get(&SymbolKind::Action).unwrap();
     if p > max_par {
         println!("exceeded max par symbols");
         return false;
     }
 
-    /*if !ActParLimitation::is_limit_respected(p,a) {
-        println!("exceeded act/par limit");
+    let a = *imetrics.symbols.get(&SymbolKind::Action).unwrap();
+    if a >=50 {
+        println!("exceeded max actions");
         return false;
-    }*/
+    }
+
     return true;
 }
 
 
 fn generate_interaction(gen_ctx : &GeneralContext,
-                        rng : &mut ThreadRng,
+                        rng : &mut StdRng,
                         gen_depth : u32) -> Interaction {
 
     let i = generate_random_interaction(&InteractionSymbolsProbabilities::default_high_level(),
@@ -459,11 +511,12 @@ fn get_metrics_from_random_interaction(gen_ctx : &GeneralContext,
         return None;
     }
 
+    fs::create_dir_all("random_gen").unwrap();
     draw_interaction(&gen_ctx,
                      &i,
                      &InteractionGraphicalRepresentation::AsSequenceDiagram,
                      &"temp".to_string(),
-                     &"gen".to_string(),
+                     &"random_gen".to_string(),
                      &format!("nfagenexp_i{:}",x));
 
 
@@ -472,9 +525,13 @@ fn get_metrics_from_random_interaction(gen_ctx : &GeneralContext,
             return None;
         },
         Some( (opmetrics,cmpmetrics) ) => {
+            let kind = match *imetrics.symbols.get(&SymbolKind::Par).unwrap() {
+                0 => GeneratedInteractionKind::RandomNoPar,
+                _ => GeneratedInteractionKind::Random
+            };
             let rsults = NfaGenerationExperiment2ResultMetrics::new(
                 format!("i{:}",x),
-                GeneratedInteractionKind::Random,
+                kind,
                 imetrics,
                 opmetrics,
                 cmpmetrics
