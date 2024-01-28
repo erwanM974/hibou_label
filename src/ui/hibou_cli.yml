@@ -102,27 +102,32 @@ subcommands:
               required: false
               short: n
               takes_value: true
-              help: number of tries to get the median time
+              help: number of tries to get the median time (default 1)
           - num_ints:
               required: false
               short: i
               takes_value: true
-              help: number of interactions to generate
+              help: number of interactions to generate (default 350)
           - gen_depth:
               required: false
               short: d
               takes_value: true
-              help: maximum depth of generated interaction terms (before simplification)
+              help: maximum depth of generated interaction terms (before simplification) (default 10)
           - max_symbols:
               required: false
-              short: s
+              short: x
               takes_value: true
-              help: maximum number of symbols of generated interaction terms (after simplification)
+              help: maximum number of symbols of generated interaction terms (after simplification) (default 100)
           - max_par:
               required: false
               short: p
               takes_value: true
-              help: maximum number of par symbols of generated interaction terms (after simplification)
+              help: maximum number of par symbols of generated interaction terms (after simplification) (default 6)
+          - seed:
+              required: false
+              short: s
+              takes_value: true
+              help: seed for RNG (default 1)
     - canonize:
         about: utility to compute the normal form of an interaction
         version: "0.8.5"
@@ -140,6 +145,23 @@ subcommands:
               required: false
               index: 3
               help: input hibou configuration file
+    - get_metrics:
+        about: utility to get specific metrics from an interaction
+        version: "0.8.5"
+        author: Erwan Mahe <github.com/erwanM974>
+        args:
+          - hsf:
+              required: true
+              index: 1
+              help: input hibou signature file
+          - hif:
+              required: true
+              index: 2
+              help: input hibou interaction file
+          - kind:
+              required: true
+              index: 3
+              help: metric kind, either of INT, operatNFA or minDFA
     - explore:
         about: utility to explore the semantics of an interaction
         version: "0.8.5"

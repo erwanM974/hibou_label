@@ -20,6 +20,7 @@ use crate::core::transformation::transfophase::InteractionTransformationPhase;
 
 pub enum DefaultCanonizationProcess {
     Basic,
+    BasicWithUnfoldActions,
     BasicWithToSeq,
     FivePhases
 }
@@ -39,6 +40,20 @@ impl DefaultCanonizationProcess {
                         InteractionTransformationKind::InvertAlt,
                         InteractionTransformationKind::Deduplicate,
                         InteractionTransformationKind::LoopUnNest
+                    ]
+                )]
+            },
+            DefaultCanonizationProcess::BasicWithUnfoldActions => {
+                vec![InteractionTransformationPhase::new(
+                    vec![
+                        InteractionTransformationKind::Simpl,
+                        InteractionTransformationKind::LoopSimpl,
+                        InteractionTransformationKind::FlushRight,
+                        InteractionTransformationKind::InvertPar,
+                        InteractionTransformationKind::InvertAlt,
+                        InteractionTransformationKind::Deduplicate,
+                        InteractionTransformationKind::LoopUnNest,
+                        InteractionTransformationKind::UnfoldActions
                     ]
                 )]
             },

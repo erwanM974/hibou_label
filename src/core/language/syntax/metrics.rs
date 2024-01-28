@@ -18,6 +18,7 @@ limitations under the License.
 use strum_macros::EnumIter; // 0.17.1
 
 use std::collections::{HashMap, HashSet};
+use std::fmt::format;
 use strum_macros::IntoStaticStr;
 use itertools::Itertools;
 use strum::IntoEnumIterator;
@@ -49,6 +50,16 @@ pub struct InteractionMetrics {
 }
 
 impl InteractionMetrics {
+
+    pub fn string_summary(&self) -> Vec<String> {
+        let mut mystrings = vec![];
+        mystrings.push(format!("depth               : {:}", self.depth));
+        mystrings.push(format!("loop depth          : {:}", self.max_nested_loop_depth));
+        mystrings.push(format!("number of lifelines : {:}", self.lifelines.len()));
+        let num_actions = self.symbols.get(&SymbolKind::Action).unwrap();
+        mystrings.push(format!("number of actions   : {:}", num_actions));
+        mystrings
+    }
 
     pub fn add_csv_title_line(results : &mut String) {
         for symbol in SymbolKind::iter() {

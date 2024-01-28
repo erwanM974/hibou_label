@@ -18,7 +18,7 @@ use std::fmt::Formatter;
 use strum_macros::IntoStaticStr;
 
 use crate::core::language::syntax::interaction::Interaction;
-use crate::core::transformation::transfofunc::action::transfo_sort_action_content;
+use crate::core::transformation::transfofunc::action::{transfo_sort_action_content, transfo_unfold_action};
 use crate::core::transformation::transfofunc::alt_dedup::alt_dedup_equal::transfo_deduplicate;
 use crate::core::transformation::transfofunc::defactorize::{transfo_defactorize_left, transfo_defactorize_right};
 use crate::core::transformation::transfofunc::factorize::factorize_par::transfo_factorize_par;
@@ -49,7 +49,8 @@ pub enum InteractionTransformationKind {
     LoopUnNest,
     SortActionContent, // sort emission targets OR reception recipients
     StrictToSeq,
-    ParToSeq
+    ParToSeq,
+    UnfoldActions,
     // ***
     /*MergeShiftLeft1,
     MergeShiftLeft2,
@@ -125,6 +126,9 @@ impl InteractionTransformationKind {
             },
             InteractionTransformationKind::ParToSeq => {
                 return transfo_par_to_seq;
+            },
+            InteractionTransformationKind::UnfoldActions => {
+                return transfo_unfold_action;
             }
             // ***
             /*

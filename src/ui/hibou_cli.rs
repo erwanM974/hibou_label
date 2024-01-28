@@ -21,6 +21,7 @@ use crate::ui::commands::cli_analyze::cli_analyze;
 use crate::ui::commands::cli_canonize::cli_canonize;
 use crate::ui::commands::cli_draw::cli_draw;
 use crate::ui::commands::cli_explore::cli_explore;
+use crate::ui::commands::cli_get_metrics::cli_get_metrics;
 use crate::ui::commands::cli_glosem::cli_glosem;
 use crate::ui::commands::cli_mutate_insert_noise::cli_mutate_insert_noise;
 use crate::ui::commands::cli_mutate_remove_actions::cli_mutate_remove_actions;
@@ -64,6 +65,10 @@ pub fn hibou_cli() -> i32 {
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("nfa_experiment2") {
         let mut got = cli_nfa_experiment2(matches);
+        ret_print = got.0;
+        ret_code = got.1;
+    } else if let Some(matches) = matches.subcommand_matches("get_metrics") {
+        let mut got = cli_get_metrics(matches);
         ret_print = got.0;
         ret_code = got.1;
     } else if let Some(matches) = matches.subcommand_matches("nfa_analyze") {
