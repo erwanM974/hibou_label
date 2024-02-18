@@ -17,3 +17,4 @@ limitations under the License.
 pub mod handler;
 pub mod local_analysis;
 mod matches;
+mod partial_order_reduction;
