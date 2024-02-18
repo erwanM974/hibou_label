@@ -30,7 +30,7 @@ use crate::io::output::draw_traces::implem::trace_action::diagram_repr_trace_act
 use crate::process::ana::node::flags::{MultiTraceAnalysisFlags, TraceAnalysisFlags};
 
 fn extract_texts_on_canal_hidden(gen_ctx : &GeneralContext,
-                                 lifelines : &HashSet<usize>,
+                                 lifelines : &BTreeSet<usize>,
                                  canal_flag : &TraceAnalysisFlags) -> Vec<Vec<TextToPrint>> {
     let mut canal_l1_text : Vec<TextToPrint> = Vec::new();
     add_lifelines_text_to_canal(gen_ctx,lifelines,&mut canal_l1_text,&mut 0, HCP_LightGray,HCP_LightGray);
@@ -57,7 +57,7 @@ fn extract_texts_on_canal_hidden(gen_ctx : &GeneralContext,
 }
 
 fn extract_texts_on_canal_visible(gen_ctx : &GeneralContext,
-                                 lifelines : &HashSet<usize>,
+                                 lifelines : &BTreeSet<usize>,
                                  canal_trace : &Trace,
                                   canal_flags : &TraceAnalysisFlags) -> Vec<Vec<TextToPrint>> {
     let mut canal_l1_text : Vec<TextToPrint> = Vec::new();
@@ -151,7 +151,7 @@ pub fn extract_texts_on_multi_trace(gen_ctx : &GeneralContext,
 }
 
 fn add_lifelines_text_to_canal(gen_ctx : &GeneralContext,
-                                      lifelines : &HashSet<usize>,
+                                      lifelines : &BTreeSet<usize>,
                                       canal_text : &mut Vec<TextToPrint>,
                                       char_width_canal : &mut usize,
                                lf_color : [u8;3],

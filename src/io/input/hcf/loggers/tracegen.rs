@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use graph_process_manager_core::manager::config::AbstractProcessConfiguration;
 use graph_process_manager_loggers::stepstrace::logger::GenericStepsTraceLogger;
 use graph_process_manager_loggers::stepstrace::printer::StepsTraceProcessPrinter;
@@ -91,12 +91,12 @@ pub fn parse_tracegen_logger<Conf : AbstractProcessConfiguration>(logger_id : u3
                         co_localizations = CoLocalizations::get_trivial_partition(gen_ctx.get_lf_num());
                     },
                     Rule::TRACEGEN_LOGGER_partition_specific => {
-                        let mut colocs : Vec<HashSet<usize>> = vec![];
+                        let mut colocs : Vec<BTreeSet<usize>> = vec![];
                         // ***
                         let mut got_lfs = hashset!{};
                         // ***
                         for lfs_list_pair in opt_pair.into_inner() {
-                            let mut coloc = hashset!{};
+                            let mut coloc = btreeset!{};
                             for lf_name_pair in lfs_list_pair.into_inner() {
                                 let lf_name : String = lf_name_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                                 match gen_ctx.get_lf_id(&lf_name) {

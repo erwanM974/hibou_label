@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::iter::FromIterator;
 
 
@@ -112,8 +112,8 @@ impl GeneralContext {
     // ********** ********** ********** ********** ********** ********** **********
     // ********** ********** ********** ********** ********** ********** **********
 
-    pub fn get_all_lfs_ids(&self) -> HashSet<usize> {
-        return HashSet::from_iter(0..self.get_lf_num() );
+    pub fn get_all_lfs_ids(&self) -> BTreeSet<usize> {
+        return BTreeSet::from_iter(0..self.get_lf_num() );
     }
 
     // ********** ********** ********** ********** ********** ********** **********

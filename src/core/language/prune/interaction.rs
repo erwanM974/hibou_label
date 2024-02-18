@@ -28,7 +28,7 @@ use crate::core::language::syntax::interaction::Interaction;
 
 
 impl LifelinePrunable for Interaction {
-    fn prune(&self, lf_ids : &HashSet<usize>) -> Interaction {
+    fn prune(&self, lf_ids : &BTreeSet<usize>) -> Interaction {
         match self {
             Interaction::Empty => {
                 return Interaction::Empty;
@@ -162,16 +162,16 @@ impl LifelinePrunable for Interaction {
         }
     }
 
-    fn prune_with_affected(&self, lf_ids : &HashSet<usize>) -> (Interaction,HashSet<usize>) {
+    fn prune_with_affected(&self, lf_ids : &BTreeSet<usize>) -> (Interaction,BTreeSet<usize>) {
         match self {
             Interaction::Empty => {
-                return (Interaction::Empty,hashset!{});
+                return (Interaction::Empty,btreeset!{});
             },
             Interaction::Emission(_) => {
-                return (self.clone(),hashset!{});
+                return (self.clone(),btreeset!{});
             },
             Interaction::Reception(_) => {
-                return (self.clone(),hashset!{});
+                return (self.clone(),btreeset!{});
             },
             Interaction::Seq(i1, i2) => {
                 let (pruned_i1,mut aff1) = i1.prune_with_affected(lf_ids);

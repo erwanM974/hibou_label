@@ -15,11 +15,11 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 pub trait AvoidsLifelines {
 
-    fn avoids_all_of(&self, lf_ids : &HashSet<usize>) -> bool;
+    fn avoids_all_of(&self, lf_ids : &BTreeSet<usize>) -> bool;
 
 }
 

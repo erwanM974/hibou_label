@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs::File;
 use std::io::Write;
 
@@ -32,7 +32,7 @@ pub fn to_plant_uml_ap(output_path : &String,
     // ***
     for lf_id in 0..gen_ctx.get_lf_num() {
         let lf_name = gen_ctx.get_lf_name(lf_id).unwrap();
-        let mut lfs_to_remove : HashSet<usize> = (0..(gen_ctx.get_lf_num())).collect();
+        let mut lfs_to_remove : BTreeSet<usize> = (0..(gen_ctx.get_lf_num())).collect();
         lfs_to_remove.remove(&lf_id);
         let projected_int = interaction.eliminate_lifelines(&lfs_to_remove);
         output_file.write( format!("state lf_{} {{\n",lf_name).as_bytes() );

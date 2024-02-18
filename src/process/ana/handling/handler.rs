@@ -99,13 +99,19 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
         if !parent_node_kind.flags.is_multi_trace_empty(&context.multi_trace) {
             match &param.ana_kind {
                 AnalysisKind::Accept => {
-                    param.get_action_matches_in_analysis(context,
-                                                   &parent_node_kind.interaction,
-                                                   &parent_node_kind.flags)
+                    param.get_action_matches_in_analysis(
+                        param.partial_order_reduction,
+                        false,
+                        context,
+                        &parent_node_kind.interaction,
+                        &parent_node_kind.flags)
                 },
                 AnalysisKind::Prefix => {
-                    param.get_action_matches_in_analysis(context,
+                    param.get_action_matches_in_analysis(param.partial_order_reduction,
+                                                         false,
+                                                         context,
                                                         &parent_node_kind.interaction,
+
                                                         &parent_node_kind.flags)
                 },
                 AnalysisKind::Eliminate => {
@@ -117,23 +123,25 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
                         }
                     }
                     //
-                    let insert_hide_step : bool;
-                    if canals_ids_to_hide.len() > 0 {
+                    let insert_hide_step : bool = if canals_ids_to_hide.is_empty() {
+                        false
+                    } else {
                         let lfs_to_hide = context.co_localizations.get_lf_ids_from_coloc_ids(&canals_ids_to_hide);
                         if parent_node_kind.interaction.involves_any_of(&lfs_to_hide) {
-                            insert_hide_step = true;
+                            true
                         } else {
-                            insert_hide_step = false;
+                            false
                         }
-                    } else {
-                        insert_hide_step = false;
-                    }
+                    };
                     //
                     if insert_hide_step {
                         vec![ AnalysisStepKind::EliminateNoLongerObserved(canals_ids_to_hide) ]
                     } else {
-                        param.get_action_matches_in_analysis(context,
+                        param.get_action_matches_in_analysis(param.partial_order_reduction,
+                                                             true,
+                                                             context,
                                                        &parent_node_kind.interaction,
+
                                                        &parent_node_kind.flags)
                     }
                 },
@@ -246,35 +254,40 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
                                               node_kind: &mut AnalysisNodeKind)
             -> Option<(AnalysisLocalVerdict, AnalysisStaticLocalVerdictAnalysisProof)> {
 
-        match is_dead_local_analysis(&context.gen_ctx,
-                                     &context.co_localizations,
-                                     &param.ana_kind,
-                                     param.use_locana,
-                                     &node_kind.interaction,
-                                     &context.multi_trace,
-                                     &mut node_kind.flags) { // TODO: make node_kind mutable so that dirty flags are updated
-            None => {
-                None
-            },
-            Some( fail_on_canal_id ) => {
-                let (local_coloc,local_interaction,local_multi_trace,local_flags) =
-                    get_local_analysis_starting_data(&context.gen_ctx,
-                                                     fail_on_canal_id,
-                                                     &context.co_localizations,
-                                                     &node_kind.interaction,
-                                                     &context.multi_trace,
-                                                     &node_kind.flags);
-                let data = AnalysisStaticLocalVerdictAnalysisProof::new(param.ana_kind.clone(),
-                                                                        local_coloc,
-                                                                        local_interaction,
-                                                                        local_multi_trace,
-                                                                        local_flags);
-                if param.ana_kind.has_simulation() {
-                    Some( (AnalysisLocalVerdict::OutSim(true),data) )
-                } else {
-                    Some( (AnalysisLocalVerdict::Out(true),data) )
+        if let Some(locana_param) = &param.locana {
+            match is_dead_local_analysis(&context.gen_ctx,
+                                         &context.co_localizations,
+                                         &param.ana_kind,
+                                         locana_param,
+                                         param.partial_order_reduction,
+                                         &node_kind.interaction,
+                                         &context.multi_trace,
+                                         &mut node_kind.flags) {
+                None => {
+                    None
+                },
+                Some( fail_on_canal_id ) => {
+                    let (local_coloc,local_interaction,local_multi_trace,local_flags) =
+                        get_local_analysis_starting_data(&context.gen_ctx,
+                                                         fail_on_canal_id,
+                                                         &context.co_localizations,
+                                                         &node_kind.interaction,
+                                                         &context.multi_trace,
+                                                         &node_kind.flags);
+                    let data = AnalysisStaticLocalVerdictAnalysisProof::new(param.ana_kind.clone(),
+                                                                            local_coloc,
+                                                                            local_interaction,
+                                                                            local_multi_trace,
+                                                                            local_flags);
+                    if param.ana_kind.has_simulation() {
+                        Some( (AnalysisLocalVerdict::OutSim(true),data) )
+                    } else {
+                        Some( (AnalysisLocalVerdict::Out(true),data) )
+                    }
                 }
             }
+        } else {
+            None
         }
     }
 

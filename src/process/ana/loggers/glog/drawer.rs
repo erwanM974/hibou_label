@@ -90,9 +90,15 @@ impl GraphVizProcessDrawer<AnalysisConfig> for InteractionProcessDrawer {
                                                                                                    false,
                                                                                                    ".".to_string(),
                                                                                                    static_ana_id.clone());
+        let max_depth = match param.locana.as_ref().unwrap().max_depth {
+            None => None,
+            Some(x) => Some(x)
+        };
         perform_local_analysis(&context.gen_ctx,
                                data_proof.local_coloc.clone(),
                                &param.ana_kind,
+                               false, // Partial Order Reduction is not useful on a single coloc trace
+                               &max_depth,
                                data_proof.local_interaction.clone(),
                                data_proof.local_multi_trace.clone(),
                                data_proof.local_flags.clone(),

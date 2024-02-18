@@ -16,6 +16,7 @@ limitations under the License.
 
 
 
+use std::fs;
 use std::path::PathBuf;
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
@@ -42,6 +43,8 @@ pub fn generate_swap_components_mutant(gen_ctx : &GeneralContext,
             path = [&file_name].iter().collect();
         },
         Some( parent ) => {
+            // creates directory
+            fs::create_dir_all(parent).unwrap();
             path = [parent, &file_name].iter().collect();
         }
     }

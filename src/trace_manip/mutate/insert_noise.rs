@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
+use std::fs;
 use std::path::PathBuf;
 use rand::Rng;
 use rand::rngs::ThreadRng;
@@ -39,12 +40,13 @@ pub fn generate_insert_noise_mutant(gen_ctx : &GeneralContext,
                                     only_at_end : bool) -> String{
     let file_name = format!("{:}.{:}", mutant_name, HIBOU_TRACE_FILE_EXTENSION);
     let path : PathBuf;
-    let file_path : String;
     match parent_folder {
         None => {
             path = [&file_name].iter().collect();
         },
         Some( parent ) => {
+            // creates directory
+            fs::create_dir_all(parent).unwrap();
             path = [parent, &file_name].iter().collect();
         }
     }
@@ -58,7 +60,9 @@ pub fn generate_insert_noise_mutant(gen_ctx : &GeneralContext,
 }
 
 
-fn generate_random_action_on_coloc(rng : &mut ThreadRng, gen_ctx : &GeneralContext, coloc_lfs : &HashSet<usize>) -> TraceAction {
+fn generate_random_action_on_coloc(rng : &mut ThreadRng,
+                                   gen_ctx : &GeneralContext,
+                                   coloc_lfs : &BTreeSet<usize>) -> TraceAction {
     let lf_id : usize;
     {
         let coloc_lfs_as_vec : Vec<usize> = coloc_lfs.iter().cloned().collect();

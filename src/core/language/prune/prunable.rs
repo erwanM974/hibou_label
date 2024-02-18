@@ -16,10 +16,10 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 pub trait LifelinePrunable : Sized {
-    fn prune(&self, lf_ids : &HashSet<usize>) -> Self;
-    fn prune_with_affected(&self, lf_ids : &HashSet<usize>) -> (Self,HashSet<usize>);
+    fn prune(&self, lf_ids : &BTreeSet<usize>) -> Self;
+    fn prune_with_affected(&self, lf_ids : &BTreeSet<usize>) -> (Self,BTreeSet<usize>);
 }
 

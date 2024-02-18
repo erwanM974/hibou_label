@@ -18,7 +18,7 @@ limitations under the License.
 
 
 use std::path::PathBuf;
-use std::ptr;
+use std::{fs, ptr};
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::distributions::{Distribution, Uniform};
@@ -43,6 +43,8 @@ pub fn generate_swap_actions_mutant(gen_ctx : &GeneralContext,
             path = [&file_name].iter().collect();
         },
         Some( parent ) => {
+            // creates directory
+            fs::create_dir_all(parent).unwrap();
             path = [parent, &file_name].iter().collect();
         }
     }

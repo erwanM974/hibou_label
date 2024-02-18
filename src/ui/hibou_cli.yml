@@ -417,4 +417,43 @@ subcommands:
                   required: true
                   index: 2
                   help: input hibou interaction file
+    - rng_gen_interactions:
+          about: experiment for generating fas from interactions
+          version: "0.8.5"
+          author: Erwan Mahe <github.com/erwanM974>
+          args:
+              - hsf:
+                    required: true
+                    index: 1
+                    help: input hibou signature file
+              - folder:
+                    required: false
+                    short: f
+                    takes_value: true
+                    help: folder in which to generate the interactions
+              - num_ints:
+                  required: false
+                  short: i
+                  takes_value: true
+                  help: number of interactions to generate (default 350)
+              - probas:
+                  required: false
+                  short: p
+                  takes_value: true
+                  help: probability distributions of interaction language symbols (default or conservative)
+              - max_depth:
+                    required: false
+                    short: d
+                    takes_value: true
+                    help: maximum depth of generated interaction terms (before simplification) (default 10)
+              - min_symbols:
+                    required: false
+                    short: x
+                    takes_value: true
+                    help: maximum number of symbols of generated interaction terms (after simplification) (default 100)
+              - seed:
+                    required: false
+                    short: s
+                    takes_value: true
+                    help: seed for RNG (default 1)
 

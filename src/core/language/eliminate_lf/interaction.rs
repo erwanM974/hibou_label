@@ -15,14 +15,14 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::syntax::interaction::Interaction;
 
 
 impl LifelineEliminable for Interaction {
 
-    fn eliminate_lifelines(&self, lfs_to_eliminate: &HashSet<usize>) -> Interaction {
+    fn eliminate_lifelines(&self, lfs_to_eliminate: &BTreeSet<usize>) -> Interaction {
         match self {
             Interaction::Empty => {
                 return Interaction::Empty;

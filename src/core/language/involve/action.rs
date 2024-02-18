@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};
 
 impl InvolvesLifelines for EmissionAction {
 
-    fn involved_lifelines(&self) -> HashSet<usize> {
-        let mut involved = HashSet::new();
+    fn involved_lifelines(&self) -> BTreeSet<usize> {
+        let mut involved = BTreeSet::new();
         involved.insert( self.origin_lf_id );
         for target in &self.targets {
             match target {
@@ -33,7 +33,7 @@ impl InvolvesLifelines for EmissionAction {
         }
         return involved;
     }
-    fn involves_any_of(&self, lf_ids : &HashSet<usize>) -> bool {
+    fn involves_any_of(&self, lf_ids : &BTreeSet<usize>) -> bool {
         let occ = self.involved_lifelines();
         if occ.is_disjoint(lf_ids) {
             return false;
@@ -46,14 +46,14 @@ impl InvolvesLifelines for EmissionAction {
 
 impl InvolvesLifelines for ReceptionAction {
 
-    fn involved_lifelines(&self) -> HashSet<usize> {
-        let mut involved = HashSet::new();
+    fn involved_lifelines(&self) -> BTreeSet<usize> {
+        let mut involved = BTreeSet::new();
         for rcp_lf_id in &self.recipients {
             involved.insert( *rcp_lf_id );
         }
         return involved;
     }
-    fn involves_any_of(&self, lf_ids : &HashSet<usize>) -> bool {
+    fn involves_any_of(&self, lf_ids : &BTreeSet<usize>) -> bool {
         let occ = self.involved_lifelines();
         if occ.is_disjoint(lf_ids) {
             return false;

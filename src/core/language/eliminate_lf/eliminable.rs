@@ -16,13 +16,13 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::syntax::interaction::Interaction;
 
 
 pub trait LifelineEliminable {
 
-    fn eliminate_lifelines(&self, lfs_to_eliminate : &HashSet<usize>) -> Interaction;
+    fn eliminate_lifelines(&self, lfs_to_eliminate : &BTreeSet<usize>) -> Interaction;
 
 }
 

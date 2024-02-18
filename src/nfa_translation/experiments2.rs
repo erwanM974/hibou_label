@@ -31,11 +31,11 @@ use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::Interaction;
 use crate::core::language::syntax::metrics::{InteractionMetrics, SymbolKind};
 use crate::experiments::doors_interactions_generation::generate_doors_interactions;
+use crate::experiments::interaction_random_gen::interface::generate_canonical_random_interaction;
+use crate::experiments::interaction_random_gen::probas::InteractionSymbolsProbabilities;
 use crate::experiments::loopalt_interaction_generation::generate_loop_alt_interactions;
 use crate::experiments::next_action::NextActionSpec;
 use crate::experiments::parstrict_interaction_generation::generate_par_strict_interaction;
-use crate::experiments::random_interaction_generation::{generate_random_interaction};
-use crate::experiments::probas::InteractionSymbolsProbabilities;
 use crate::io::output::draw_interactions::interface::{draw_interaction, InteractionGraphicalRepresentation};
 use crate::nfa_translation::alphabet::get_alphabet_from_gen_ctx;
 use crate::nfa_translation::canonize::canonize_interaction;
@@ -323,7 +323,13 @@ pub fn run_nfa_generation_experiment2(number_of_interactions : u32,
         let mut rng = StdRng::seed_from_u64(seed);
         let mut x = 0;
         'myloop : while x < number_of_interactions {
-            let i = generate_interaction(gen_ctx,&mut rng, gen_depth);
+            let i = generate_canonical_random_interaction(
+                gen_ctx,
+                &mut rng,
+                gen_depth,
+                1,
+                &InteractionSymbolsProbabilities::default_high_level_regular()
+            ).unwrap();
             if memoized_ints.contains(&i) {
                 println!("already encounteterd interaction, retrying...");
                 continue 'myloop;
@@ -455,56 +461,13 @@ fn random_respects_specifications(imetrics : &InteractionMetrics,
 }
 
 
-fn generate_interaction(gen_ctx : &GeneralContext,
-                        rng : &mut StdRng,
-                        gen_depth : u32) -> Interaction {
-
-    let i = generate_random_interaction(&InteractionSymbolsProbabilities::default_high_level(),
-                                        0,
-                                        gen_depth,
-                                        &gen_ctx,
-                                        rng);
-
-    let imetrics = InteractionMetrics::extract_from_interaction(&i);
-    let isymbs = imetrics.symbols.iter().fold(0_u32,|x,(_,c)| x + c);
-    println!("generated interaction of depth {:} with {:} symbols",
-             imetrics.depth,
-             isymbs
-    );
-
-    let ican = canonize_interaction(&gen_ctx,&i, DefaultCanonizationProcess::BasicWithToSeq);
-    let icanmetrics = InteractionMetrics::extract_from_interaction(&ican);
-    let icansymbs = icanmetrics.symbols.iter().fold(0_u32,|x,(_,c)| x + c);
-    println!("canonized to interaction of depth {:} with {:} symbols",
-             icanmetrics.depth,
-             icansymbs
-    );
-    if icansymbs > isymbs {
-        println!("canonized has more symbols !!");
-        draw_interaction(&gen_ctx,
-                         &i,
-                         &InteractionGraphicalRepresentation::AsSequenceDiagram,
-                         &"temp".to_string(),
-                         &"canerror".to_string(),
-                         &"init".to_string());
-        draw_interaction(&gen_ctx,
-                         &ican,
-                         &InteractionGraphicalRepresentation::AsSequenceDiagram,
-                         &"temp".to_string(),
-                         &"canerror".to_string(),
-                         &"canned".to_string());
-        panic!();
-    }
-    ican
-}
-
 fn get_metrics_from_random_interaction(gen_ctx : &GeneralContext,
-                      alphabet : &Vec<BTreeSet<TraceAction>>,
-                      i : &Interaction,
-                      max_symbols : u32,
-                      max_par : u32,
-                      num_tries_for_median : u32,
-                      x : u32) -> Option<NfaGenerationExperiment2ResultMetrics> {
+                                       alphabet : &Vec<BTreeSet<TraceAction>>,
+                                       i : &Interaction,
+                                       max_symbols : u32,
+                                       max_par : u32,
+                                       num_tries_for_median : u32,
+                                       x : u32) -> Option<NfaGenerationExperiment2ResultMetrics> {
 
     let imetrics = InteractionMetrics::extract_from_interaction(&i);
     if !random_respects_specifications(&imetrics,max_symbols,max_par) {

@@ -37,7 +37,7 @@ use crate::process::ana::conf::AnalysisConfig;
 use crate::process::ana::filter::elim::AnalysisFilterEliminationKind;
 use crate::process::ana::filter::filter::{AnalysisFilter, AnalysisFilterCriterion};
 use crate::process::ana::param::anakind::{AnalysisKind, SimulationActionCriterion, SimulationConfiguration, SimulationLoopCriterion};
-use crate::process::ana::param::param::AnalysisParameterization;
+use crate::process::ana::param::param::{AnalysisParameterization, LocalAnalysisLifelineSelectionPolicy, LocalAnalysisParameterization};
 use crate::process::ana::priorities::AnalysisPriorities;
 use crate::process::ana::verdict::global::AnalysisGlobalVerdict;
 
@@ -64,7 +64,10 @@ impl HibouAnalyzeOptions {
     }
 
     pub fn default() -> HibouAnalyzeOptions {
-        let default_param = AnalysisParameterization::new(AnalysisKind::Prefix,true);
+        let default_param = AnalysisParameterization::new(
+            AnalysisKind::Prefix,
+            Some(LocalAnalysisParameterization::new(LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,None)),
+            false);
         HibouAnalyzeOptions::new(
             vec![],
             QueueSearchStrategy::DFS,
@@ -86,7 +89,9 @@ pub fn parse_analyze_options(gen_ctx : &GeneralContext,
     let mut filters : Vec<Box<dyn AbstractFilter<AnalysisFilterCriterion,AnalysisFilterEliminationKind>>> = Vec::new();
     let mut priorities : GenericProcessPriorities<AnalysisPriorities> = GenericProcessPriorities::new(AnalysisPriorities::default(),false);
     let mut ana_kind = AnalysisKind::Prefix;
-    let mut use_local_analysis = true;
+    let mut use_locana = true;
+    let mut locana_param = LocalAnalysisParameterization::new(LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,None);
+    let mut use_partial_order_reduction = false;
     let mut use_memoization = true;
     let mut goal = Some(AnalysisGlobalVerdict::WeakPass);
     // ***
@@ -221,17 +226,30 @@ pub fn parse_analyze_options(gen_ctx : &GeneralContext,
                     }
                 }
             },
-            Rule::OPTION_LOCANA => {
+            Rule::OPTION_PARTIAL_ORDER => {
                 let as_bool_pair = option_decl_pair.into_inner().next().unwrap();
                 match as_bool_pair.as_rule() {
                     Rule::HIBOU_true => {
-                        use_local_analysis = true;
+                        use_partial_order_reduction = true;
                     },
                     Rule::HIBOU_false => {
-                        use_local_analysis = false;
+                        use_partial_order_reduction = false;
                     },
                     _ => {
                         panic!("what rule then ? : {:?}", as_bool_pair.as_rule() );
+                    }
+                }
+            },
+            Rule::OPTION_LOCANA => {
+                match parse_local_analyses_config(option_decl_pair) {
+                    Err(e) => {return Err(e);},
+                    Ok(got) => {
+                        if let Some(got_locana_param) = got {
+                            use_locana = true;
+                            locana_param = got_locana_param;
+                        } else {
+                            use_locana = false;
+                        }
                     }
                 }
             },
@@ -244,7 +262,7 @@ pub fn parse_analyze_options(gen_ctx : &GeneralContext,
                     Rule::OPTION_GOAL_weakpass => {
                         goal = Some( AnalysisGlobalVerdict::WeakPass );
                     },
-                    Rule::OPTION_GOAL_none => {
+                    Rule::HIBOU_none => {
                         goal = None;
                     },
                     _ => {
@@ -258,7 +276,12 @@ pub fn parse_analyze_options(gen_ctx : &GeneralContext,
         }
     }
     // ***
-    let param = AnalysisParameterization::new(ana_kind,use_local_analysis);
+    let locana_param = if use_locana {
+        Some(locana_param)
+    } else {
+        None
+    };
+    let param = AnalysisParameterization::new(ana_kind,locana_param, use_partial_order_reduction);
     let hoptions = HibouAnalyzeOptions::new(loggers,strategy,filters,priorities,param,use_memoization,goal);
     return Ok(hoptions);
 }
@@ -382,6 +405,64 @@ fn parse_priorities(priorities_decl_pair : Pair<Rule>) -> Result<GenericProcessP
     return Ok(GenericProcessPriorities::new(specific,randomize));
 }
 
+fn parse_local_analyses_config(locana_pair : Pair<Rule>) -> Result<Option<LocalAnalysisParameterization>,HibouParsingError> {
+    let choice_pair = locana_pair.into_inner().next().unwrap();
+    match choice_pair.as_rule() {
+        Rule::HIBOU_none => {
+            return Ok(None);
+        },
+        Rule::OPTION_LOCANA_CONFIG_decl => {
+            let mut max_depth = None;
+            let mut select = LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep;
+            for inner_pair in choice_pair.into_inner() {
+                match inner_pair.as_rule() {
+                    Rule::OPTION_LOCANA_select => {
+                        let select_pair = inner_pair.into_inner().next().unwrap();
+                        match select_pair.as_rule() {
+                            Rule::OPTION_LOCANA_select_all => {
+                                select = LocalAnalysisLifelineSelectionPolicy::SelectAll;
+                            },
+                            Rule::OPTION_LOCANA_select_dirty => {
+                                select = LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep;
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", select_pair.as_rule() );
+                            }
+                        }
+                    },
+                    Rule::OPTION_LOCANA_depth => {
+                        let depth_pair = inner_pair.into_inner().next().unwrap();
+                        match depth_pair.as_rule() {
+                            Rule::HIBOU_none => {
+                                max_depth = None;
+                            },
+                            Rule::ARITH_INTEGER => {
+                                let content = depth_pair.into_inner().next().unwrap();
+                                let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                                let my_val : u32 = content_str.parse::<u32>().unwrap();
+                                max_depth = Some(my_val);
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", depth_pair.as_rule() );
+                            }
+                        }
+                    },
+                    _ => {
+                        panic!("what rule then ? : {:?}", inner_pair.as_rule() );
+                    }
+                }
+            }
+            let locana_param = LocalAnalysisParameterization::new(select,max_depth);
+            return Ok(Some(locana_param));
+        },
+        // ***
+        _ => {
+            panic!("what rule then ? : {:?}", choice_pair.as_rule() );
+        }
+    }
+}
+
+
 fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<SimulationConfiguration,HibouParsingError> {
     let mut sim_before = false;
     let mut reset_crit_after_exec = false;
@@ -445,7 +526,7 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
                     Rule::OPTION_ANA_SIMULATE_CONFIG_crit_maxnum => {
                         act_crit = SimulationActionCriterion::MaxNumOutsideLoops;
                     },
-                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_none => {
+                    Rule::HIBOU_none => {
                         act_crit = SimulationActionCriterion::None;
                     },
                     _ => {
@@ -468,7 +549,7 @@ fn parse_simulation_config(simu_config_decl_pair : Pair<Rule>) -> Result<Simulat
                     Rule::OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth => {
                         loop_crit = SimulationLoopCriterion::MaxDepth;
                     },
-                    Rule::OPTION_ANA_SIMULATE_CONFIG_crit_none => {
+                    Rule::HIBOU_none => {
                         loop_crit = SimulationLoopCriterion::None;
                     },
                     _ => {

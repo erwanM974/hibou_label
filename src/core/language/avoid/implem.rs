@@ -17,7 +17,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::avoid::avoids::AvoidsLifelines;
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::core::language::syntax::action::{EmissionAction, ReceptionAction};
@@ -25,21 +25,21 @@ use crate::core::language::syntax::interaction::Interaction;
 
 
 impl AvoidsLifelines for EmissionAction {
-    fn avoids_all_of(&self, lf_ids: &HashSet<usize>) -> bool {
+    fn avoids_all_of(&self, lf_ids: &BTreeSet<usize>) -> bool {
         return self.involved_lifelines().is_disjoint(lf_ids);
     }
 }
 
 
 impl AvoidsLifelines for ReceptionAction {
-    fn avoids_all_of(&self, lf_ids: &HashSet<usize>) -> bool {
+    fn avoids_all_of(&self, lf_ids: &BTreeSet<usize>) -> bool {
         return self.involved_lifelines().is_disjoint(lf_ids);
     }
 }
 
 
 impl AvoidsLifelines for Interaction {
-    fn avoids_all_of(&self, lf_ids: &HashSet<usize>) -> bool {
+    fn avoids_all_of(&self, lf_ids: &BTreeSet<usize>) -> bool {
         match self {
             &Interaction::Empty => {
                 return true;

@@ -19,11 +19,12 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use rand::prelude::{SliceRandom, StdRng};
 use rand::Rng;
+
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, ReceptionAction};
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
 use crate::core::language::syntax::metrics::{InteractionMetrics, SymbolKind};
-use crate::experiments::probas::{InteractionGenerationSymbol, InteractionSymbolsProbabilities};
+use crate::experiments::interaction_random_gen::probas::{InteractionGenerationSymbol, InteractionSymbolsProbabilities};
 use crate::nfa_translation::alphabet::get_alphabet_from_gen_ctx;
 use crate::nfa_translation::experiments2::NfaMetrics;
 use crate::nfa_translation::get_nfa_from_logger::get_nfa_from_interaction_exploration;
@@ -52,30 +53,32 @@ pub fn generate_random_action(signature : &GeneralContext,rng : &mut StdRng) -> 
 }
 
 pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
+                                   //resolve_basic_at_low_depth : bool,
                                    depth : u32,
-                                   gen_depth : u32,
+                                   max_depth : u32,
                                    signature : &GeneralContext,
                                    rng : &mut StdRng) -> Interaction {
-    if depth >= gen_depth {
+    if depth >= max_depth {
         return generate_random_action(signature,rng);
     }
     let mut symbol = probas.get_random_symbol(rng);
-    if depth <= gen_depth/2 {
+    /*if !resolve_basic_at_low_depth && depth <= max_depth/2 {
         while symbol == InteractionGenerationSymbol::Basic {
             println!("should not resolve basic interaction at low depth");
             symbol = probas.get_random_symbol(rng);
         }
-    }
+    }*/
     match symbol {
         InteractionGenerationSymbol::Basic => {
-            let alphabet = get_alphabet_from_gen_ctx(&signature);
+            /*let alphabet = get_alphabet_from_gen_ctx(&signature);
             let mut i = Interaction::Empty;
             loop {
                 let got_i = generate_random_interaction(
                     &InteractionSymbolsProbabilities::default_basic(),
                     depth,
-                    gen_depth,
-                    signature, rng
+                    max_depth,
+                    signature,
+                    rng
                 );
                 let (nfa, _) = get_nfa_from_interaction_exploration(signature,
                                                                     &i,
@@ -88,7 +91,14 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
                     break;
                 }
             };
-            i
+            i*/
+            generate_random_interaction(
+                &InteractionSymbolsProbabilities::default_basic(),
+                depth,
+                max_depth,
+                signature,
+                rng
+            )
         }
         InteractionGenerationSymbol::Empty => {
             Interaction::Empty
@@ -97,25 +107,33 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
             generate_random_action(signature,rng)
         }
         InteractionGenerationSymbol::LoopS => {
-            let i1 = generate_random_interaction(probas,depth+1,gen_depth,signature,rng);
+            let i1 = generate_random_interaction(probas,depth+1,max_depth,signature,rng);
             Interaction::Loop(LoopKind::SStrictSeq,Box::new(i1))
-        }
+        },
+        InteractionGenerationSymbol::LoopW => {
+            let i1 = generate_random_interaction(probas,depth+1,max_depth,signature,rng);
+            Interaction::Loop(LoopKind::WWeakSeq,Box::new(i1))
+        },
+        InteractionGenerationSymbol::LoopP => {
+            let i1 = generate_random_interaction(probas,depth+1,max_depth,signature,rng);
+            Interaction::Loop(LoopKind::PInterleaving,Box::new(i1))
+        },
         x => {
-            let i1 = Box::new(generate_random_interaction(probas,depth+1,gen_depth,signature,rng));
-            let i2 = Box::new(generate_random_interaction(probas,depth+1,gen_depth,signature,rng));
+            let i1 = Box::new(generate_random_interaction(probas,depth+1,max_depth,signature,rng));
+            let i2 = Box::new(generate_random_interaction(probas,depth+1,max_depth,signature,rng));
             match x {
                 InteractionGenerationSymbol::Strict => {
                     Interaction::Strict(i1,i2)
-                }
+                },
                 InteractionGenerationSymbol::Seq => {
                     Interaction::Seq(i1,i2)
-                }
+                },
                 InteractionGenerationSymbol::Par => {
                     Interaction::Par(i1,i2)
-                }
+                },
                 InteractionGenerationSymbol::Alt => {
                     Interaction::Alt(i1,i2)
-                }
+                },
                 _ => {
                     panic!()
                 }
@@ -127,6 +145,7 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
 
 #[cfg(test)]
 mod tests {
+    use rand::SeedableRng;
     use super::*;
 
     #[test]
@@ -137,8 +156,8 @@ mod tests {
         gen_ctx.add_msg("m1".to_string());
         gen_ctx.add_msg("m2".to_string());
 
-        let mut rng = rand::thread_rng();
-        let probas = InteractionSymbolsProbabilities::default();
+        let mut rng = StdRng::seed_from_u64(0);
+        let probas = InteractionSymbolsProbabilities::default_regular();
         let int = generate_random_interaction(&probas,0,3,&gen_ctx, &mut rng);
         println!("{:?}", int);
     }

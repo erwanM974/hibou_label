@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-pub mod random_interaction_generation;
-pub mod probas;
+
+pub mod interaction_random_gen;
+
 pub mod parstrict_interaction_generation;
 pub mod doors_interactions_generation;
 pub mod loopalt_interaction_generation;

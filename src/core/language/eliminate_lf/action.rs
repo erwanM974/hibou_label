@@ -17,7 +17,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::eliminate_lf::eliminable::LifelineEliminable;
 use crate::core::language::syntax::action::{EmissionAction, EmissionTargetRef, ReceptionAction};
 use crate::core::language::syntax::interaction::Interaction;
@@ -26,7 +26,7 @@ use crate::core::language::syntax::interaction::Interaction;
 
 impl LifelineEliminable for EmissionAction {
 
-    fn eliminate_lifelines(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
+    fn eliminate_lifelines(&self, lfs_to_remove: &BTreeSet<usize>) -> Interaction {
         if lfs_to_remove.contains(&self.origin_lf_id) {
             let mut has_lf_tars = false;
             let mut target_lfs : Vec<usize> = Vec::new();
@@ -77,7 +77,7 @@ impl LifelineEliminable for EmissionAction {
 
 
 impl LifelineEliminable for ReceptionAction {
-    fn eliminate_lifelines(&self, lfs_to_remove: &HashSet<usize>) -> Interaction {
+    fn eliminate_lifelines(&self, lfs_to_remove: &BTreeSet<usize>) -> Interaction {
         let mut has_lf_tars = false;
         let mut target_lfs : Vec<usize> = Vec::new();
         for tar_lf_id in &self.recipients {

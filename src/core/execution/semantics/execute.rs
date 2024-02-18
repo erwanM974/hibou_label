@@ -78,32 +78,32 @@ fn execute_reception(rc_act : &ReceptionAction, sub_pos : &Option<usize>) -> Int
 
 pub struct ExecutionResult {
     pub interaction : Interaction,
-    pub affected_lifelines : HashSet<usize>
+    pub affected_lifelines : BTreeSet<usize>
 }
 
 impl ExecutionResult {
-    pub fn new(interaction : Interaction,affected_lifelines : HashSet<usize>) -> ExecutionResult {
+    pub fn new(interaction : Interaction,affected_lifelines : BTreeSet<usize>) -> ExecutionResult {
         return ExecutionResult{interaction,affected_lifelines};
     }
 }
 
 fn execute_interaction_leaf(my_int : &Interaction,
                             sub_pos : &Option<usize>,
-                            tar_lf_ids : &HashSet<usize>,
+                            tar_lf_ids : &BTreeSet<usize>,
                             get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Emission(em_act) => {
             if get_affected {
                 return ExecutionResult::new(execute_emission(em_act), tar_lf_ids.clone());
             } else {
-                return ExecutionResult::new(execute_emission(em_act), hashset!{});
+                return ExecutionResult::new(execute_emission(em_act), btreeset!{});
             }
         },
         Interaction::Reception(rc_act) => {
             if get_affected {
                 return ExecutionResult::new(execute_reception(rc_act,sub_pos), tar_lf_ids.clone());
             } else {
-                return ExecutionResult::new(execute_reception(rc_act,sub_pos), hashset!{});
+                return ExecutionResult::new(execute_reception(rc_act,sub_pos), btreeset!{});
             }
         },
         _ => {
@@ -112,7 +112,10 @@ fn execute_interaction_leaf(my_int : &Interaction,
     }
 }
 
-fn make_follow_up_loop(old_i1 : &Interaction, new_i1 : Interaction, lkind : &LoopKind, tar_lf_ids : &HashSet<usize>) -> Interaction {
+fn make_follow_up_loop(old_i1 : &Interaction,
+                       new_i1 : Interaction,
+                       lkind : &LoopKind,
+                       tar_lf_ids : &BTreeSet<usize>) -> Interaction {
     if new_i1 == Interaction::Empty {
         return Interaction::Loop(lkind.clone(), Box::new(old_i1.clone() ) );
     } else {
@@ -148,7 +151,7 @@ fn make_follow_up_loop(old_i1 : &Interaction, new_i1 : Interaction, lkind : &Loo
 
 fn execute_interaction_left(my_int : &Interaction,
                             sub_p1 : &Position,
-                            tar_lf_ids : &HashSet<usize>,
+                            tar_lf_ids : &BTreeSet<usize>,
                             get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Alt(i1, i2) => {
@@ -164,12 +167,11 @@ fn execute_interaction_left(my_int : &Interaction,
         Interaction::Loop(lkind, i1) => {
             let exres1 = execute_interaction(i1,sub_p1,tar_lf_ids,false);
             let new_i1 = exres1.interaction;
-            let affected : HashSet<usize>;
-            if get_affected {
-                affected = i1.involved_lifelines();
+            let affected = if get_affected {
+                i1.involved_lifelines()
             } else {
-                affected = hashset!{};
-            }
+                btreeset!{}
+            };
             let new_i = make_follow_up_loop(i1,new_i1,lkind,tar_lf_ids);
             return ExecutionResult::new(new_i,affected);
         },
@@ -263,7 +265,7 @@ fn execute_interaction_left(my_int : &Interaction,
 
 fn execute_interaction_right(my_int : &Interaction,
                              sub_p2 : &Position,
-                             tar_lf_ids : &HashSet<usize>,
+                             tar_lf_ids : &BTreeSet<usize>,
                              get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Alt(i1,i2) => {
@@ -298,20 +300,19 @@ fn execute_interaction_right(my_int : &Interaction,
         Interaction::Seq(i1,i2) => {
             let new_i1 : Interaction;
             let new_i2 : Interaction;
-            let affected : HashSet<usize>;
-            if get_affected {
+            let affected = if get_affected {
                 let (got_i1,mut aff1) = i1.prune_with_affected(&tar_lf_ids);
                 let exres2 = execute_interaction(i2,sub_p2,tar_lf_ids,true);
                 new_i1 = got_i1;
                 new_i2 = exres2.interaction;
                 aff1.extend(exres2.affected_lifelines);
-                affected = aff1;
+                aff1
             } else {
                 new_i1 = i1.prune(&tar_lf_ids);
                 let exres2 = execute_interaction(i2,sub_p2,tar_lf_ids,false);
                 new_i2 = exres2.interaction;
-                affected = exres2.affected_lifelines;
-            }
+                exres2.affected_lifelines
+            };
             // ***
             if new_i1 == Interaction::Empty {
                 return ExecutionResult::new(new_i2,affected);
@@ -332,8 +333,7 @@ fn execute_interaction_right(my_int : &Interaction,
             // ***
             let new_i1 : Interaction;
             let new_i2 : Interaction;
-            let affected : HashSet<usize>;
-            if get_affected {
+            let affected = if get_affected {
                 let got_i1;
                 let mut aff1;
                 if lfs_to_prune.len() > 0 {
@@ -342,13 +342,13 @@ fn execute_interaction_right(my_int : &Interaction,
                     aff1 = Aaff1;
                 } else {
                     got_i1 = *i1.clone();
-                    aff1 = hashset!{};
+                    aff1 = btreeset!{};
                 }
                 let exres2 = execute_interaction(i2,sub_p2,tar_lf_ids,true);
                 new_i1 = got_i1;
                 new_i2 = exres2.interaction;
                 aff1.extend(exres2.affected_lifelines);
-                affected = aff1;
+                aff1
             } else {
                 if lfs_to_prune.len() > 0 {
                     new_i1 = i1.prune(&lfs_to_prune);
@@ -357,8 +357,8 @@ fn execute_interaction_right(my_int : &Interaction,
                 }
                 let exres2 = execute_interaction(i2,sub_p2,tar_lf_ids,false);
                 new_i2 = exres2.interaction;
-                affected = exres2.affected_lifelines;
-            }
+                exres2.affected_lifelines
+            };
             // ***
             if new_i1 == Interaction::Empty {
                 return ExecutionResult::new(new_i2,affected);
@@ -407,7 +407,7 @@ fn execute_interaction_right(my_int : &Interaction,
 fn execute_interaction_both(my_int : &Interaction,
                             sub_p1 : &Position,
                             sub_p2 : &Position,
-                            tar_lf_ids : &HashSet<usize>,
+                            tar_lf_ids : &BTreeSet<usize>,
                             get_affected : bool) -> ExecutionResult {
     match my_int {
         Interaction::Alt(i1,i2) => {
@@ -465,7 +465,7 @@ fn execute_interaction_both(my_int : &Interaction,
 
 pub fn execute_interaction(my_int : &Interaction,
                my_pos : &Position,
-               tar_lf_ids : &HashSet<usize>,
+               tar_lf_ids : &BTreeSet<usize>,
                            get_affected : bool) -> ExecutionResult {
     match my_pos {
         Position::Epsilon(sub_pos) => {

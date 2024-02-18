@@ -24,7 +24,7 @@ HIBOU_LABEL_LIST = { "(" ~ HIBOU_LABEL ~ ("," ~ HIBOU_LABEL)* ~ ")" }
 HIBOU_true = { "⊤" | "true" | "True" | "TRUE" }
 HIBOU_false = { "⊥" | "false" | "False" | "FALSE" }
 
-
+HIBOU_none = { "none" | "None" | "NONE" }
 // ***
 
 
@@ -54,7 +54,7 @@ GRAPHIC_LOGGER_opt = _{ GRAPHIC_LOGGER_format
                         | GRAPHIC_LOGGER_parent_folder
                         | GRAPHIC_LOGGER_output_file }
 
-GRAPHIC_LOGGER_opts = { "[" ~ GRAPHIC_LOGGER_opt ~ ("," ~ GRAPHIC_LOGGER_opt)* ~ "]" }
+GRAPHIC_LOGGER_opts = { "[" ~ GRAPHIC_LOGGER_opt ~ ("," ~ GRAPHIC_LOGGER_opt)* ~ (",")? ~ "]" }
 OPTION_GRAPHIC_LOGGER = { "graphic" ~ GRAPHIC_LOGGER_opts? }
 
 
@@ -80,7 +80,7 @@ TRACEGEN_LOGGER_opt = _{ TRACEGEN_LOGGER_gen_kind
                         | TRACEGEN_LOGGER_parent_folder
                         | TRACEGEN_LOGGER_trace_prefix }
 
-TRACEGEN_LOGGER_opts = { "[" ~ TRACEGEN_LOGGER_opt ~ ("," ~ TRACEGEN_LOGGER_opt)* ~ "]" }
+TRACEGEN_LOGGER_opts = { "[" ~ TRACEGEN_LOGGER_opt ~ ("," ~ TRACEGEN_LOGGER_opt)* ~ (",")? ~ "]" }
 OPTION_TRACEGEN_LOGGER = { "tracegen" ~ TRACEGEN_LOGGER_opts? }
 
 OPTION_NFAIT_LOGGER = { "nfa" | "nfait" }
@@ -89,7 +89,7 @@ OPTION_NFAIT_LOGGER = { "nfa" | "nfait" }
 
 
 OPTION_LOGGER_KIND = _{ OPTION_GRAPHIC_LOGGER | OPTION_TRACEGEN_LOGGER | OPTION_NFAIT_LOGGER }
-OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ "]" }
+OPTION_LOGGER_DECL = { "loggers" ~ "=" ~ "[" ~ OPTION_LOGGER_KIND ~ ("," ~ OPTION_LOGGER_KIND)* ~ (",")? ~ "]" }
 // ***********************************************
 ARITH_INTEGER = { "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
 // ***********************************************
@@ -124,7 +124,7 @@ OPTION_PRIORITY_LEVEL = { ARITH_INTEGER | ("-" ~ ARITH_INTEGER ) }
 OPTION_PRIORITY_RANDOMIZE = { "randomize" ~ "=" ~ (HIBOU_true | HIBOU_false) }
 OPTION_PRIORITY_SPECIFIC_elt = { OPTION_PRIORITY_KIND ~ "=" ~ OPTION_PRIORITY_LEVEL }
 OPTION_PRIORITY_elt = _{ OPTION_PRIORITY_RANDOMIZE | OPTION_PRIORITY_SPECIFIC_elt }
-OPTION_PRIORITY = { "[" ~ OPTION_PRIORITY_elt ~ ("," ~ OPTION_PRIORITY_elt)* ~ "]" }
+OPTION_PRIORITY = { "[" ~ OPTION_PRIORITY_elt ~ ("," ~ OPTION_PRIORITY_elt)* ~ (",")? ~ "]" }
 // ***********************************************
 OPTION_STRATEGY_BFS = { "BreadthFS" | "Breadth First Search" | "BFS" }
 OPTION_STRATEGY_DFS = { "DepthFS" | "Depth First Search" | "DFS" }
@@ -136,7 +136,7 @@ OPTION_FILTER_MAX_DEPTH = { ("max_depth"|"max" ~ "depth") ~ "=" ~ ARITH_INTEGER 
 OPTION_FILTER_MAX_LOOP_DEPTH = { ("max_loop_depth"|"max" ~ "loop" ~ "depth") ~ "=" ~ ARITH_INTEGER }
 OPTION_FILTER_MAX_NODE_NUMBER = { ("max_node_number"|"max" ~ "node" ~ "number") ~ "=" ~ ARITH_INTEGER }
 OPTION_FILTER = _{ OPTION_FILTER_MAX_DEPTH | OPTION_FILTER_MAX_LOOP_DEPTH | OPTION_FILTER_MAX_NODE_NUMBER }
-OPTION_FILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_FILTER ~ ("," ~ OPTION_FILTER)* ~ "]" }
+OPTION_FILTERS_DECL = { "filters" ~ "=" ~ "[" ~ OPTION_FILTER ~ ("," ~ OPTION_FILTER)* ~ (",")? ~ "]" }
 // ***********************************************
 OPTION_PRIORITIES_DECL = { "priorities" ~ "=" ~ OPTION_PRIORITY }
 // ***********************************************
@@ -165,15 +165,15 @@ OPTION_ANA_KIND_eliminate = { "eliminate" }
 OPTION_ANA_SIMULATE_CONFIG_crit_num = { "num" ~ "=" ~ ARITH_INTEGER }
 OPTION_ANA_SIMULATE_CONFIG_crit_maxnum = { "max_num" | "max"~"num" }
 OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth = { "max_depth" | "max"~"depth" }
-OPTION_ANA_SIMULATE_CONFIG_crit_none = { "none" | "None" | "NONE" }
+
 // ***
 OPTION_ANA_SIMULATE_CONFIG_loop = { "loop" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_maxnum
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_maxdepth
-                                                | OPTION_ANA_SIMULATE_CONFIG_crit_none ) }
+                                                | HIBOU_none ) }
 OPTION_ANA_SIMULATE_CONFIG_act = { "act" ~ ( OPTION_ANA_SIMULATE_CONFIG_crit_num
                                                 | OPTION_ANA_SIMULATE_CONFIG_crit_maxnum
-                                                | OPTION_ANA_SIMULATE_CONFIG_crit_none) }
+                                                | HIBOU_none) }
 // ***
 OPTION_ANA_SIMULATE_CONFIG_simbefore = { ("slice" | "before" | "preamble") ~ "=" ~ (HIBOU_true | HIBOU_false) }
 OPTION_ANA_SIMULATE_CONFIG_multiply_by_mu_length = { ("multiply" | "resized" | "dependent") ~ "=" ~ (HIBOU_true | HIBOU_false) }
@@ -184,7 +184,7 @@ OPTION_ANA_SIMULATE_CONFIG_opt = _{ OPTION_ANA_SIMULATE_CONFIG_simbefore
                                     | OPTION_ANA_SIMULATE_CONFIG_act
                                     | OPTION_ANA_SIMULATE_CONFIG_loop }
 // ***
-OPTION_ANA_SIMULATE_CONFIG_decl = { "[" ~ OPTION_ANA_SIMULATE_CONFIG_opt ~ ("," ~ OPTION_ANA_SIMULATE_CONFIG_opt)* ~ "]" }
+OPTION_ANA_SIMULATE_CONFIG_decl = { "[" ~ OPTION_ANA_SIMULATE_CONFIG_opt ~ ("," ~ OPTION_ANA_SIMULATE_CONFIG_opt)* ~ (",")? ~ "]" }
 // ***
 OPTION_ANA_KIND_simulate = { "simulate" ~ OPTION_ANA_SIMULATE_CONFIG_decl? }
 OPTION_ANALYSIS_KIND = _{ OPTION_ANA_KIND_accept
@@ -195,16 +195,25 @@ OPTION_ANALYSIS_KIND_DECL = { "analysis_kind" ~ "=" ~ OPTION_ANALYSIS_KIND }
 // ***********************************************
 OPTION_GOAL_pass = { "Pass" }
 OPTION_GOAL_weakpass = { "WeakPass" }
-OPTION_GOAL_none = { "None" }
-OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | OPTION_GOAL_none }
+OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | HIBOU_none }
 OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
 // ***********************************************
-OPTION_LOCANA = { "local_analysis" ~ "=" ~ (HIBOU_true | HIBOU_false)  }
+OPTION_LOCANA_depth = { ("max_depth" | "max"~"depth") ~ "=" ~ (HIBOU_none | ARITH_INTEGER)}
+OPTION_LOCANA_select_all = { "all" | "All" | "ALL" }
+OPTION_LOCANA_select_dirty = { "dirty" | "Dirty" | "DIRTY" }
+OPTION_LOCANA_select = { "select" ~ "=" ~ (OPTION_LOCANA_select_all|OPTION_LOCANA_select_dirty) }
+OPTION_LOCANA_CONFIG_opt = _{ OPTION_LOCANA_select
+                                    | OPTION_LOCANA_depth }
+OPTION_LOCANA_CONFIG_decl = { "[" ~ OPTION_LOCANA_CONFIG_opt ~ ("," ~ OPTION_LOCANA_CONFIG_opt)* ~ (",")? ~ "]" }
+OPTION_LOCANA = { "local_analysis" ~ "=" ~ (HIBOU_none|OPTION_LOCANA_CONFIG_decl) }
+// ***********************************************
+OPTION_PARTIAL_ORDER = { ("partial_order_reduction"|"por"|"POR") ~ "=" ~ (HIBOU_true|HIBOU_false) }
 // ***********************************************
 ANALYZE_OPTION_DECL = _{ GENERAL_OPTION_DECL
                             | OPTION_ANALYSIS_KIND_DECL
                             | OPTION_GOAL_DECL
-                            | OPTION_LOCANA }
+                            | OPTION_LOCANA
+                            | OPTION_PARTIAL_ORDER  }
 ANALYZE_OPTION_SECTION =  { "@analyze_option" ~ "{" ~
                                	ANALYZE_OPTION_DECL ~ (";" ~ ANALYZE_OPTION_DECL)* ~ (";")?
                                    ~ "}"}

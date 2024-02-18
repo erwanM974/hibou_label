@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use graph_process_manager_core::delegate::delegate::GenericProcessDelegate;
 use graph_process_manager_core::delegate::priorities::GenericProcessPriorities;
 use graph_process_manager_core::manager::logger::AbstractProcessLogger;
@@ -31,7 +31,7 @@ use crate::process::ana::filter::filter::AnalysisFilter;
 use crate::process::ana::node::flags::{MultiTraceAnalysisFlags, TraceAnalysisFlags};
 use crate::process::ana::node::node::AnalysisNodeKind;
 use crate::process::ana::param::anakind::AnalysisKind;
-use crate::process::ana::param::param::AnalysisParameterization;
+use crate::process::ana::param::param::{AnalysisParameterization, LocalAnalysisLifelineSelectionPolicy, LocalAnalysisParameterization};
 use crate::process::ana::priorities::AnalysisPriorities;
 use crate::process::ana::step::AnalysisStepKind;
 use crate::process::ana::verdict::global::AnalysisGlobalVerdict;
@@ -44,7 +44,7 @@ pub fn get_local_analysis_starting_data(gen_ctx : &GeneralContext,
                                         multi_trace : &MultiTrace,
                                         flags : &MultiTraceAnalysisFlags) -> (CoLocalizations,Interaction,MultiTrace,MultiTraceAnalysisFlags) {
     let local_coloc : CoLocalizations;
-    let locs_lf_ids : &HashSet<usize> = co_localizations.locs_lf_ids.get(canal_id).unwrap();
+    let locs_lf_ids : &BTreeSet<usize> = co_localizations.locs_lf_ids.get(canal_id).unwrap();
     local_coloc = CoLocalizations::new(vec![locs_lf_ids.clone()]);
     // ***
     let local_interaction : Interaction;
@@ -69,40 +69,54 @@ pub fn get_local_analysis_starting_data(gen_ctx : &GeneralContext,
 pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
                               co_localizations : &CoLocalizations,
                               parent_analysis_kind : &AnalysisKind,
-                              use_locana : bool,
+                              locana_param : &LocalAnalysisParameterization,
+                              use_partial_order_reduction : bool,
                               interaction : &Interaction,
                               multi_trace : &MultiTrace,
                               flags : &mut MultiTraceAnalysisFlags) -> Option<usize> {
-    if use_locana {
-        for (canal_id, colocalized_lfs) in co_localizations.locs_lf_ids.iter().enumerate() {
-            let canal_flags: &mut TraceAnalysisFlags = flags.canals.get_mut(canal_id).unwrap();
-            let canal_trace: &Trace = multi_trace.get(canal_id).unwrap();
-            // ***
-            if canal_flags.dirty4local && canal_trace.len() > canal_flags.consumed {
-                let local_flags : MultiTraceAnalysisFlags = MultiTraceAnalysisFlags::new(vec![canal_flags.clone()], flags.rem_loop_in_sim, flags.rem_act_in_sim);
-                let local_multi_trace : MultiTrace = vec![canal_trace.clone()];
-                let local_interaction : Interaction;
-                {
-                    let mut lfs_to_remove = gen_ctx.get_all_lfs_ids();
-                    for lf_id in colocalized_lfs {
-                        lfs_to_remove.remove( &lf_id );
-                    }
-                    local_interaction = interaction.eliminate_lifelines(&lfs_to_remove);
-                }
-                let local_coloc = CoLocalizations::new(vec![colocalized_lfs.clone()]);
-                match perform_local_analysis(gen_ctx,local_coloc,parent_analysis_kind,local_interaction,local_multi_trace,local_flags,vec![]) {
-                    AnalysisGlobalVerdict::Fail => {
-                        return Some(canal_id);
-                    },
-                    AnalysisGlobalVerdict::WeakFail => {
-                        return Some(canal_id);
-                    },
-                    _ => {}
-                }
-            }
-            // ***
-            canal_flags.dirty4local = false;
+    'iter_coloc : for (canal_id, colocalized_lfs) in co_localizations.locs_lf_ids.iter().enumerate() {
+        let canal_flags: &mut TraceAnalysisFlags = flags.canals.get_mut(canal_id).unwrap();
+        let canal_trace: &Trace = multi_trace.get(canal_id).unwrap();
+        // ***
+        // if we have already consumed the local trace, continue
+        if canal_trace.len() <= canal_flags.consumed {
+            continue 'iter_coloc;
         }
+        // ***
+        // perform local analysis on canal if the selection policy is to always perform local analyses
+        // or if the co-localization's flag is dirty
+        if locana_param.on_lifeline_policy == LocalAnalysisLifelineSelectionPolicy::SelectAll || canal_flags.dirty4local {
+            let local_flags : MultiTraceAnalysisFlags = MultiTraceAnalysisFlags::new(vec![canal_flags.clone()], flags.rem_loop_in_sim, flags.rem_act_in_sim);
+            let local_multi_trace : MultiTrace = vec![canal_trace.clone()];
+            let local_interaction : Interaction;
+            {
+                let mut lfs_to_remove = gen_ctx.get_all_lfs_ids();
+                for lf_id in colocalized_lfs {
+                    lfs_to_remove.remove( &lf_id );
+                }
+                local_interaction = interaction.eliminate_lifelines(&lfs_to_remove);
+            }
+            let local_coloc = CoLocalizations::new(vec![colocalized_lfs.clone()]);
+            match perform_local_analysis(gen_ctx,
+                                         local_coloc,
+                                         parent_analysis_kind,
+                                         use_partial_order_reduction,
+                                         &locana_param.max_depth,
+                                         local_interaction,
+                                         local_multi_trace,
+                                         local_flags,
+                                         vec![]) {
+                AnalysisGlobalVerdict::Fail => {
+                    return Some(canal_id);
+                },
+                AnalysisGlobalVerdict::WeakFail => {
+                    return Some(canal_id);
+                },
+                _ => {}
+            }
+        }
+        // ***
+        canal_flags.dirty4local = false;
     }
     return None;
 }
@@ -113,6 +127,8 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
 pub fn perform_local_analysis(gen_ctx : &GeneralContext,
                           local_coloc : CoLocalizations,
                           parent_analysis_kind : &AnalysisKind,
+                          use_partial_order_reduction : bool,
+                          max_depth : &Option<u32>,
                           local_interaction : Interaction,
                           local_multi_trace : MultiTrace,
                           local_flags : MultiTraceAnalysisFlags,
@@ -135,12 +151,18 @@ pub fn perform_local_analysis(gen_ctx : &GeneralContext,
     let new_gen_ctx= gen_ctx.clone();
     // ***
     let mut locana_filters : Vec<AnalysisFilter> = vec![];
+    if let Some(d) = max_depth {
+        locana_filters.push(AnalysisFilter::MaxProcessDepth(*d as u32));
+    }
     // ***
     let init_mu_len = multi_trace_length(&local_multi_trace);
     let locana_ctx = AnalysisContext::new(new_gen_ctx,local_coloc,local_multi_trace,init_mu_len);
     let priorities : GenericProcessPriorities<AnalysisPriorities> = GenericProcessPriorities::new(AnalysisPriorities::default(),false);
     let delegate : GenericProcessDelegate<AnalysisStepKind,AnalysisNodeKind,AnalysisPriorities> = GenericProcessDelegate::new(QueueSearchStrategy::HCS,priorities);
-    let locana_param = AnalysisParameterization::new(local_analysis_kind, false);
+    let locana_param = AnalysisParameterization::new(
+        local_analysis_kind,
+        None,
+        use_partial_order_reduction);
     let mut local_analysis_manager : GenericProcessManager<AnalysisConfig> = GenericProcessManager::new(locana_ctx,
                                                                                                         locana_param,
                                                                                                         delegate,

@@ -17,7 +17,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use crate::core::language::involve::involves::InvolvesLifelines;
 use crate::core::language::syntax::interaction::Interaction;
 
@@ -26,10 +26,10 @@ use crate::core::language::syntax::interaction::Interaction;
 
 
 impl InvolvesLifelines for Interaction {
-    fn involved_lifelines(&self) -> HashSet<usize> {
+    fn involved_lifelines(&self) -> BTreeSet<usize> {
         match &self {
             &Interaction::Empty => {
-                return HashSet::new();
+                return btreeset!{};
             },
             &Interaction::Emission(ref em_act) => {
                 return em_act.involved_lifelines();
@@ -76,7 +76,7 @@ impl InvolvesLifelines for Interaction {
         }
     }
 
-    fn involves_any_of(&self, lf_ids : &HashSet<usize>) -> bool {
+    fn involves_any_of(&self, lf_ids : &BTreeSet<usize>) -> bool {
         match self {
             &Interaction::Empty => {
                 return false;

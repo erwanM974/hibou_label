@@ -68,7 +68,7 @@ pub fn multi_action_from_text(gen_ctx : &GeneralContext,
         },
         Ok( ref mut content ) => {
             let trace_elt_pair = content.next().unwrap();
-            return trace_element_from_pair(gen_ctx,trace_elt_pair,&hashset!{},&mut hashset!{}, true);
+            return trace_element_from_pair(gen_ctx,trace_elt_pair,&btreeset!{},&mut btreeset!{}, true);
         }
     }
 }

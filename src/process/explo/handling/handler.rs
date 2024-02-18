@@ -70,7 +70,7 @@ impl AbstractProcessHandler<ExplorationConfig> for ExplorationProcessHandler {
                           parent_node_kind: &ExplorationNodeKind)
                 -> Vec<ExplorationStepKind> {
         
-        let mut glob_front = global_frontier(&parent_node_kind.interaction,&None);
+        let mut glob_front = global_frontier(&parent_node_kind.interaction);
         // reverse so that when one pops from right to left the actions appear from the top to the bottom
         glob_front.reverse();
         // ***

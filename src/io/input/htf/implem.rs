@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use pest::iterators::Pair;
 use crate::core::colocalizations::CoLocalizations;
@@ -46,8 +46,8 @@ pub fn multitrace_from_text(gen_ctx : &GeneralContext,
             let first_pair : Pair<Rule> = content.next().unwrap();
             match first_pair.as_rule() {
                 Rule::TRACE_SEQUENCE => {
-                    let mut lifelines : HashSet<usize> = hashset!{};
-                    match trace_sequence_from_pair(gen_ctx,first_pair,&hashset!{},&mut lifelines,true) {
+                    let mut lifelines : BTreeSet<usize> = btreeset!{};
+                    match trace_sequence_from_pair(gen_ctx,first_pair,&btreeset!{},&mut lifelines,true) {
                         Err(e) => {
                             return Err(e);
                         },
@@ -59,9 +59,9 @@ pub fn multitrace_from_text(gen_ctx : &GeneralContext,
                     }
                 },
                 Rule::MULTI_TRACE => {
-                    let mut unavailable_lifelines : HashSet<usize> = HashSet::new();
+                    let mut unavailable_lifelines : BTreeSet<usize> = btreeset!{};
                     let mut multi_trace : MultiTrace = vec![];
-                    let mut colocs : Vec<HashSet<usize>> = vec![];
+                    let mut colocs : Vec<BTreeSet<usize>> = vec![];
                     for canal_trace_pair in first_pair.into_inner() {
                         match trace_canal_from_pair(gen_ctx,
                                                     canal_trace_pair,
@@ -89,15 +89,15 @@ pub fn multitrace_from_text(gen_ctx : &GeneralContext,
 
 
 fn complete_canals_up_to_defined_lifelines(gen_ctx : &GeneralContext,
-                                           colocs : &mut Vec<HashSet<usize>>,
+                                           colocs : &mut Vec<BTreeSet<usize>>,
                                            multi_trace : &mut MultiTrace) {
-    let mut rem_lifelines : HashSet<usize> = gen_ctx.get_all_lfs_ids();
+    let mut rem_lifelines : BTreeSet<usize> = gen_ctx.get_all_lfs_ids();
     for coloc in colocs.iter() {
         rem_lifelines = &rem_lifelines - coloc;
     }
     // ***
     for lf_id in rem_lifelines {
-        colocs.push( hashset!{lf_id} );
+        colocs.push( btreeset!{lf_id} );
         multi_trace.push(vec![]);
     }
     // ***

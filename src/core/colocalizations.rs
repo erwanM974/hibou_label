@@ -18,28 +18,28 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 #[derive(Clone, PartialEq, Debug, Eq)]
 pub struct CoLocalizations {
-    pub locs_lf_ids : Vec<HashSet<usize>>
+    pub locs_lf_ids : Vec<BTreeSet<usize>>
 }
 
 impl CoLocalizations {
 
-    pub fn new(locs_lf_ids :  Vec<HashSet<usize>>) -> CoLocalizations {
+    pub fn new(locs_lf_ids :  Vec<BTreeSet<usize>>) -> CoLocalizations {
         return CoLocalizations{locs_lf_ids};
     }
 
     pub fn get_trivial_partition(lf_num : usize) -> CoLocalizations {
-        let mut all_lfs : HashSet<usize> = HashSet::from_iter((0..lf_num).collect::<Vec<usize>>().iter().cloned());
+        let mut all_lfs : BTreeSet<usize> = BTreeSet::from_iter((0..lf_num).collect::<Vec<usize>>().iter().cloned());
         return CoLocalizations::new(vec![all_lfs]);
     }
 
     pub fn get_discrete_partition(lf_num : usize) -> CoLocalizations {
         let mut colocs = vec![];
         for lf_id in 0..lf_num {
-            colocs.push( hashset!{lf_id} )
+            colocs.push( btreeset!{lf_id} )
         }
         return CoLocalizations::new(colocs);
     }
@@ -52,7 +52,7 @@ impl CoLocalizations {
         return self.locs_lf_ids.len();
     }
 
-    pub fn get_coloc_ids_from_lf_ids(&self, lfs_ids : &HashSet<usize>) -> HashSet<usize> {
+    pub fn get_coloc_ids_from_lf_ids(&self, lfs_ids : &BTreeSet<usize>) -> HashSet<usize> {
         let mut colocs_ids : HashSet<usize> = HashSet::new();
         for lf_id in lfs_ids {
             colocs_ids.insert(self.get_lf_coloc_id(*lf_id).unwrap());
@@ -60,17 +60,17 @@ impl CoLocalizations {
         return colocs_ids;
     }
 
-    pub fn get_lf_ids_from_coloc_ids(&self, coloc_ids : &HashSet<usize>) -> HashSet<usize> {
-        let mut lfs_ids : HashSet<usize> = HashSet::new();
+    pub fn get_lf_ids_from_coloc_ids(&self, coloc_ids : &HashSet<usize>) -> BTreeSet<usize> {
+        let mut lfs_ids = btreeset!{};
         for coloc_id in coloc_ids {
-            let got_lf_ids : &HashSet<usize> = self.locs_lf_ids.get(*coloc_id).unwrap();
+            let got_lf_ids : &BTreeSet<usize> = self.locs_lf_ids.get(*coloc_id).unwrap();
             lfs_ids.extend(got_lf_ids);
         }
         return lfs_ids;
     }
 
-    pub fn get_coloc_lfs_ids(&self, coloc_id : usize) -> &HashSet<usize> {
-        let got_lf_ids : &HashSet<usize> = self.locs_lf_ids.get(coloc_id).unwrap();
+    pub fn get_coloc_lfs_ids(&self, coloc_id : usize) -> &BTreeSet<usize> {
+        let got_lf_ids : &BTreeSet<usize> = self.locs_lf_ids.get(coloc_id).unwrap();
         return got_lf_ids;//.clone();
     }
 

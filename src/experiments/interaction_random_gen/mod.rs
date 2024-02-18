@@ -15,14 +15,7 @@ limitations under the License.
 */
 
 
-use std::collections::{BTreeSet, HashSet};
 
-pub trait InvolvesLifelines {
-
-    fn involved_lifelines(&self) -> BTreeSet<usize>;
-
-    fn involves_any_of(&self, lf_ids : &BTreeSet<usize>) -> bool;
-}
-
-
-
+pub mod probas;
+mod gen;
+pub mod interface;

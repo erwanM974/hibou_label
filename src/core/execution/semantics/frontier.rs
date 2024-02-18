@@ -26,10 +26,10 @@ use crate::core::language::syntax::action::{CommunicationSynchronicity, Emission
 use crate::core::language::syntax::interaction::Interaction;
 
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct FrontierElement {
     pub position : Position,
-    pub target_lf_ids : HashSet<usize>,
+    pub target_lf_ids : BTreeSet<usize>,
     pub target_actions : BTreeSet<TraceAction>,
     pub max_loop_depth : u32
 }
@@ -37,7 +37,7 @@ pub struct FrontierElement {
 
 impl FrontierElement {
     pub fn new(position : Position,
-               target_lf_ids : HashSet<usize>,
+               target_lf_ids : BTreeSet<usize>,
                target_actions : BTreeSet<TraceAction>,
                max_loop_depth : u32) -> FrontierElement {
         return FrontierElement{position,target_lf_ids,target_actions,max_loop_depth};
@@ -47,23 +47,8 @@ impl FrontierElement {
 
 
 
-pub fn global_frontier(interaction : &Interaction,
-                   to_match : &Option<&HashSet<&TraceAction>>) -> Vec<FrontierElement> {
-    match to_match {
-        None => {
-            return global_frontier_rec(interaction, 0);
-        },
-        Some( to_match_set ) => {
-            let mut frt = vec![];
-            for frt_elt in global_frontier_rec(interaction, 0) {
-                let of_references : HashSet<&TraceAction> = frt_elt.target_actions.iter().collect();
-                if of_references.is_subset(to_match_set) {
-                    frt.push(frt_elt);
-                }
-            }
-            return frt;
-        }
-    }
+pub fn global_frontier(interaction : &Interaction) -> Vec<FrontierElement> {
+    global_frontier_rec(interaction, 0)
 }
 
 
@@ -80,7 +65,7 @@ fn frontier_on_emission(em_act : &EmissionAction, loop_depth : u32) -> Vec<Front
         CommunicationSynchronicity::Asynchronous => {
             let emission_tract = em_act.get_first_atomic_action();
             return vec![FrontierElement::new(Position::Epsilon(None),
-                                             hashset!{em_act.origin_lf_id},
+                                             btreeset!{em_act.origin_lf_id},
                                              btreeset!{emission_tract},
                                              loop_depth)];
         }
@@ -102,7 +87,7 @@ fn frontier_on_reception(rc_act : &ReceptionAction, loop_depth : u32) -> Vec<Fro
             for (rcp_idx,rcp_lf_id) in rc_act.recipients.iter().enumerate() {
                 let reception_tract = rc_act.get_specific_atomic_action(rcp_idx);
                 frt.push( FrontierElement::new(Position::Epsilon(Some(rcp_idx)),
-                                               hashset!{*rcp_lf_id},
+                                               btreeset!{*rcp_lf_id},
                                                btreeset!{reception_tract},
                                                loop_depth) );
             }
@@ -178,7 +163,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                 let frt1_elt : &FrontierElement = frt1.get(frt1_idx).unwrap();
                 let frt2_elt: &FrontierElement = frt2.get(frt2_idx).unwrap();
                 let new_pos = Position::Both( Box::new(frt1_elt.position.clone()), Box::new(frt2_elt.position.clone()));
-                let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
+                let new_target_lf_ids : BTreeSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
                 let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
                 let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
                 // ***
@@ -258,7 +243,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                     if intersect1 == intersect2 {
                         let new_pos = Position::Both(Box::new(frt1_elt.position.clone()),
                                                      Box::new(frt2_elt.position.clone()));
-                        let new_target_lf_ids : HashSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
+                        let new_target_lf_ids : BTreeSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
                         let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
                         let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
                         // ***

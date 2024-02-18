@@ -35,7 +35,7 @@ pub fn make_interaction_image(gen_ctx : &GeneralContext,
     let mut lf_x_widths : HashMap<usize,DrawingLifelineCoords> = HashMap::new();
     let mut current_x : f32 = MARGIN;
     for lf_id in 0..gen_ctx.get_lf_num() {
-        if interaction.involves_any_of(&hashset!{lf_id}) {
+        if interaction.involves_any_of(&btreeset!{lf_id}) {
             let lf_char_width = gen_ctx.get_lf_name(lf_id).unwrap().len();
             // ***
             let span_inner = (HORIZONTAL_SIZE - 2.0*MARGIN).max( 2.0*MARGIN + (lf_char_width as f32)*FONT_WIDTH/2.0 );

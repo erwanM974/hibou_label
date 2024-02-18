@@ -34,8 +34,8 @@ use crate::io::input::htf::parser::{HtfParser,Rule};
 
 pub fn trace_sequence_from_pair(gen_ctx : &GeneralContext,
                                 trace_sequence_pair : Pair<Rule>,
-                                unavailable_lifelines : &HashSet<usize>,
-                                lifelines : &mut HashSet<usize>,
+                                unavailable_lifelines : &BTreeSet<usize>,
+                                lifelines : &mut BTreeSet<usize>,
                                 add_lfs : bool) -> Result<Trace,HibouParsingError> {
     let mut trace : Trace = vec![];
     for trace_elt_pair in trace_sequence_pair.into_inner() {
@@ -54,8 +54,8 @@ pub fn trace_sequence_from_pair(gen_ctx : &GeneralContext,
 
 pub fn trace_element_from_pair(gen_ctx : &GeneralContext,
                                trace_elt_pair : Pair<Rule>,
-                               unavailable_lifelines : &HashSet<usize>,
-                               lifelines : &mut HashSet<usize>,
+                               unavailable_lifelines : &BTreeSet<usize>,
+                               lifelines : &mut BTreeSet<usize>,
                                add_lfs : bool) -> Result<BTreeSet<TraceAction>,HibouParsingError> {
     match trace_elt_pair.as_rule() {
         Rule::TRACE_ACTION => {
@@ -83,8 +83,8 @@ pub fn trace_element_from_pair(gen_ctx : &GeneralContext,
 
 fn get_trace_multi_action(gen_ctx : &GeneralContext,
                           multi_act_pair : Pair<Rule>,
-                          unavailable_lifelines : &HashSet<usize>,
-                          lifelines : &mut HashSet<usize>,
+                          unavailable_lifelines : &BTreeSet<usize>,
+                          lifelines : &mut BTreeSet<usize>,
                           add_lfs : bool) -> Result<BTreeSet<TraceAction>,HibouParsingError> {
     let mut multi_action = btreeset!{};
     for action_pair in multi_act_pair.into_inner() {
@@ -100,8 +100,8 @@ fn get_trace_multi_action(gen_ctx : &GeneralContext,
 
 fn get_trace_action(gen_ctx : &GeneralContext,
                     action_pair : Pair<Rule>,
-                    unavailable_lifelines : &HashSet<usize>,
-                    lifelines : &mut HashSet<usize>,
+                    unavailable_lifelines : &BTreeSet<usize>,
+                    lifelines : &mut BTreeSet<usize>,
                     add_lfs : bool)-> Result<TraceAction,HibouParsingError>  {
     match trace_action_from_text(gen_ctx,action_pair) {
         Err(e) => {

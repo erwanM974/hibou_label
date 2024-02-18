@@ -36,6 +36,8 @@ pub enum InteractionGenerationSymbol {
     Seq,
     Par,
     LoopS,
+    LoopW,
+    LoopP,
     Alt,
     Basic
 }
@@ -77,7 +79,47 @@ impl InteractionSymbolsProbabilities {
         Ok(Self{ordered_symbols,ordered_bounds})
     }
 
-    pub fn default() -> InteractionSymbolsProbabilities {
+    pub fn conservative() -> InteractionSymbolsProbabilities {
+        let map = hashmap!{
+            InteractionGenerationSymbol::Empty      => 0.025,
+            InteractionGenerationSymbol::Basic     => 0.175,
+            // total 0.2
+            InteractionGenerationSymbol::Action     => 0.15,
+            // total 0.35
+            InteractionGenerationSymbol::Seq        => 0.3,
+            // total 0.65
+            InteractionGenerationSymbol::Alt        => 0.15,
+            // total 0.8
+            InteractionGenerationSymbol::LoopW       => 0.15,
+            // total 0.95
+            InteractionGenerationSymbol::Par => 0.05
+            // total 1.0
+        };
+        Self::from_map(map).unwrap()
+    }
+
+    pub fn default_non_regular() -> InteractionSymbolsProbabilities {
+        let map = hashmap!{
+            InteractionGenerationSymbol::Empty      => 0.025,
+            InteractionGenerationSymbol::Basic     => 0.125,
+            // total 0.15
+            InteractionGenerationSymbol::Action     => 0.05,
+            // total 0.2
+            InteractionGenerationSymbol::Seq        => 0.3,
+            // total 0.5
+            InteractionGenerationSymbol::Alt        => 0.15,
+            // total 0.65
+            InteractionGenerationSymbol::LoopW       => 0.15,
+            // total 0.8
+            InteractionGenerationSymbol::LoopP       => 0.1,
+            // total 0.9
+            InteractionGenerationSymbol::Par => 0.1
+            // total 1.0
+        };
+        Self::from_map(map).unwrap()
+    }
+
+    pub fn default_regular() -> InteractionSymbolsProbabilities {
         let map = hashmap!{
             InteractionGenerationSymbol::Empty      => 0.025,
             InteractionGenerationSymbol::Action     => 0.175,
@@ -96,7 +138,7 @@ impl InteractionSymbolsProbabilities {
         Self::from_map(map).unwrap()
     }
 
-    pub fn default_high_level() -> InteractionSymbolsProbabilities {
+    pub fn default_high_level_regular() -> InteractionSymbolsProbabilities {
         let map = hashmap!{
             InteractionGenerationSymbol::Empty      => 0.05,
             InteractionGenerationSymbol::Action      => 0.15,
@@ -155,7 +197,7 @@ mod tests {
 
     #[test]
     fn mutate_remove_test() {
-        let probas = InteractionSymbolsProbabilities::default();
+        let probas = InteractionSymbolsProbabilities::default_regular();
         println!("{:}", probas);
     }
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use pest::iterators::Pair;
 use crate::core::execution::trace::multitrace::MultiTrace;
@@ -36,11 +36,11 @@ use crate::io::input::htf::parser::{HtfParser,Rule};
 
 pub fn trace_canal_from_pair(gen_ctx : &GeneralContext,
                                        trace_pair : Pair<Rule>,
-                                       co_localizations : &mut Vec<HashSet<usize>>,
+                                       co_localizations : &mut Vec<BTreeSet<usize>>,
                                        multi_trace : &mut MultiTrace,
-                             unavailable_lifelines : &mut HashSet<usize>) -> Result<(),HibouParsingError> {
+                             unavailable_lifelines : &mut BTreeSet<usize>) -> Result<(),HibouParsingError> {
     // ***
-    let mut lifelines : HashSet<usize> = HashSet::new();
+    let mut lifelines : BTreeSet<usize> = btreeset!{};
     // ***
     let mut content = trace_pair.into_inner();
     let canal_lfs_pair = content.next().unwrap();
@@ -60,7 +60,7 @@ pub fn trace_canal_from_pair(gen_ctx : &GeneralContext,
             }
         },
         Rule::CANAL_LIFELINES_all => {
-            let mut remaining_lfs : HashSet<usize> = gen_ctx.get_all_lfs_ids();
+            let mut remaining_lfs : BTreeSet<usize> = gen_ctx.get_all_lfs_ids();
             remaining_lfs = &remaining_lfs - unavailable_lifelines;
             match trace_sequence_from_pair(gen_ctx,trace_sequence_pair,unavailable_lifelines,&mut remaining_lfs, false) {
                 Err(e) => {
@@ -74,7 +74,7 @@ pub fn trace_canal_from_pair(gen_ctx : &GeneralContext,
             }
         },
         Rule::CANAL_LIFELINES_spec => {
-            let mut lifelines : HashSet<usize> = hashset!{};
+            let mut lifelines : BTreeSet<usize> = btreeset!{};
             for trace_lf_pair in canal_lfs_pair.into_inner() {
                 let lf_name : String  = trace_lf_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                 match gen_ctx.get_lf_id(&lf_name) {

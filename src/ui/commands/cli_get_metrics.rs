@@ -70,8 +70,8 @@ pub fn cli_get_metrics(matches : &ArgMatches) -> (Vec<String>, u32) {
                                                                                           &int,
                                                                                           alphabet.clone());
                                 let in_micros = duration.as_micros();
-                                println!("via exploration translated interaction into nfa of {:} states in {:}μs", nfa.transitions.len(), in_micros);
                                 nfa = got_nfa;
+                                println!("via exploration translated interaction into nfa of {:} states in {:}μs", nfa.transitions.len(), in_micros);
                                 durations.push(in_micros);
                             }
 
