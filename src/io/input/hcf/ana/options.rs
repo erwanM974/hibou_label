@@ -66,7 +66,10 @@ impl HibouAnalyzeOptions {
     pub fn default() -> HibouAnalyzeOptions {
         let default_param = AnalysisParameterization::new(
             AnalysisKind::Prefix,
-            Some(LocalAnalysisParameterization::new(LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,None)),
+            Some(LocalAnalysisParameterization::new(
+                LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,
+                None,
+                1)),
             false);
         HibouAnalyzeOptions::new(
             vec![],
@@ -90,7 +93,10 @@ pub fn parse_analyze_options(gen_ctx : &GeneralContext,
     let mut priorities : GenericProcessPriorities<AnalysisPriorities> = GenericProcessPriorities::new(AnalysisPriorities::default(),false);
     let mut ana_kind = AnalysisKind::Prefix;
     let mut use_locana = true;
-    let mut locana_param = LocalAnalysisParameterization::new(LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,None);
+    let mut locana_param = LocalAnalysisParameterization::new(
+        LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep,
+        None,
+        1);
     let mut use_partial_order_reduction = false;
     let mut use_memoization = true;
     let mut goal = Some(AnalysisGlobalVerdict::WeakPass);
@@ -412,7 +418,8 @@ fn parse_local_analyses_config(locana_pair : Pair<Rule>) -> Result<Option<LocalA
             return Ok(None);
         },
         Rule::OPTION_LOCANA_CONFIG_decl => {
-            let mut max_depth = None;
+            let mut max_look_ahead_depth = None;
+            let mut modulo_each_X_steps = 1;
             let mut select = LocalAnalysisLifelineSelectionPolicy::OnlyOnImpactedByLastStep;
             for inner_pair in choice_pair.into_inner() {
                 match inner_pair.as_rule() {
@@ -434,16 +441,28 @@ fn parse_local_analyses_config(locana_pair : Pair<Rule>) -> Result<Option<LocalA
                         let depth_pair = inner_pair.into_inner().next().unwrap();
                         match depth_pair.as_rule() {
                             Rule::HIBOU_none => {
-                                max_depth = None;
+                                max_look_ahead_depth = None;
                             },
                             Rule::ARITH_INTEGER => {
-                                let content = depth_pair.into_inner().next().unwrap();
-                                let content_str : String = content.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                                let content_str : String = depth_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                                 let my_val : u32 = content_str.parse::<u32>().unwrap();
-                                max_depth = Some(my_val);
+                                max_look_ahead_depth = Some(my_val);
                             },
                             _ => {
                                 panic!("what rule then ? : {:?}", depth_pair.as_rule() );
+                            }
+                        }
+                    },
+                    Rule::OPTION_LOCANA_modulo => {
+                        let modulo_pair = inner_pair.into_inner().next().unwrap();
+                        match modulo_pair.as_rule() {
+                            Rule::ARITH_INTEGER => {
+                                let content_str : String = modulo_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
+                                let my_val : u32 = content_str.parse::<u32>().unwrap();
+                                modulo_each_X_steps = my_val;
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", modulo_pair.as_rule() );
                             }
                         }
                     },
@@ -452,7 +471,10 @@ fn parse_local_analyses_config(locana_pair : Pair<Rule>) -> Result<Option<LocalA
                     }
                 }
             }
-            let locana_param = LocalAnalysisParameterization::new(select,max_depth);
+            let locana_param = LocalAnalysisParameterization::new(
+                select,
+                max_look_ahead_depth,
+                modulo_each_X_steps);
             return Ok(Some(locana_param));
         },
         // ***

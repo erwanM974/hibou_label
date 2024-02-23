@@ -126,12 +126,19 @@ impl AbstractProcessHandler<AnalysisConfig> for AnalysisProcessHandler {
                     let insert_hide_step : bool = if canals_ids_to_hide.is_empty() {
                         false
                     } else {
+                        true
+                        // we could also require that the interaction does not involve the lifelines to hide
+                        // it is a good thing to do generally
+                        // however, if we want to compute the size of the analysis graph precisely
+                        // it messes up the calculations because we may have (L\H1,i,u) and (L\H2,i,u) from different paths
+                        // anyways I removed it for now
+                        /*
                         let lfs_to_hide = context.co_localizations.get_lf_ids_from_coloc_ids(&canals_ids_to_hide);
                         if parent_node_kind.interaction.involves_any_of(&lfs_to_hide) {
                             true
                         } else {
                             false
-                        }
+                        }*/
                     };
                     //
                     if insert_hide_step {

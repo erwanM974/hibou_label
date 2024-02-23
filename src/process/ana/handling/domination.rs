@@ -37,7 +37,7 @@ pub fn get_head_actions_ids_maps(algo_uses_lifeline_removal_steps : bool,
     let mut head_action_id_to_follow_ups : HashMap<usize,HashSet<Interaction>> = hashmap!{};
 
     // iter immediately executable multi-actions
-    for frt_elt in global_frontier(interaction) {
+    for frt_elt in global_frontier(interaction,true) {
         // iter head actions to look for a match
         'iter_head : for (x,(coloc_id,head,is_last)) in head_actions.iter().enumerate() {
             // if there is a match keeps track of frt_elt and the follow_up interaction
@@ -80,18 +80,18 @@ pub fn get_domination_domain(
     let mut dominates : HashSet<usize> = hashset!{};
     let left = head_id_for_which_to_compute_domain;
     for right in head_action_id_to_follow_ups.keys().copied().filter(|right| *right != left) {
-        let (left_coloc_id,left_actions,left_is_last) = head_actions.get(left).unwrap();
-        let (right_coloc_id,right_actions,right_is_last) = head_actions.get(right).unwrap();
+        let (_,left_actions,left_is_last) = head_actions.iter().filter(|(c,_,_)| *c == left).next().unwrap();
+        let (_,right_actions,right_is_last) = head_actions.iter().filter(|(c,_,_)| *c == right).next().unwrap();
         let mut left_then_right = hashset!{};
         for left_follow_up in head_action_id_to_follow_ups.get(&left).unwrap() {
-            for after_left in global_frontier(left_follow_up) {
+            for after_left in global_frontier(left_follow_up,true) {
                 if after_left.target_actions == **right_actions {
                     let exe_result = execute_interaction(left_follow_up,
                                                          &after_left.position,
                                                          &after_left.target_lf_ids,
                                                          false);
                     let follow_up = if algo_uses_lifeline_removal_steps && *right_is_last {
-                        let lfs_to_remove = context.co_localizations.get_coloc_lfs_ids(*right_coloc_id);
+                        let lfs_to_remove = context.co_localizations.get_coloc_lfs_ids(right);
                         exe_result.interaction.eliminate_lifelines(lfs_to_remove)
                     } else {
                         exe_result.interaction
@@ -102,14 +102,14 @@ pub fn get_domination_domain(
         }
         let mut right_then_left = hashset!{};
         for right_follow_up in head_action_id_to_follow_ups.get(&right).unwrap() {
-            for after_right in global_frontier(right_follow_up) {
+            for after_right in global_frontier(right_follow_up,true) {
                 if after_right.target_actions == **left_actions {
                     let exe_result = execute_interaction(right_follow_up,
                                                          &after_right.position,
                                                          &after_right.target_lf_ids,
                                                          false);
                     let follow_up = if algo_uses_lifeline_removal_steps && *left_is_last {
-                        let lfs_to_remove = context.co_localizations.get_coloc_lfs_ids(*left_coloc_id);
+                        let lfs_to_remove = context.co_localizations.get_coloc_lfs_ids(left);
                         exe_result.interaction.eliminate_lifelines(lfs_to_remove)
                     } else {
                         exe_result.interaction
@@ -151,7 +151,7 @@ pub fn get_domination_maps(
         let (right_coloc_id,right_actions,right_is_last) = head_actions.get(right).unwrap();
         let mut left_then_right = hashset!{};
         for left_follow_up in head_action_id_to_follow_ups.get(&left).unwrap() {
-            for after_left in global_frontier(left_follow_up) {
+            for after_left in global_frontier(left_follow_up,true) {
                 if after_left.target_actions == **right_actions {
                     let exe_result = execute_interaction(left_follow_up,
                                                          &after_left.position,
@@ -169,7 +169,7 @@ pub fn get_domination_maps(
         }
         let mut right_then_left = hashset!{};
         for right_follow_up in head_action_id_to_follow_ups.get(&right).unwrap() {
-            for after_right in global_frontier(right_follow_up) {
+            for after_right in global_frontier(right_follow_up,true) {
                 if after_right.target_actions == **left_actions {
                     let exe_result = execute_interaction(right_follow_up,
                                                          &after_right.position,
@@ -208,20 +208,3 @@ pub fn get_domination_maps(
 
 
 
-pub fn is_action_univocal_in_analysis(context : &AnalysisContext,
-                      interaction : &Interaction,
-                      coloc_id : usize,
-                      head_multi_action : &BTreeSet<TraceAction>) -> bool {
-    let lfs_to_remove = context.co_localizations.get_coloc_lfs_ids(coloc_id);
-    let mono_coloc_interaction = interaction.eliminate_lifelines(lfs_to_remove);
-    let mut match_count = 0;
-    for frt_elt in global_frontier(&mono_coloc_interaction) {
-        if frt_elt.target_actions == *head_multi_action {
-            match_count += 1;
-            if match_count >= 2 {
-                return false;
-            }
-        }
-    }
-    true
-}

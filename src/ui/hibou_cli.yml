@@ -16,13 +16,13 @@
 
 
 name: hibou_label
-version: "0.8.5"
+version: "0.8.7"
 author: Erwan Mahe <github.com/erwanM974>
 about: Holistic Interaction Behavioral Oracle Utility - hibou provides utilities for manipulating interaction models (sequence diagrams/sequence charts)
 subcommands:
     - draw:
         about: utility to draw an interaction either as a sequence diagram or a term tree
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -45,7 +45,7 @@ subcommands:
               help: kind of representation (either sequence diagram 'sd' or term tree 'tt')
     - glosem:
         about: utility to build and then minimize a NFA from an exploration of an interaction's semantics
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -63,7 +63,7 @@ subcommands:
               help: maximum number of loops consecutively instantiated
     - nfa_experiment:
         about: experiment for generating fas from interactions
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -91,7 +91,7 @@ subcommands:
               help: maximum number of states of NFA to try Kameda-Weiner
     - nfa_experiment2:
         about: experiment for generating fas from interactions
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -130,7 +130,7 @@ subcommands:
               help: seed for RNG (default 1)
     - canonize:
         about: utility to compute the normal form of an interaction
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -147,7 +147,7 @@ subcommands:
               help: input hibou configuration file
     - get_metrics:
         about: utility to get specific metrics from an interaction
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -164,7 +164,7 @@ subcommands:
               help: metric kind, either of INT, operatNFA or minDFA
     - explore:
         about: utility to explore the semantics of an interaction
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -181,7 +181,7 @@ subcommands:
               help: input hibou configuration file
     - nfa_analyze:
         about: analyze a global trace against a NFA extracted from the exploration of an input interaction
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -208,7 +208,7 @@ subcommands:
               help: whether to represent the analysis of trace against nfa
     - analyze:
         about: utility to analyze a (multi-)trace w.r.t. an interaction
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -229,7 +229,7 @@ subcommands:
               help: input hibou configuration file
     - slice:
         about: utility to generate slices of a (multi-)trace
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -267,7 +267,7 @@ subcommands:
               help: a name for prefixing generated files names
     - mutate_remove_actions:
         about: utility to generate generate a mutant from a multi-trace by inserting noise actions
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -295,7 +295,7 @@ subcommands:
               help: maximum number of inserts (default 1), actual number can be lower due other parameters
     - mutate_insert_noise:
         about: utility to generate generate a mutant from a multi-trace by inserting noise actions
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -333,7 +333,7 @@ subcommands:
               help: maximum number of inserts (default 1), actual number can be lower due other parameters
     - mutate_swap_actions:
         about: utility to generate generate a mutant from a multi-trace by swaping positions of actions within its component traces
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -361,7 +361,7 @@ subcommands:
               help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
     - mutate_swap_components:
         about: utility to generate generate a mutant from two multi-traces by swaping their respective component traces
-        version: "0.8.5"
+        version: "0.8.7"
         author: Erwan Mahe <github.com/erwanM974>
         args:
           - hsf:
@@ -393,7 +393,7 @@ subcommands:
               help: maximum number of swaps (default 1), actual number can be lower due to multi-trace size
     - puml_sd:
             about: utility to translate an interaction into a .puml informal sequence diagram spec (.puml)
-            version: "0.8.5"
+            version: "0.8.7"
             author: Erwan Mahe <github.com/erwanM974>
             args:
               - hsf:
@@ -406,7 +406,7 @@ subcommands:
                   help: input hibou interaction file
     - puml_ap:
             about: utility to translate an interaction into a .puml informal automata product spec (.puml)
-            version: "0.8.5"
+            version: "0.8.7"
             author: Erwan Mahe <github.com/erwanM974>
             args:
               - hsf:
@@ -419,7 +419,7 @@ subcommands:
                   help: input hibou interaction file
     - rng_gen_interactions:
           about: experiment for generating fas from interactions
-          version: "0.8.5"
+          version: "0.8.7"
           author: Erwan Mahe <github.com/erwanM974>
           args:
               - hsf:

@@ -85,7 +85,7 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
         // ***
         // perform local analysis on canal if the selection policy is to always perform local analyses
         // or if the co-localization's flag is dirty
-        if locana_param.on_lifeline_policy == LocalAnalysisLifelineSelectionPolicy::SelectAll || canal_flags.dirty4local {
+        if locana_param.on_lifeline_policy == LocalAnalysisLifelineSelectionPolicy::SelectAll || canal_flags.dirty_local_counter >= locana_param.modulo_each_X_steps {
             let local_flags : MultiTraceAnalysisFlags = MultiTraceAnalysisFlags::new(vec![canal_flags.clone()], flags.rem_loop_in_sim, flags.rem_act_in_sim);
             let local_multi_trace : MultiTrace = vec![canal_trace.clone()];
             let local_interaction : Interaction;
@@ -101,7 +101,7 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
                                          local_coloc,
                                          parent_analysis_kind,
                                          use_partial_order_reduction,
-                                         &locana_param.max_depth,
+                                         &locana_param.max_look_ahead_depth,
                                          local_interaction,
                                          local_multi_trace,
                                          local_flags,
@@ -116,7 +116,8 @@ pub fn is_dead_local_analysis(gen_ctx : &GeneralContext,
             }
         }
         // ***
-        canal_flags.dirty4local = false;
+        // resets the dirty local counter
+        canal_flags.dirty_local_counter = 0;
     }
     return None;
 }

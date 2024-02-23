@@ -28,7 +28,7 @@ use crate::process::ana::step::SimulationStepKind;
 pub struct TraceAnalysisFlags {
     pub consumed : usize,
     pub no_longer_observed : bool,
-    pub dirty4local : bool,
+    pub dirty_local_counter : u32,
     pub simulated_before : u32,
     pub simulated_after : u32
 }
@@ -37,14 +37,14 @@ impl TraceAnalysisFlags {
     pub fn new(
         consumed : usize,
         no_longer_observed : bool,
-        dirty4local : bool,
+        dirty_local_counter : u32,
         simulated_before : u32,
         simulated_after : u32) -> TraceAnalysisFlags {
-        return TraceAnalysisFlags{consumed,no_longer_observed,dirty4local,simulated_before,simulated_after};
+        return TraceAnalysisFlags{consumed,no_longer_observed,dirty_local_counter,simulated_before,simulated_after};
     }
 
     pub fn new_init() -> TraceAnalysisFlags {
-        return TraceAnalysisFlags::new(0,false,true,0,0);
+        return TraceAnalysisFlags::new(0,false,0,0,0);
     }
 }
 
@@ -170,9 +170,19 @@ impl MultiTraceAnalysisFlags {
         for (flag_id,old_flag) in self.canals.iter().enumerate() {
             let mut new_flag : TraceAnalysisFlags = old_flag.clone();
             // ***
-            if affected_colocs.contains(&flag_id) {
-                new_flag.dirty4local = true;
-            }
+            // the new dirty flag
+            new_flag.dirty_local_counter = if old_flag.dirty_local_counter >= 1 {
+                // if it was already dirty, increments it
+                 old_flag.dirty_local_counter + 1
+            } else {
+                if affected_colocs.contains(&flag_id) {
+                    // if not then sets it to 1 (dirty) if the coloc has been impacted
+                    1
+                }  else {
+                    // or 0 (not dirty) if the coloc is not impacted
+                    0
+                }
+            };
             // ***
             if consu_set.contains(&flag_id) {
                 new_flag.consumed += 1;

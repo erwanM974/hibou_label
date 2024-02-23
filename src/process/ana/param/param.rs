@@ -45,24 +45,28 @@ impl fmt::Display for LocalAnalysisLifelineSelectionPolicy {
 
 pub struct LocalAnalysisParameterization {
     pub on_lifeline_policy : LocalAnalysisLifelineSelectionPolicy,
-    pub max_depth : Option<u32>
+    pub max_look_ahead_depth : Option<u32>,
+    pub modulo_each_X_steps : u32
 }
 
 impl fmt::Display for LocalAnalysisParameterization {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(depth) = self.max_depth {
-            write!(f,"[policy={:} max_depth={:}]", self.on_lifeline_policy, depth)
+        if let Some(depth) = self.max_look_ahead_depth {
+            write!(f,"[select={:}, modulo_each={:}, max_look_ahead_depth={:}]", self.on_lifeline_policy, self.modulo_each_X_steps, depth)
         } else {
-            write!(f,"[policy={:}]", self.on_lifeline_policy)
+            write!(f,"[select={:}], modulo_each={:}, max_look_ahead_depth=none]", self.on_lifeline_policy, self.modulo_each_X_steps)
         }
     }
 
 }
 
 impl LocalAnalysisParameterization {
-    pub fn new(on_lifeline_policy: LocalAnalysisLifelineSelectionPolicy, max_depth: Option<u32>) -> Self {
-        Self { on_lifeline_policy, max_depth }
+    pub fn new(
+        on_lifeline_policy: LocalAnalysisLifelineSelectionPolicy,
+        max_look_ahead_depth: Option<u32>,
+        modulo_each_X_steps : u32) -> Self {
+        Self { on_lifeline_policy, max_look_ahead_depth, modulo_each_X_steps }
     }
 }
 
@@ -93,12 +97,14 @@ impl AbstractProcessParameterization for AnalysisParameterization {
             got.push(
                 format!("local analysis = {:}", locana_param)
             );
-        }
-        if self.partial_order_reduction {
+        } else {
             got.push(
-                "uses an EXPERIMENTAL partial order reduction technique that may produce FALSE NEGATIVES".to_string()
+                "local analysis = none".to_string()
             );
         }
+        got.push(
+            format!("partial order reduction = {:}", self.partial_order_reduction)
+        );
         got
     }
 }

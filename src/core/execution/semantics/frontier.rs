@@ -47,8 +47,9 @@ impl FrontierElement {
 
 
 
-pub fn global_frontier(interaction : &Interaction) -> Vec<FrontierElement> {
-    global_frontier_rec(interaction, 0)
+
+pub fn global_frontier(interaction : &Interaction, delayed_alt : bool) -> Vec<FrontierElement> {
+    global_frontier_rec(delayed_alt, interaction, 0)
 }
 
 
@@ -96,7 +97,7 @@ fn frontier_on_reception(rc_act : &ReceptionAction, loop_depth : u32) -> Vec<Fro
     }
 }
 
-fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<FrontierElement> {
+fn global_frontier_rec(delayed_alt : bool, interaction : &Interaction, loop_depth : u32) -> Vec<FrontierElement> {
     match interaction {
         Interaction::Empty => {
             return vec![];
@@ -108,16 +109,16 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return frontier_on_reception(rc_act, loop_depth);
         },
         Interaction::Strict(ref i1, ref i2) => {
-            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth) );
             if i1.express_empty() {
-                front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
+                front.append( &mut push_frontier_right( &mut global_frontier_rec(delayed_alt,i2,loop_depth)) );
             }
             return front;
         },
         Interaction::Seq(ref i1, ref i2) => {
-            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth) );
             // ***
-            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) {
+            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(delayed_alt,i2,loop_depth)) {
                 if i1.avoids_all_of(&frt_elt2.target_lf_ids) {
                     front.push(frt_elt2);
                 }
@@ -125,9 +126,9 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::CoReg(ref cr, ref i1, ref i2) => {
-            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth) );
             // ***
-            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) {
+            for frt_elt2 in push_frontier_right( &mut global_frontier_rec(delayed_alt,i2,loop_depth)) {
                 let mut reqs_lf_ids = frt_elt2.target_lf_ids.clone();
                 for cr_lf_id in cr {
                     reqs_lf_ids.remove(cr_lf_id);
@@ -139,70 +140,72 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             return front;
         },
         Interaction::Alt(ref i1, ref i2) => {
-            // BELOW with delayed alt
-            let mut match_indices : HashSet<(usize,usize)> = hashset! {};
-            let mut frt1_matched : HashSet<usize> = hashset![];
-            let mut frt2_matched : HashSet<usize> = hashset![];
-            // ***
-            let frt1 = global_frontier_rec(i1,loop_depth);
-            let frt2 = global_frontier_rec(i2,loop_depth);
-            // ***
-            for (frt1_idx,frt1_elt) in frt1.iter().enumerate() {
-                for (frt2_idx,frt2_elt) in frt2.iter().enumerate() {
-                    if frt1_elt.target_actions == frt2_elt.target_actions {
-                        frt1_matched.insert(frt1_idx);
-                        frt2_matched.insert(frt2_idx);
-                        match_indices.insert( (frt1_idx,frt2_idx) );
+            if delayed_alt {
+                // BELOW with delayed alt
+                let mut match_indices : Vec<(usize,usize)> = vec![];
+                let mut frt1_matched : HashSet<usize> = hashset![];
+                let mut frt2_matched : HashSet<usize> = hashset![];
+                // ***
+                let frt1 = global_frontier_rec(delayed_alt,i1,loop_depth);
+                let frt2 = global_frontier_rec(delayed_alt,i2,loop_depth);
+                // ***
+                for (frt1_idx,frt1_elt) in frt1.iter().enumerate() {
+                    for (frt2_idx,frt2_elt) in frt2.iter().enumerate() {
+                        if frt1_elt.target_actions == frt2_elt.target_actions {
+                            frt1_matched.insert(frt1_idx);
+                            frt2_matched.insert(frt2_idx);
+                            match_indices.push( (frt1_idx,frt2_idx) );
+                        }
                     }
                 }
-            }
-            // ***
-            let mut new_front = vec![];
-            // ***
-            for (frt1_idx,frt2_idx) in match_indices {
-                let frt1_elt : &FrontierElement = frt1.get(frt1_idx).unwrap();
-                let frt2_elt: &FrontierElement = frt2.get(frt2_idx).unwrap();
-                let new_pos = Position::Both( Box::new(frt1_elt.position.clone()), Box::new(frt2_elt.position.clone()));
-                let new_target_lf_ids : BTreeSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
-                let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
-                let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
                 // ***
-                new_front.push( FrontierElement::new(new_pos,
-                                                     new_target_lf_ids,
-                                                     new_target_actions,
-                                                     new_max_loop_depth ));
-            }
-            // ***
-            for (frt1_idx,frt1_elt) in frt1.into_iter().enumerate() {
-                if !frt1_matched.contains(&frt1_idx) {
-                    let shifted_pos = Position::Left(Box::new(frt1_elt.position));
-                    new_front.push( FrontierElement::new(shifted_pos,
-                                                         frt1_elt.target_lf_ids,
-                                                         frt1_elt.target_actions,
-                                                         frt1_elt.max_loop_depth ));
+                let mut new_front = vec![];
+                // ***
+                for (frt1_idx,frt2_idx) in match_indices {
+                    let frt1_elt : &FrontierElement = frt1.get(frt1_idx).unwrap();
+                    let frt2_elt: &FrontierElement = frt2.get(frt2_idx).unwrap();
+                    let new_pos = Position::Both( Box::new(frt1_elt.position.clone()), Box::new(frt2_elt.position.clone()));
+                    let new_target_lf_ids : BTreeSet<usize> = frt1_elt.target_lf_ids.union(&frt2_elt.target_lf_ids).cloned().collect();
+                    let new_target_actions : BTreeSet<TraceAction> = frt1_elt.target_actions.union(&frt2_elt.target_actions).cloned().collect();
+                    let new_max_loop_depth = frt1_elt.max_loop_depth.max(frt2_elt.max_loop_depth);
+                    // ***
+                    new_front.push( FrontierElement::new(new_pos,
+                                                         new_target_lf_ids,
+                                                         new_target_actions,
+                                                         new_max_loop_depth ));
                 }
-            }
-            // ***
-            for (frt2_idx,frt2_elt) in frt2.into_iter().enumerate() {
-                if !frt2_matched.contains(&frt2_idx) {
-                    let shifted_pos = Position::Right(Box::new(frt2_elt.position));
-                    new_front.push( FrontierElement::new(shifted_pos,
-                                                         frt2_elt.target_lf_ids,
-                                                         frt2_elt.target_actions,
-                                                         frt2_elt.max_loop_depth ));
+                // ***
+                for (frt1_idx,frt1_elt) in frt1.into_iter().enumerate() {
+                    if !frt1_matched.contains(&frt1_idx) {
+                        let shifted_pos = Position::Left(Box::new(frt1_elt.position));
+                        new_front.push( FrontierElement::new(shifted_pos,
+                                                             frt1_elt.target_lf_ids,
+                                                             frt1_elt.target_actions,
+                                                             frt1_elt.max_loop_depth ));
+                    }
                 }
+                // ***
+                for (frt2_idx,frt2_elt) in frt2.into_iter().enumerate() {
+                    if !frt2_matched.contains(&frt2_idx) {
+                        let shifted_pos = Position::Right(Box::new(frt2_elt.position));
+                        new_front.push( FrontierElement::new(shifted_pos,
+                                                             frt2_elt.target_lf_ids,
+                                                             frt2_elt.target_actions,
+                                                             frt2_elt.max_loop_depth ));
+                    }
+                }
+                // ***
+                return new_front;
+            } else {
+                // BELOW non-delayed ALT
+                let mut front = push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth) );
+                front.append( &mut push_frontier_right( &mut global_frontier_rec(delayed_alt,i2,loop_depth)) );
+                return front;
             }
-            // ***
-            return new_front;
-            // *****
-            // BELOW non-delayed ALT
-            /*let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
-            front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
-            return front;*/
         },
         Interaction::Par(ref i1, ref i2) => {
-            let mut front = push_frontier_left( &mut global_frontier_rec(i1,loop_depth) );
-            front.append( &mut push_frontier_right( &mut global_frontier_rec(i2,loop_depth)) );
+            let mut front = push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth) );
+            front.append( &mut push_frontier_right( &mut global_frontier_rec(delayed_alt,i2,loop_depth)) );
             return front;
         },
         Interaction::Sync(ref sync_acts,ref i1, ref i2) => {
@@ -212,7 +215,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             let mut rem_frt1 = vec![];
             let mut rem_frt2 = vec![];
             // ***
-            for frt1_elt in global_frontier_rec(i1,loop_depth) {
+            for frt1_elt in global_frontier_rec(delayed_alt,i1,loop_depth) {
                 let intersect : BTreeSet<TraceAction> = frt1_elt.target_actions.intersection(&sync_acts_as_set).cloned().collect();
                 if intersect.is_empty() {
                     let shifted_pos = Position::Left(Box::new(frt1_elt.position));
@@ -225,7 +228,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
                 }
             }
             // ***
-            for frt2_elt in global_frontier_rec(i2,loop_depth) {
+            for frt2_elt in global_frontier_rec(delayed_alt,i2,loop_depth) {
                 let intersect : BTreeSet<TraceAction> = frt2_elt.target_actions.intersection(&sync_acts_as_set).cloned().collect();
                 if intersect.is_empty() {
                     let shifted_pos = Position::Right(Box::new(frt2_elt.position));
@@ -258,7 +261,7 @@ fn global_frontier_rec(interaction : &Interaction, loop_depth : u32) -> Vec<Fron
             new_front
         },
         Interaction::Loop(_, ref i1) => {
-            return push_frontier_left( &mut global_frontier_rec(i1,loop_depth+1) );
+            return push_frontier_left( &mut global_frontier_rec(delayed_alt,i1,loop_depth+1) );
         },
         _ => {
             panic!("non-conform interaction");

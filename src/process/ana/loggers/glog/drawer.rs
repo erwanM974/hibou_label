@@ -90,7 +90,7 @@ impl GraphVizProcessDrawer<AnalysisConfig> for InteractionProcessDrawer {
                                                                                                    false,
                                                                                                    ".".to_string(),
                                                                                                    static_ana_id.clone());
-        let max_depth = match param.locana.as_ref().unwrap().max_depth {
+        let max_depth = match param.locana.as_ref().unwrap().max_look_ahead_depth {
             None => None,
             Some(x) => Some(x)
         };

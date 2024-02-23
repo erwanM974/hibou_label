@@ -102,6 +102,18 @@ fn extract_texts_on_canal_visible(gen_ctx : &GeneralContext,
                 }
             }
         }
+        if (canal_flags.dirty_local_counter > 0) {
+            canal_l2_text.push( TextToPrint::new(" ".to_string(), Rgb(HCP_Black)) );
+            //
+            let dirty_flag_repr = if canal_flags.dirty_local_counter > 1 {
+                format!("*{:}", canal_flags.dirty_local_counter)
+            } else {
+                "*".to_string()
+            };
+            canal_l2_text.push( TextToPrint::new(
+                dirty_flag_repr,
+                Rgb(HC_Grammar_Symbol)) );
+        }
         canal_l2_text.push( TextToPrint::new(" ".to_string(), Rgb(HCP_Black)) );
     }
     // ***

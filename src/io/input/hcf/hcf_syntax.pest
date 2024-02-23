@@ -198,12 +198,14 @@ OPTION_GOAL_weakpass = { "WeakPass" }
 OPTION_GOAL_KIND = _{ OPTION_GOAL_pass | OPTION_GOAL_weakpass | HIBOU_none }
 OPTION_GOAL_DECL = { "goal" ~ "=" ~ OPTION_GOAL_KIND }
 // ***********************************************
-OPTION_LOCANA_depth = { ("max_depth" | "max"~"depth") ~ "=" ~ (HIBOU_none | ARITH_INTEGER)}
+OPTION_LOCANA_depth = { ("max_look_ahead_depth" | "max"~"depth" | "lookahead" | "lookup") ~ "=" ~ (HIBOU_none | ARITH_INTEGER)}
+OPTION_LOCANA_modulo = { ("modulo" | "modulo_each_X_steps") ~ "=" ~ ARITH_INTEGER}
 OPTION_LOCANA_select_all = { "all" | "All" | "ALL" }
 OPTION_LOCANA_select_dirty = { "dirty" | "Dirty" | "DIRTY" }
 OPTION_LOCANA_select = { "select" ~ "=" ~ (OPTION_LOCANA_select_all|OPTION_LOCANA_select_dirty) }
 OPTION_LOCANA_CONFIG_opt = _{ OPTION_LOCANA_select
-                                    | OPTION_LOCANA_depth }
+                                    | OPTION_LOCANA_depth
+                                    | OPTION_LOCANA_modulo }
 OPTION_LOCANA_CONFIG_decl = { "[" ~ OPTION_LOCANA_CONFIG_opt ~ ("," ~ OPTION_LOCANA_CONFIG_opt)* ~ (",")? ~ "]" }
 OPTION_LOCANA = { "local_analysis" ~ "=" ~ (HIBOU_none|OPTION_LOCANA_CONFIG_decl) }
 // ***********************************************

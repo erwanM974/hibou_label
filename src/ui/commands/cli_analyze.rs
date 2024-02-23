@@ -76,7 +76,7 @@ pub fn cli_analyze(matches : &ArgMatches) -> (Vec<String>,u32) {
                             ret_print.push( "W.R.T. INTERACTION".to_string());
                             ret_print.push( format!("from file '{}'",hsf_file_path) );
                             if ana_opts.ana_param.partial_order_reduction {
-                                ret_print.push( "WARNING : uses experimental Partial Order Reduction that returns FALSE NEGATIVES".to_string() );
+                                ret_print.push( "WARNING : uses experimental Partial Order Reduction that returns FALSE NEGATIVES when using synchronous operator".to_string() );
                             }
                             ret_print.push( "".to_string());
                             // ***
