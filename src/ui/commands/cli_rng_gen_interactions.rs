@@ -119,6 +119,10 @@ pub fn cli_rng_gen_interactions(matches : &ArgMatches) -> (Vec<String>,u32) {
                         probas_name = "conservative";
                         InteractionSymbolsProbabilities::conservative()
                     },
+                    "protocols_with_coreg" => {
+                        probas_name = "conservative";
+                        InteractionSymbolsProbabilities::protocols_with_coreg()
+                    },
                     "default" => {
                         InteractionSymbolsProbabilities::default_non_regular()
                     },

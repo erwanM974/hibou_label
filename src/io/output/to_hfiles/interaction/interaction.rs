@@ -17,9 +17,14 @@ limitations under the License.
 
 use crate::core::general_context::GeneralContext;
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
-use crate::core::language::syntax::util::get_recursive_frag::{get_recursive_alt_frags, get_recursive_par_frags, get_recursive_seq_frags, get_recursive_strict_frags};
+use crate::core::language::syntax::util::get_recursive_frag::{
+    get_recursive_alt_frags,
+    get_recursive_par_frags,
+    get_recursive_seq_frags,
+    get_recursive_coreg_frags,
+    get_recursive_strict_frags};
 use crate::io::output::to_hfiles::interaction::model_action::{emission_as_hif_encoding, reception_as_hif_encoding};
-use crate::io::textual_convention::{SYNTAX_ALT, SYNTAX_EMPTY, SYNTAX_LOOP_H, SYNTAX_LOOP_P, SYNTAX_LOOP_S, SYNTAX_LOOP_W, SYNTAX_PAR, SYNTAX_SEQ, SYNTAX_STRICT};
+use crate::io::textual_convention::{SYNTAX_ALT, SYNTAX_COREG, SYNTAX_EMPTY, SYNTAX_LOOP_H, SYNTAX_LOOP_P, SYNTAX_LOOP_S, SYNTAX_LOOP_W, SYNTAX_PAR, SYNTAX_SEQ, SYNTAX_STRICT};
 
 
 pub fn interaction_as_hif_encoding(gen_ctx : &GeneralContext,
@@ -29,7 +34,7 @@ pub fn interaction_as_hif_encoding(gen_ctx : &GeneralContext,
 
 fn op_as_hif_encoding(gen_ctx : &GeneralContext,
                      depth : usize,
-                     op_text : &'static str,
+                     op_text : &str,
                      sub_ints : Vec<&Interaction>) -> String {
     let ints_strs : Vec<String> = sub_ints.iter().map(|i| interaction_as_hif_encoding_inner(gen_ctx,depth+1,i)).collect();
     return format!("{0}{1}(\n{2}\n{0})", "\t".repeat(depth), op_text, ints_strs.join(",\n"));
@@ -75,8 +80,12 @@ fn interaction_as_hif_encoding_inner(gen_ctx : &GeneralContext,
             seq_frags.extend_from_slice(&mut get_recursive_seq_frags(i2));
             return op_as_hif_encoding(gen_ctx,depth,SYNTAX_SEQ,seq_frags);
         },
-        &Interaction::CoReg(_, ref i1, ref i2) => {
-            panic!("todo");
+        &Interaction::CoReg(ref cr, ref i1, ref i2) => {
+            let mut cr_frags = get_recursive_coreg_frags(cr,i1);
+            cr_frags.extend_from_slice(&mut get_recursive_coreg_frags(cr,i2));
+            let cr_lfs : Vec<String> = cr.iter().map(|lf_id| gen_ctx.get_lf_name(*lf_id).unwrap()).collect();
+            let operator_name = format!("{:}({:})", SYNTAX_COREG, cr_lfs.join(","));
+            return op_as_hif_encoding(gen_ctx,depth,&operator_name,cr_frags);
         },
         &Interaction::Par(ref i1, ref i2) => {
             let mut par_frags = get_recursive_par_frags(i1);

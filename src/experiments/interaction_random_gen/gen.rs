@@ -21,7 +21,8 @@ use rand::prelude::{SliceRandom, StdRng};
 use rand::Rng;
 
 use crate::core::general_context::GeneralContext;
-use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, ReceptionAction};
+use crate::core::language::involve::involves::InvolvesLifelines;
+use crate::core::language::syntax::action::{CommunicationSynchronicity, EmissionAction, EmissionTargetRef, ReceptionAction};
 use crate::core::language::syntax::interaction::{Interaction, LoopKind};
 use crate::core::language::syntax::metrics::{InteractionMetrics, SymbolKind};
 use crate::experiments::interaction_random_gen::probas::{InteractionGenerationSymbol, InteractionSymbolsProbabilities};
@@ -52,6 +53,29 @@ pub fn generate_random_action(signature : &GeneralContext,rng : &mut StdRng) -> 
     }
 }
 
+pub fn generate_random_pattern(signature : &GeneralContext,
+                               is_broadcast : bool,
+                               rng : &mut StdRng) -> Interaction {
+    let ms_id = rng.gen_range(0..signature.get_ms_num());
+    let mut lifelines : Vec<usize> = (0..signature.get_lf_num()).collect();
+    lifelines.shuffle(rng);
+    let orig_lf_id = lifelines.pop().unwrap();
+    let targets : Vec<EmissionTargetRef> = if is_broadcast {
+        let number_of_targets = rng.gen_range(0..lifelines.len());
+        lifelines[0..number_of_targets].iter()
+            .map(|x| EmissionTargetRef::Lifeline(*x)).collect()
+    } else {
+        vec![EmissionTargetRef::Lifeline(lifelines.pop().unwrap())]
+    };
+    let emission = EmissionAction::new(
+        orig_lf_id,
+        ms_id,
+        CommunicationSynchronicity::Asynchronous,
+        targets
+    );
+    Interaction::Emission(emission)
+}
+
 pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
                                    //resolve_basic_at_low_depth : bool,
                                    depth : u32,
@@ -62,36 +86,14 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
         return generate_random_action(signature,rng);
     }
     let mut symbol = probas.get_random_symbol(rng);
-    /*if !resolve_basic_at_low_depth && depth <= max_depth/2 {
-        while symbol == InteractionGenerationSymbol::Basic {
-            println!("should not resolve basic interaction at low depth");
-            symbol = probas.get_random_symbol(rng);
-        }
-    }*/
     match symbol {
+        InteractionGenerationSymbol::Transmission => {
+            generate_random_pattern(signature,false,rng)
+        },
+        InteractionGenerationSymbol::Broadcast => {
+            generate_random_pattern(signature,true,rng)
+        },
         InteractionGenerationSymbol::Basic => {
-            /*let alphabet = get_alphabet_from_gen_ctx(&signature);
-            let mut i = Interaction::Empty;
-            loop {
-                let got_i = generate_random_interaction(
-                    &InteractionSymbolsProbabilities::default_basic(),
-                    depth,
-                    max_depth,
-                    signature,
-                    rng
-                );
-                let (nfa, _) = get_nfa_from_interaction_exploration(signature,
-                                                                    &i,
-                                                                    alphabet.clone());
-                if nfa.transitions.len() > 1000 {
-                    println!("basic interaction has more than 1000 states, retrying...");
-                    continue;
-                } else {
-                    i = got_i;
-                    break;
-                }
-            };
-            i*/
             generate_random_interaction(
                 &InteractionSymbolsProbabilities::default_basic(),
                 depth,
@@ -99,13 +101,13 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
                 signature,
                 rng
             )
-        }
+        },
         InteractionGenerationSymbol::Empty => {
             Interaction::Empty
-        }
+        },
         InteractionGenerationSymbol::Action => {
             generate_random_action(signature,rng)
-        }
+        },
         InteractionGenerationSymbol::LoopS => {
             let i1 = generate_random_interaction(probas,depth+1,max_depth,signature,rng);
             Interaction::Loop(LoopKind::SStrictSeq,Box::new(i1))
@@ -133,6 +135,16 @@ pub fn generate_random_interaction(probas : &InteractionSymbolsProbabilities,
                 },
                 InteractionGenerationSymbol::Alt => {
                     Interaction::Alt(i1,i2)
+                },
+                InteractionGenerationSymbol::Coreg => {
+                    let involved_in_both : Vec<usize> = i1.involved_lifelines().intersection(&i2.involved_lifelines())
+                        .into_iter().cloned().collect();
+                    if involved_in_both.is_empty() {
+                        Interaction::Seq(i1,i2)
+                    } else {
+                        let lf_id = involved_in_both.get(rng.gen_range(0..involved_in_both.len())).unwrap();
+                        Interaction::CoReg(vec![*lf_id],i1,i2)
+                    }
                 },
                 _ => {
                     panic!()

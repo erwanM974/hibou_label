@@ -282,8 +282,8 @@ fn draw_coregion_frame(    image : &mut RgbImage,
     // ***
     let y_end : f32 = y_coords.pop().unwrap();
     for lf_coord in x_coords {
-        let x_left = lf_coord.x_middle - lf_coord.x_span_inner/2.0;
-        let x_right = lf_coord.x_middle + lf_coord.x_span_inner/2.0;
+        let x_left = lf_coord.x_middle - lf_coord.x_span_outer/2.0 + (nest_shift as f32)*FRAGMENT_PADDING;
+        let x_right = lf_coord.x_middle + lf_coord.x_span_outer/2.0 - (nest_shift as f32)*FRAGMENT_PADDING;
         // ***
         draw_line_segment_mut(image,
                               (x_left, y_start),

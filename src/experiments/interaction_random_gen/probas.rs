@@ -34,12 +34,15 @@ pub enum InteractionGenerationSymbol {
     Action,
     Strict,
     Seq,
+    Coreg,
     Par,
     LoopS,
     LoopW,
     LoopP,
     Alt,
-    Basic
+    Basic,
+    Transmission,
+    Broadcast
 }
 
 
@@ -77,6 +80,27 @@ impl InteractionSymbolsProbabilities {
         assert!(ordered_bounds.len() == ordered_symbols.len() +1);
         // ***
         Ok(Self{ordered_symbols,ordered_bounds})
+    }
+
+    pub fn protocols_with_coreg() -> InteractionSymbolsProbabilities {
+        let map = hashmap!{
+            InteractionGenerationSymbol::Empty      => 0.025,
+            InteractionGenerationSymbol::Transmission     => 0.175,
+            // total 0.2
+            InteractionGenerationSymbol::Broadcast     => 0.1,
+            // total 0.3
+            InteractionGenerationSymbol::Seq        => 0.2,
+            // total 0.5
+            InteractionGenerationSymbol::Coreg        => 0.1,
+            // total 0.6
+            InteractionGenerationSymbol::Alt        => 0.2,
+            // total 0.8
+            InteractionGenerationSymbol::LoopW       => 0.15,
+            // total 0.95
+            InteractionGenerationSymbol::Par => 0.05
+            // total 1.0
+        };
+        Self::from_map(map).unwrap()
     }
 
     pub fn conservative() -> InteractionSymbolsProbabilities {

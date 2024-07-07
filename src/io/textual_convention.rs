@@ -21,7 +21,7 @@ pub static SYNTAX_SEQ: &'static str = "seq";
 pub static SYNTAX_PAR: &'static str = "par";
 pub static SYNTAX_ALT: &'static str = "alt";
 pub static SYNTAX_SYNC: &'static str = "sync";
-pub static SYNTAX_COREG: &'static str = "creg";
+pub static SYNTAX_COREG: &'static str = "coreg";
 
 pub static SYNTAX_AND: &'static str = "and";
 
