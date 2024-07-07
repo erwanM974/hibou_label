@@ -47,6 +47,7 @@ pub fn parse_tracegen_logger<Conf : AbstractProcessConfiguration>(logger_id : u3
             MultiTraceProcessPrinter : StepsTraceProcessPrinter<Conf,TraceGenLoggerObject>  {
     // default configuration
     let mut generation = TracegenProcessLoggerGeneration::accepted;
+    let mut no_duplicates_via_memoization = false;
     let mut co_localizations = CoLocalizations::get_trivial_partition(gen_ctx.get_lf_num());
     let mut parent_folder = format!("tracegen_l{:}", logger_id);
     let mut files_prefix = "trace".to_string();
@@ -62,12 +63,23 @@ pub fn parse_tracegen_logger<Conf : AbstractProcessConfiguration>(logger_id : u3
                         let inner_pair = opt_pair.into_inner().next().unwrap();
                         parent_folder = inner_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
                     },
+                    Rule::TRACEGEN_LOGGER_no_duplicate => {
+                        let inner_pair = opt_pair.into_inner().next().unwrap();
+                        match inner_pair.as_rule() {
+                            Rule::HIBOU_true => {
+                                no_duplicates_via_memoization = true;
+                            },
+                            Rule::HIBOU_false => {
+                                no_duplicates_via_memoization = false;
+                            },
+                            _ => {
+                                panic!("what rule then ? : {:?}", inner_pair.as_rule());
+                            }
+                        }
+                    },
                     Rule::TRACEGEN_LOGGER_trace_prefix => {
                         let inner_pair = opt_pair.into_inner().next().unwrap();
                         files_prefix = inner_pair.as_str().chars().filter(|c| !c.is_whitespace()).collect();
-                    },
-                    Rule::TRACEGEN_LOGGER_terminal => {
-                        generation = TracegenProcessLoggerGeneration::terminal;
                     },
                     Rule::TRACEGEN_LOGGER_accepted => {
                         generation = TracegenProcessLoggerGeneration::accepted;
@@ -126,6 +138,7 @@ pub fn parse_tracegen_logger<Conf : AbstractProcessConfiguration>(logger_id : u3
     }
     let printer = MultiTraceProcessPrinter::new(co_localizations,generation);
     return Ok(GenericStepsTraceLogger::new(Box::new(printer),
+                                           no_duplicates_via_memoization,
                                            files_prefix,
                                            HIBOU_TRACE_FILE_EXTENSION.to_string(),
                                          parent_folder,

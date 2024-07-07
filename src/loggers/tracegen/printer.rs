@@ -25,7 +25,6 @@ use crate::loggers::tracegen::object::TraceGenLoggerObject;
 
 
 pub enum TracegenProcessLoggerGeneration {
-    terminal,   // at terminal nodes in the process
     accepted,   // generate a trace file only for exactly accepted traces
     //   i.e. at each new node verify express empty and if it is the case generate
     atExactDepth(u32), // generate a trace file for nodes at a specific depth
@@ -62,9 +61,6 @@ impl MultiTraceProcessPrinter {
             },
             TracegenProcessLoggerGeneration::atDepthModulo(modulo_depth) => {
                 depth % modulo_depth == 0
-            },
-            TracegenProcessLoggerGeneration::terminal => {
-                unimplemented!();
             }
         }
     }

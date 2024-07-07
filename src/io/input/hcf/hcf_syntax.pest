@@ -61,11 +61,10 @@ OPTION_GRAPHIC_LOGGER = { "graphic" ~ GRAPHIC_LOGGER_opts? }
 // ***
 
 
-TRACEGEN_LOGGER_terminal = { "terminal" }
 TRACEGEN_LOGGER_accepted = { "accepted" }
 TRACEGEN_LOGGER_depth = { "exact depth" ~ ARITH_INTEGER }
 TRACEGEN_LOGGER_modulo = { "modulo depth" ~ ARITH_INTEGER }
-TRACEGEN_LOGGER_gen_kind = _{ "generation" ~ "=" ~ ( TRACEGEN_LOGGER_terminal | TRACEGEN_LOGGER_accepted | TRACEGEN_LOGGER_depth | TRACEGEN_LOGGER_modulo ) }
+TRACEGEN_LOGGER_gen_kind = _{ "generation" ~ "=" ~ ( TRACEGEN_LOGGER_accepted | TRACEGEN_LOGGER_depth | TRACEGEN_LOGGER_modulo ) }
 
 TRACEGEN_LOGGER_partition_discrete = { "discrete" }
 TRACEGEN_LOGGER_partition_trivial = { "trivial" }
@@ -74,11 +73,13 @@ TRACEGEN_LOGGER_partition = _{ "partition" ~ "=" ~ (TRACEGEN_LOGGER_partition_di
 
 TRACEGEN_LOGGER_parent_folder = { ("parent"|"parent_folder"|"folder") ~ "=" ~ HIBOU_LABEL }
 TRACEGEN_LOGGER_trace_prefix = { ("name_prefix"|"trace_prefix"|"prefix") ~ "=" ~ HIBOU_LABEL }
+TRACEGEN_LOGGER_no_duplicate = { ("avoid_duplicates"|"prevent_duplicates"|"no_duplicates") ~ "=" ~ (HIBOU_true|HIBOU_false) }
 
 TRACEGEN_LOGGER_opt = _{ TRACEGEN_LOGGER_gen_kind
                         | TRACEGEN_LOGGER_partition
                         | TRACEGEN_LOGGER_parent_folder
-                        | TRACEGEN_LOGGER_trace_prefix }
+                        | TRACEGEN_LOGGER_trace_prefix
+                        | TRACEGEN_LOGGER_no_duplicate }
 
 TRACEGEN_LOGGER_opts = { "[" ~ TRACEGEN_LOGGER_opt ~ ("," ~ TRACEGEN_LOGGER_opt)* ~ (",")? ~ "]" }
 OPTION_TRACEGEN_LOGGER = { "tracegen" ~ TRACEGEN_LOGGER_opts? }
